@@ -1,0 +1,13 @@
+<div class="modal-body">
+    <div class="verify">Verify Your Email</div>
+    <div class="emailTo">We sent an email to</div>
+    <div class="email">{{email}}</div>
+    <div class="instructions">
+        Just click on the link in that email to verify your email.
+        If you don't see it, you may need to check your spam folder.
+    </div>
+    <div class="findIt">Still can't find it?</div>
+    <button class="button" [disabled]="isResendDisabled" (click)="resendEmail()">
+        {{ isResendDisabled ? 'Resend in ' + remainingTime + 's' : 'Resend Verification Email' }}
+    </button>
+</div>

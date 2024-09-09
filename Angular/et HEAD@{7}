@@ -1,0 +1,30 @@
+[33m84b08d9[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to HEAD@{1}
+[33m84b08d9[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: checkout: moving from master to master
+[33m84b08d9[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: reset: moving to origin/master
+[33mb082e10[m HEAD@{3}: reset: moving to HEAD
+[33mb082e10[m HEAD@{4}: reset: moving to HEAD
+[33mb082e10[m HEAD@{5}: reset: moving to HEAD
+[33mb082e10[m HEAD@{6}: checkout: moving from master to master
+[33mb082e10[m HEAD@{7}: commit (amend): .77
+[33m84b08d9[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{8}: commit: .765
+[33mf75f2d7[m HEAD@{9}: commit (merge): Merge branch 'origin/master'
+[33mb8f5b36[m HEAD@{10}: checkout: moving from 66adfdf181151bd4b43702dba0dcc3c45ccdc7d6 to master
+[33m66adfdf[m HEAD@{11}: commit: .75
+[33mb8f5b36[m HEAD@{12}: checkout: moving from master to b8f5b36a49fad9faa184ed0f734e6ff0e8af2dad
+[33mb8f5b36[m HEAD@{13}: checkout: moving from master to master
+[33mb8f5b36[m HEAD@{14}: checkout: moving from master to master
+[33mb8f5b36[m HEAD@{15}: checkout: moving from master to master
+[33mb8f5b36[m HEAD@{16}: checkout: moving from master to master
+[33mb8f5b36[m HEAD@{17}: commit (amend): .76
+[33md429eb0[m HEAD@{18}: commit (merge): .75
+[33ma69aeaa[m HEAD@{19}: commit (amend): .75
+[33ma952733[m HEAD@{20}: commit: .74
+[33m67d2343[m HEAD@{21}: commit (merge): .73555
+[33m86c9bab[m HEAD@{22}: checkout: moving from master to master
+[33m86c9bab[m HEAD@{23}: commit (amend): .7355
+[33m75be3aa[m HEAD@{24}: commit: .735
+[33m972d98a[m HEAD@{25}: commit: .73
+[33mf4cc065[m HEAD@{26}: commit: .725
+[33mb639d48[m HEAD@{27}: commit: .72
+[33m423dc47[m HEAD@{28}: commit: .715
+[33m34943a2[m HEAD@{29}: clone: from https://github.com/Tymoody399/Sivantis

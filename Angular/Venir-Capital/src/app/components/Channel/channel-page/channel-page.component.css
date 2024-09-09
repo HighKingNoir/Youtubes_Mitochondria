@@ -1,0 +1,523 @@
+@keyframes flowText {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+@keyframes pulse {
+  0% {
+    background-color: green; /* Starting color */
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgb(0, 194, 0); /* Midway color */
+    transform: scale(1.1);
+  }
+  100% {
+    background-color: green; /* Ending color */
+    transform: scale(1);
+  }
+}
+  
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+
+
+.banner{
+  position: relative;
+  display: flex;
+  top: 65px;
+  height: 150px;
+  color: grey;
+  background-color: rgb(154, 154, 154);
+  width: calc(100% - 180px);
+  left: 180px;
+  align-items: center;
+  margin-bottom: 80px;
+  border-bottom: 1px solid gray;
+}
+
+.transparent-bg {
+  background-color: transparent
+}
+
+.banner img{
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+}
+
+.streamerLinksContainer{
+  height: 50px;
+  border-bottom: 2px solid gray;
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  width: calc(100% - 180px);
+  left: 180px;
+  align-items: center;
+  color: white;
+  font-size: 16px;
+}
+
+.streamerLinks a{
+  text-decoration: none;
+  color: gold;
+  cursor: pointer;
+}
+
+.streamerLinks a:hover{
+  color: rgb(130, 110, 0) ;
+}
+
+.channelInfo-Container{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 175px;
+  color: white;
+  width: calc(100% - 180px);
+  left: 180px;
+  padding: 10px 50px;
+  font-size: 20px;
+  border-bottom: 2px solid gray;
+}
+
+.channelInfo {
+  display: flex;
+}
+
+.channelInfo .channelLogo{
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.channelInfo .channelDescriptors{
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  width: 100%;
+}
+
+.channelDescriptors .layer-One{
+  display: flex;
+  justify-content: space-between;
+}
+
+.layer-One .subscribe-Button{
+  padding: 0px 10px 0 10px;
+  border: none;
+  border-radius: 20px;
+  font-size: 17px;
+  background-color: rgb(85, 85, 85);
+  color: white;
+  border: 1px solid rgb(70, 70, 70);
+}
+
+.alter-ChannelInfo{
+  display: flex;
+  padding-top: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.alter-ChannelInfo .alter-ChannelInfo-Object{
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.alter-ChannelInfo .alter-ChannelInfo-Object:hover{
+  color: gray;
+}
+
+
+.channelDescription{
+  max-width: 100%;
+  white-space: normal; /* Allow text to wrap within the container */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* Set the number of lines before ellipsis */
+  -webkit-box-orient: vertical;
+  color: gray;
+  font-size: 13px;
+}
+
+.sub-Header{
+    position: sticky;
+    display: flex;
+    top: 65px;
+    height: 50px;
+    color: white;
+    background-color: rgb(47, 47, 47);
+    width: calc(100% - 180px);
+    left: 180px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sub-Header .watching{
+    padding-left: 10px;
+    align-items: center;
+    display: flex;
+    min-width: 20%;
+    width: 30%;
+
+    border-right: 1px solid black;
+    color: red;
+}
+
+.watching .watching-Text{
+    border-right: 1px solid red;
+    padding-right: 10px;
+}
+
+.watching .watching-Content{
+    display: flex;
+    position: relative;
+    align-items: center;
+    overflow: hidden; /* Hide overflow text */
+    white-space: nowrap; /* Prevent line breaks */
+    width: 100%;
+}
+.watching-Content .flowing-text {
+    color: red;
+    animation: flowText 12s linear infinite;
+    white-space: nowrap; /* Prevent line breaks */
+    margin: 0;
+    width: 100%;
+  }
+  
+
+
+.sub-Header .upcoming{
+    padding-left: 10px;
+    padding-right: 5px;
+    align-items: center;
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.upcoming .upcoming-text{
+    border-right: 1px solid rgb(205, 205, 205);
+    padding-right: 10px;
+    
+}
+
+.upcoming .upcoming-Content{
+    width: 100%;
+    display: flex;
+    position: relative;
+    align-items: center;
+    overflow: hidden; /* Hide overflow text */
+    white-space: nowrap; /* Prevent line breaks */
+}
+
+.upcoming-Content .flowing-text {
+    width: 100%;
+    color: rgb(205, 205, 205);
+    animation: flowText 15s linear infinite;
+    white-space: nowrap; /* Prevent line breaks */
+    margin: 0;
+  }
+
+ .fund-Button{
+  border-style: none;
+  color: gold;
+  background-color: transparent;
+}
+
+.fund-Button:disabled{
+  color: rgb(130, 110, 0) !important;
+}
+
+.fund-Button:hover{
+  color: rgb(130, 110, 0) !important;
+}
+
+.videos{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 180px);
+  left: 180px;
+  color: white;
+  padding: 10px 25px 0 25px;
+}
+
+
+.videos .header{
+  font-size: 25px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.videoContainer{
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* Creates 4 equal columns */
+  gap: 20px;
+  width: calc(100%);
+}
+
+@media screen and (max-width: 1350px) {
+  .videoContainer {
+      grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media screen and (max-width: 1150px) {
+  .videoContainer {
+      grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (max-width: 950px) {
+  .videoContainer {
+      grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 675px) {
+  .videoContainer {
+      grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+.card {
+  cursor: pointer;
+  background-color: transparent;
+  color: rgb(200, 200, 200);
+  border: none;
+}
+.card:hover {
+  color: rgb(241, 241, 241);
+}
+
+.card-body{
+  padding: 0px;
+}
+
+.contentThumbnail{
+  border-radius: 15px;
+  height: 150px;
+  margin-bottom: 2px;
+}
+
+.contentType{
+  justify-content: center;
+  display: flex;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  background: radial-gradient(ellipse at center, rgb(65, 65, 65), rgb(0, 0, 0));
+  color: white;
+  letter-spacing: 1px;
+}
+
+.type-grey {
+  background-color: grey;
+}
+
+.info{
+  display: flex;
+  width: 100%;
+  border-radius: 5px;
+  padding: 2px;
+}
+
+
+.info .youtubeProfilePicture{
+  border-radius: 50%;
+  height: 35px;
+  width: 35px;
+}
+
+.info .info-Colunm{
+  padding-left: 5px;
+  width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+  overflow: hidden
+}
+
+.info .contentName{
+  color: white;
+  margin-bottom: 4px;
+  max-height: 50px;
+  white-space: normal; /* Allow text to wrap within the container */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Set the number of lines before ellipsis */
+  -webkit-box-orient: vertical;
+  font-size: 16px;
+}
+
+.info .info-Colunm .second-Row{
+  display: flex;
+  flex-direction: row;
+  justify-content:space-between;
+  margin: 0;
+}
+
+.second-Row .youtubeUsername{
+  margin-bottom: 2px;
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 75%;
+  display: block;
+  overflow: hidden
+}
+
+.second-Row .isScum{
+  margin-bottom: 2px;
+  color: rgb(255, 0, 0);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.third-Row .releaseDate{
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.info .info-Colunm .forth-Row{
+  display: flex;
+  flex-direction: row;
+  justify-content:space-between;
+  height: auto;
+}
+
+.forth-Row .pricing-Group{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.pricing-Group .singleBuyer{
+  display: flex;
+  position: relative;
+}
+
+.pricing-Group .communityBuyer{
+  display: flex;
+  position: relative;
+}
+
+.pricing-Group .startingCost{
+  padding-left: 5px;
+  font-size: 14px;
+}
+
+.channelNeeded{
+  color: gold;
+}
+
+p {
+  font-size: 14px;
+}
+
+.icon {
+  position: relative;
+  display: flex;
+  top:3px;
+  font-size: 14px;
+}
+
+.options{
+  width: 20px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.options i{
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.options i:hover{
+  background-color: rgb(103, 103, 103);
+}
+
+[ngbDropdownToggle]::after{
+  content: none;
+}
+
+[ngbDropdownMenu]{
+  background-color: #707070;
+  
+}
+
+.dropdown-item{
+  color: rgb(230, 230, 230);
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-item.delete{
+  color: rgb(179, 20, 20);
+}
+
+.dropdown-item i{
+  margin-right: 5px;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-item:hover{
+  background-color: #8e8e8e;
+}
+
+.isActive{
+  margin-right: 5px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.activeIndicator{
+  animation: pulse 2s infinite; /* Apply the pulse animation */
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}

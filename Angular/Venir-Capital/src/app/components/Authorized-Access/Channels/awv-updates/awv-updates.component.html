@@ -1,0 +1,46 @@
+<body>
+    <app-header></app-header>
+    <app-authorized-access-sidebar></app-authorized-access-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <div class="sub-Header">
+        <div class="sub-Header-Title">Channel Updates</div>
+        <div class="channel-Categories">
+            <button class="mainButton active"  routerLink="/AuthorizedUser/Channels/Updates">Updates</button>
+            <button class="mainButton"  routerLink="/AuthorizedUser/Channels/Change">Change</button>
+            <button class="mainButton" routerLink="/AuthorizedUser/Channels/Request">New</button>
+        </div> 
+    </div>
+    <div class="channels">
+        <div *ngFor="let channel of needsUpdates" class="channel-Request-Info">
+            <div class="layer-One">
+                <div class="channel-Label">
+                    <div class="channel">Channel:</div>
+                    <div>{{channel.channelName}}</div>
+                    <img class="channelLogo" src="{{channel.channelLogo}}" alt="">
+                </div>
+                <div style="display: flex;">
+                    <div class="channelID">Channel ID:</div>
+                    <div>{{channel.channelId}}</div>
+                </div>
+            </div>
+            <div  class="streamerInfo-Header">
+                <div class="platform">Platform</div>
+                <div class="username">Username</div>
+                <div class="averageWeeklyViewers">AWV</div>
+            </div>
+            <div *ngFor="let streamerInfo of channel.streamerInfo; let i = index" class="streamerInfo" [formGroup]="AWVForm">
+                <div class="platform">{{streamerInfo.platform}}</div>
+                <div class="username">{{streamerInfo.username}}</div>
+                <input type="text" placeholder="Prev: {{streamerInfo.averageWeeklyViewers}}" (change)="updateAWV(channel.streamerInfo, i)" [formControlName]="'averageWeeklyViewers'"  class="averageWeeklyViewers">
+            </div>
+            <div class="decision">
+                <button (click)="updateChannel(channel.channelId, channel.streamerInfo)" [disabled]="loading">Update</button>
+            </div> 
+        </div>
+    </div> 
+</body>

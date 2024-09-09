@@ -1,0 +1,19 @@
+<body>
+    <app-header></app-header>
+    <app-home-sidebar></app-home-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <div class="Users">
+      <div *ngFor="let user of Users" routerLink="/LeaderBoard/{{user.username}}">
+        <div>
+          <div>{{user.username}}</div>
+          <div>{{user.totalHype}}</div>
+        </div>
+      </div>
+    </div>
+    
+</body>

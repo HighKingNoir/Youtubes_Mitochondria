@@ -1,0 +1,79 @@
+<body>
+    <app-header></app-header>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false">
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <app-home-sidebar></app-home-sidebar>
+    <div class="sub-Header">
+        <div>Create Channel</div>
+    </div>
+    <div class="content">
+        <form [formGroup]="ChannelRequestForm">
+            <div class="channelName">
+                <div class="description">
+                    <div class="header">Channel Name</div>
+                    <div class="channelName-toolTip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Enter the name for your channel.
+                            Learn more" container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                </div>
+                <div class="channelName-Selection">
+                    <input type="text" id="channelName" name="channelName" required formControlName="channelName" (blur)="handleInputBlur()" #channelNameInput>
+                </div>
+            </div>
+            <div *ngIf=" ChannelRequestForm.get('channelName')?.hasError('pattern') || ChannelRequestForm.get('channelName')?.hasError('required') && ChannelRequestForm.get('channelName')?.touched "  class="error-message">
+                Channel name must be between 3 - 20 charecters long and no spaces.
+            </div>
+            <div *ngIf="ChannelRequestForm.get('channelName')?.hasError('channelNameTaken')" class="error-message">
+                Channel name already Taken.
+            </div>
+            <div class="channelLogo">
+                <div class="description">
+                    <div class="header">Channel Logo</div>
+                    <div class="channelLogo-toolTip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Select the logo for your channel.
+                            Max 4MB." container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                </div>
+                <div class="channelLogo-Selection">
+                    <label class="custom-file-input" for="channelLogo">{{logoSelectionString}}</label>
+                    <input type="file" id="channelLogo" name="channelLogo" accept=".jpg, .jpeg, .png" class="hidden-input" (change)="onLogoChange($event)">
+                    <img *ngIf="enteredChannelLogo" class="entered-Channel-Logo" src="{{enteredChannelLogo}}" alt="">
+                </div>
+            </div>
+            <div *ngIf="channelLogoError" class="error-message">
+                Missing Channel Logo.
+            </div>
+            <div class="controlHeader" formArrayName="formControls">
+
+                <div class="streamer-Info">
+                    <div class="streamer-Info-Description">
+                        <div>Platform</div>
+                    </div>
+                    <div class="streamer-Info-Description">
+                        <div>Username</div>
+                    </div>
+                </div>    
+            <div class="form-Section" *ngFor="let control of formControls.controls; let i = index" [formGroupName]="i">
+                <div class="input-Box">
+                    <div class="platform">{{control.value.platform}}</div>
+                    <div style="display: flex;">
+                        <div style="margin-right: 5px;">{{control.value.username}}</div>                        
+                        <button type="button" class="remove-Input" (click)="removeFormControl(i)"><i class="fa-solid fa-xmark" style="color: #c20000;"></i></button>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <div class="addForm">
+                <button *ngIf="formControls.length < 3" type="button" class="addForm-Button" (click)="addFormControl()"><i class="fa-solid fa-plus"></i>Add Streamer Channel (Max: 3)</button>
+            </div>
+            <div class="submit">
+                <button class="createChannel" [disabled]="ChannelRequestForm.invalid" (click)="Submit()">Create Channel</button>
+            </div>
+        </form>
+    </div>
+    
+</body>

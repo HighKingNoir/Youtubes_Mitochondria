@@ -1,0 +1,17 @@
+<div class="modal-body">
+    <div class="header">Disapprove Channel</div>
+    <div class="instruction">Enter the reason why <a class="channelName">{{channelName}}</a> is being disapproved:</div>
+    <form action="" method="post" [formGroup]="reasonForm">
+        <div class="videoDescription">
+            <div class="description">
+                <div class="title">Reason</div>
+            </div>
+            <div class="videoDescription-Selection">
+                <textarea name="reason" id="reason" placeholder="Enter reason" rows="10" maxlength="5000"  formControlName="reason" ></textarea>
+            </div>
+        </div>
+        <div class="submit">
+            <button class="button" [disabled]="reasonForm.invalid" (click)="submit()">Submit</button>
+        </div>
+    </form>
+</div>

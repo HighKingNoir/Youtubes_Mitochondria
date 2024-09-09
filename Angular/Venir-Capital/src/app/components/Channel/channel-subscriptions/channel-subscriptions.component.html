@@ -1,0 +1,42 @@
+<body>
+    <app-header-search></app-header-search>
+    <app-home-sidebar></app-home-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false">
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <div class="sub-Header">
+        <div class="left-Side">
+            <button class="mainButton"  routerLink="/Channels">Browse</button>
+            <button class="mainButton active"  routerLink="/Subscriptions/Channels">Subscriptions</button>
+        </div>  
+    </div>
+    <div *ngIf="isLoggedIn; else LoggedOut">
+        <div *ngIf="Channels.length == 0; else DisplayChannels">
+            <div class="notFound">
+                You aren't subscribed to any channel. Search or browse for channels you want to subscribe to.
+            </div>
+        </div>
+        <ng-template #DisplayChannels>
+            <div class="channels">
+                <div *ngFor="let channel of Channels" class="channel-Info" routerLink="/Channel/{{channel.channelName}}">
+                    <div class="logoContainer">
+                        <img src="{{channel.channelLogo}}" class="card-img-top channelLogo" alt="...">
+                    </div>
+                    <div class="card-body">
+                        <div class="channelName">{{channel.channelName}}</div>
+                        <div class="channelDescription">{{channel.channelDescription}}</div>
+                    </div>
+                </div>      
+            </div>
+        </ng-template>
+    </div>
+    <ng-template #LoggedOut>
+        <div class="notFound">
+            Login to view the channels you are subscribed to.
+        </div>
+    </ng-template>
+    
+</body>

@@ -1,0 +1,120 @@
+<div class="modal-body">
+    <div class="current-Rank">
+        <div class="header">Current Rank</div>
+        <div class="rank-Number">{{romanNumeral(userRank)}}</div>
+        <div class="rank-Title">{{rankTitles(userRank)}}</div>
+
+        <div class="rank-Bonus" [ngSwitch]="userRank">
+            <ng-container *ngSwitchCase="1">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{basePay | number:'1.0-0'}}</div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="2">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{2 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 1x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+                <div>Unlock: User Withdraw</div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="3">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{4 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 2x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="4">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{8 * basePay}}</div>
+                <div>Total Tokens: 3x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="5">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{16 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 5x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="6">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{32 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 7x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="7">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{64 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 9x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="8">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{128 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 12x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="9">
+                <div>Weekly Pay: ${{256 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 15x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+            
+            <ng-container *ngSwitchCase="10">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{512 * basePay | number:'1.0-0'}}</div>
+                <div>Total Tokens: 18x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+        </div>
+        <div class="progression-Header">Progression</div>
+        <div class="progress-Container">
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated userProgress" role="progressbar" [style.width.%]="getUserProgress()"  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar progress-bar-striped activeProgress" role="progressbar" [style.width.%]="getActiveProgress()"  aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar progress-bar-striped emptyProgress" role="progressbar" style="width: 100%"  aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <div>{{userHype.toFixed(0)}} / {{rankProgression(userRank)}}</div>
+    </div>
+    <div class="next-Rank" *ngIf="userRank < 10">
+        <div class="header">Next Rank</div>
+        <div class="rank-Number">{{romanNumeral(userRank + 1)}}</div>
+        <div class="rank-Title">{{rankTitles(userRank + 1)}}</div>
+        <div class="rank-Bonus" [ngSwitch]="userRank + 1">
+            <ng-container *ngSwitchCase="2">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{2 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 1x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+                <div>Unlock: User Withdraw</div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="3">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{4 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 1x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="4">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{8 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 1x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="5">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{16 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 2x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="6">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{32 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 2x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="7">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{64 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 2x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="8">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{128 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 3x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="9">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{256 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 3x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+            
+            <ng-container *ngSwitchCase="10">
+                <div style="margin-bottom: 5px;">Weekly Pay: ${{512 * basePay | number:'1.0-0'}}</div>
+                <div>Token: 3x<img class="sivantisToken" [src]="SivantisToken" alt=""></div>
+            </ng-container>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,114 @@
+.sub-Header{
+    position: relative;
+    display: flex;
+    z-index: 2;
+    top: 65px;
+    height: 50px;
+    color: white;
+    width: calc(100% - 200px);
+    left: 200px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sub-Header-Title{
+    font-size: 25px;
+    padding-left: 20px;
+}
+
+.log-Categories{
+    display: flex;
+    padding-right: 20px;
+}
+
+.logs{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 200px);
+    left: 200px;
+    top: 75px;
+    padding: 10px;
+}
+
+.latest-Logs-Info{
+    height: 100px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+    border: 2px solid rgb(100, 100, 100);
+}
+
+.latest-Logs-Info.complete{
+    background-color: rgb(179, 179, 179);
+}
+
+
+.latest-Logs-Info.failed{
+    background-color: lightcoral;
+}
+
+
+.latest-Logs-Info .layer-One{
+    display: flex;
+    justify-content: space-between;
+}
+
+.latest-Logs-Info .layer-Two{
+    display: flex;
+    justify-content: space-between;
+}
+
+.latest-Logs-Info .layer-Three{
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.latest-Logs-Info .layer-Four{
+    display: flex;
+    justify-content: space-between;
+}
+
+.mainButton {
+    margin-right: 10px;
+    align-items: center;
+    appearance: none;
+    background-color: #3f3f3f;
+    border-radius: 4px;
+    border-width: 0;
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#3b3b3b 0 -3px 0 inset;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: "Open Sans", sans-serif;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-align: left;
+    text-decoration: none;
+    transition: box-shadow .15s,transform .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    white-space: nowrap;
+    will-change: box-shadow,transform;
+    font-size: 18px;
+  }
+  
+  .mainButton.active{
+    background-color: rgb(130, 130, 130);
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,rgb(100, 100, 100) 0 -3px 0 inset;
+  }
+  
+  .mainButton:hover {
+    box-shadow: rgba(126, 126, 126, 0.4) 0 4px 8px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #6f6f6f 0 -3px 0 inset;
+    transform: translateY(-2px);
+  }

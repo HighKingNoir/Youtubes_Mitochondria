@@ -1,0 +1,19 @@
+<div class="modal-body" (keyup.enter)="verifyCode()">
+    <div class="icon-Container">
+        <img class="lock" src="https://img.icons8.com/ios/50/ffd700/lock-2.png"/>
+    </div>
+    <div *ngIf="secretImageUrl" class="image-Container">
+      <img [src]="secretImageUrl" alt="">
+    </div>
+    <div class="text">
+        <h2>Two Factor Authentication</h2>
+        <div class="instructions">Enter the 6-digit code from your Time-based One-Time Password (TOTP) app.</div>
+    </div>
+    <div class="custom-otp-input">
+        <ng-otp-input
+          (onInputChange)="onOtpChange($event)"
+          [config]="configOptions"
+        ></ng-otp-input>
+      </div>
+    <button class="button" (click)="verifyCode()" [ngClass]="btnStatus">{{ inputDigitLeft }}</button>
+</div>

@@ -1,0 +1,36 @@
+<body>
+    <app-header></app-header>
+    <app-authorized-access-sidebar></app-authorized-access-sidebar>
+        <div class="sub-Header">
+            <div class="sub-Header-Title">All Logs</div>
+            <div class="log-Categories">
+                <button class="mainButton active"  routerLink="/AuthorizedUser/Logs/All">All</button>
+                <button class="mainButton"  routerLink="/AuthorizedUser/Logs/Unresolved">Unresolved</button>
+                <button class="mainButton"  routerLink="/AuthorizedUser/Logs/Failed">Failed</button>
+            </div>
+        </div>
+        <div class="logs">
+            <div *ngFor="let log of allLogs" class="latest-Logs-Info" [ngClass]="getStatusClass(log.contractTransactionReceipt.contractStatusEnum)">
+                <div class="layer-One">
+                    <div class="contractStatusEnum">{{log.contractTransactionReceipt.contractStatusEnum}} </div>
+                    <div class="contractEnum">{{log.contractEnum}}</div>
+                    <div>Log ID: {{log.logId}}</div>
+                </div>
+                <div class="layer-Two">
+                    <div class="contractFunctionEnum">{{log.contractFunctionEnum}}</div>
+                    <div *ngIf="log.totalManaAmount" class="totalManaAmount">Total Mana Transfered: {{log.totalManaAmount | numberFormat}}</div>
+                    <div *ngIf="log.manaToCompany" class="manaToCompany">Mana to Company: {{log.manaToCompany | numberFormat}}</div>
+                    <div *ngIf="log.contractTransactionReceipt.gasUsed" class="gas">Gas Used: {{log.contractTransactionReceipt.gasUsed| numberFormat}}</div>
+                </div>
+                <div class="layer-Three">
+                    <div *ngIf="log.contentID" class="contentID">Content ID: {{log.contentID}}</div>
+                    <div *ngIf="log.userID" class="userID">User ID: {{log.userID}}</div>
+                    <div *ngIf="log.channelName" class="channelName">Channel Name: {{log.channelName}}</div>
+                </div>
+                <div class="layer-Four">
+                    <div class="transactionHash">Hash: {{log.contractTransactionReceipt.transactionHash}}</div>
+                    <div class="creationDate">{{getDate(log.creationDate) | date}}</div>
+                </div>  
+            </div>
+        </div>
+</body>

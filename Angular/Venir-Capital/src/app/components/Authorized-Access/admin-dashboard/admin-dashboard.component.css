@@ -1,0 +1,308 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+*{
+    color: white;;
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.content{
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    top: 65px;
+    height: calc(100% - 65px);
+    width: calc(100% - 200px);
+    left: 200px;
+    padding: 15px;
+}
+
+.content .content-Header{
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.content .header h2{
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.content-Header .dashboard-Update{
+    color: gray;
+}
+
+.totals {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .companyWallets {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    text-align: center;
+    background-color: rgb(65, 65, 65);
+    border-radius: 5px;
+    border: 2px solid grey;
+  }
+
+  .walletDetails{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+    position: absolute;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .header, .number, .dollarAmount {
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  
+  .header.active, .number.active, .dollarAmount.active {
+    opacity: 1;
+  }
+  
+  
+  .companyWallets.active {
+    opacity: 1;
+  }
+  
+
+
+
+.connectWallet .connectWallet-Button{
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+    background-color: transparent;
+}
+
+/* Style each "total" div */
+.total {
+    height: 100px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: rgb(65, 65, 65);
+    border-radius: 5px;
+    border: 2px solid grey;
+}
+
+.total-Group{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.total-Group .header{
+    margin: 0;
+}
+
+.number img{
+    height: 25px;
+    width: 25px;
+    margin-left: 5px;
+}
+
+.total-Group .number{
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+}
+
+.companyWallets .number{
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+}
+
+.total .changes{
+    width: 125px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.total .change-Container{
+    height: 100%;
+}
+
+.changes .change-Icon{
+    height: 30px;
+    width: 30px;
+    background-color: grey;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.changes .change-Indicators{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 5px;
+}
+
+.changes .change-Value{
+    padding-right: 5px;
+    font-size: 20px;
+}
+
+.changes .value-Positive{
+    color: lightgreen;
+}
+
+.changes .value-Negative{
+    color: lightcoral;
+}
+
+.changes .value-Neutral{
+    color: white;
+}
+
+.changes .icon-Positive{
+    background: rgb(0, 120, 0);
+}
+
+.changes .icon-Negative{
+    background: rgb(190, 0, 0);
+}
+
+.changes .icon-Neutral{
+    color: white;
+}
+
+.changes .change-Text{
+    color: rgb(185, 185, 185);
+    font-size: 12px;
+    text-align: center;
+    
+}
+
+.todos{
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    font-size: 20px;
+    justify-content: space-around;
+    height: 100%;
+    width: 100%;
+}
+
+.todo-Item{
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.graph {
+    background-color: rgb(65, 65, 65);
+    border-radius: 5px;
+    border: 2px solid grey;
+    margin-bottom: 20px;
+}
+
+.graph .canvas-Container{
+    display: flex;
+    height: 400px;
+    position: relative;
+    padding: 10px;
+    width: 100%;
+}
+
+.graph .header{
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid grey;
+    padding: 5px;
+    font-size: 20px;
+}
+
+.header .title{
+    margin-left: 10px;
+
+}
+
+.header .durations{
+    display: flex;
+    color: rgb(179, 179, 179);
+}
+
+.durations .duration{
+    color: rgb(179, 179, 179);
+    margin-right: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent; /* Add transparent border */
+    transition: border-bottom 0.5s ease; /* Add a transition effect */
+}
+
+.durations .duration.active{
+    color: rgb(255, 255, 255);
+    border-bottom: 1px solid grey;
+}
+
+
+/* Define the grid for the "userStats" section */
+.userStats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+/* Style the "Stats" divs */
+.Stats {
+    height: 400px;
+    background-color: rgb(65, 65, 65);
+    border-radius: 5px;
+    border: 2px solid grey;
+    display: flex;
+    flex-direction: column;
+}
+
+.Stats .header{
+    border-bottom: 1px solid grey;
+    padding: 5px 5px 5px 10px;
+    font-size: 20px;
+}
+

@@ -1,0 +1,79 @@
+<div class="modal-header">
+    <div class="title">Edit {{channel.channelName}}</div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+    <form action="" [formGroup]="editChannelForm">
+        <div class="channelBanner">
+            <div class="description">
+                <div class="header">Channel Banner</div>
+                <div class="channelBanner-toolTip">
+                    <span class="icon" triggers="click" placement="right" ngbTooltip="Select the Banner for your channel.
+                        Max 6MB." container="body"><i class="fa-regular fa-circle-question"></i></span>
+                </div>
+            </div>
+            <div class="channelBanner-Selection">
+                <label class="custom-file-input" for="channelBanner">{{bannerSelectionString}}</label>
+                <input type="file" id="channelBanner" name="channelBanner" accept=".jpg, .jpeg, .png" class="hidden-input" (change)="onBannerChange($event)">
+                <img *ngIf="editChannelForm.get('channelBanner')?.value" class="entered-Channel-Banner" src="{{editChannelForm.get('channelBanner')?.value}}" alt="">
+            </div>
+        </div>
+
+        <div class="channelLogo">
+            <div class="description">
+                <div class="header">Channel Logo</div>
+                <div class="channelLogo-toolTip">
+                    <span class="icon" triggers="click" placement="right" ngbTooltip="Select the logo for your channel.
+                        Max 4MB." container="body"><i class="fa-regular fa-circle-question"></i></span>
+                </div>
+            </div>
+            <div class="channelLogo-Selection">
+                <label class="custom-file-input" for="channelLogo">Change Logo</label>
+                <input type="file" id="channelLogo" name="channelLogo" accept=".jpg, .jpeg, .png" class="hidden-input" (change)="onLogoChange($event)">
+                <img  class="entered-Channel-Logo" src="{{editChannelForm.get('channelLogo')?.value}}" alt="">
+            </div>
+        </div>
+
+
+        <div class="channelLinks">
+            <div class="description">
+                <div class="header">Links</div>
+                <div class="channelLogo-toolTip">
+                    <span class="icon" triggers="click" placement="right" 
+                    ngbTooltip="To get your Channel ID on Youtube. Head to Youtube, then click Settings --> Advanced settings."
+                    container="body"><i class="fa-regular fa-circle-question"></i></span>
+                </div>
+            </div>
+            <div class="channelLinks-Selection" *ngFor="let streamerLink of formControls.value; let i = index">
+                <div>{{streamerLink.username}}</div>
+                <div class="youtube" *ngIf="streamerLink.platform === 'Youtube'; else OtherPlatform">
+                    <div>youtube.com/channel/</div>
+                    <input (blur)="updateYoutubeChannelId(i, $event)" placeholder="Enter Youtube Channel ID" [value]="streamerLink.youtubeChannelId" type="text" name="youtubeChannelId">
+                </div>
+                <ng-template #OtherPlatform>
+                    <div>{{streamLink(streamerLink.platform, streamerLink.username)}}</div>
+                </ng-template>
+            </div>
+        </div>
+
+        <div class="channelDescription">
+            <div class="description">
+                <div class="header">Description</div>
+                <div class="channelDescription-tooltip">
+                    <span class="icon" triggers="click" placement="right" ngbTooltip="Create an captivating description for the channel." container="body"><i class="fa-regular fa-circle-question"></i></span>
+                </div>
+                <div class="limit">
+                    <div class="counter">{{ currentDescriptionLength }}/1000</div>
+                </div>
+            </div>
+            <div class="channelDescription-Selection">
+                <textarea name="channelDescription" id="channelDescription" (input)="updateDescriptionCounter()" placeholder="Enter a description for your Channel" rows="10" maxlength="1000" (keydown)="onDescriptionTextareaKeydown($event)" formControlName="channelDescription" (input)="resizeDescriptionTextarea()" ></textarea>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <div class="submit">
+        <button type="button" class="btn btn-light" ngbAutofocus [disabled]="!hasChanges" (click)="editChannel()">Submit</button>
+    </div>
+</div>

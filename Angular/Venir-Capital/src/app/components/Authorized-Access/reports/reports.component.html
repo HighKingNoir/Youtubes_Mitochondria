@@ -1,0 +1,24 @@
+<body>
+    <app-header></app-header>
+    <app-authorized-access-sidebar></app-authorized-access-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+        <div class="sub-Header">
+            <div class="sub-Header-Title">Reports</div>
+        </div>
+        <div class="videos">
+            <div class="card" *ngFor="let video of Content">
+                <div *ngIf="video.reportRate != null">
+                    <img (click)="resolveReport(video)" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+                    <div (click)="resolveReport(video)" class="card-body" >
+                        <h6 class="reportRate" [style.color]="getColor(video.reportRate)">{{video.reportRate.toFixed(2)}}%</h6>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+</body>

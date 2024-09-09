@@ -1,0 +1,116 @@
+<body>
+    <app-header></app-header>
+    <app-profile-sidebar></app-profile-sidebar>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div class="header">
+            <h2>Crypto Wallet</h2>
+        </div>
+        <div class="settings">      
+            <div class="form">
+                <div class="form-Header">Transfer Address</div>
+                <div class="crypto-Info">
+                    <div class="form-Text">This crypto wallet is what allows Sivantis to send you mana. You can change this wallet address once every 24 hours.</div>
+                    <div class="connectedWallet" *ngIf="personalWallet; else ConnectWallet">
+                        <div>Current Wallet:</div>
+                        <div class="crypto-Wallet">{{personalWallet}}</div>
+                        <button class="crypto-Button" (click)="connectWallet()">Change Wallet</button>
+                    </div>
+                    <ng-template #ConnectWallet>
+                        <button class="crypto-Button" (click)="connectWallet()">Connect Wallet</button>
+                    </ng-template>
+                </div>
+            </div>
+            <div class="form">
+                <div class="form-Header">Bid Allowance</div>
+                <div class="form-Info" *ngIf="personalWallet; else bidNonCreator">
+                    <div class="form-Text">Your bid allowance is what allows you to place and raise bids with decentraland mana. You can raise or lower your bid allowance below.</div>
+                    <div class="form-Text allowance">Your Allowance: {{bidAllowance  | numberFormat}} mana for {{connectedWallet! | addressShortener}}</div>
+                    <div class="alterAllowance" [formGroup]="increaseBidAllowanceForm">
+                        <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                        <button (click)="increaseBidAllowance()">Increase Allowance</button>
+                    </div>
+                    <div class="alterAllowance" [formGroup]="decreaseBidAllowanceForm" style="margin-top: 10px; margin-bottom: 10px;">
+                        <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                        <button (click)="decreaseBidAllowance()">Decrease Allowance</button>
+                    </div>
+                    <div class="crypto-Info">
+                        <button (click)="viewAllowance()" class="crypto-Button">Change Wallet</button>
+                    </div>
+                </div>
+                <ng-template #bidNonCreator>
+                    <div class="form-Info" *ngIf="connectedWallet; else ViewBidAllowance">
+                        <div class="form-Text">Your bid allowance is what allows you to place and raise bids with decentraland mana. You can raise or lower your bid allowance below.</div>
+                        <div class="form-Text  allowance">Your Allowance: {{bidAllowance | numberFormat}} mana for {{connectedWallet | addressShortener}}</div> 
+                        <div class="alterAllowance" [formGroup]="increaseBidAllowanceForm">
+                            <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                            <button (click)="increaseBidAllowance()">Increase Allowance</button>
+                        </div>
+                        <div class="alterAllowance" [formGroup]="decreaseBidAllowanceForm" style="margin-top: 10px; margin-bottom: 10px;">
+                            <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                            <button (click)="decreaseBidAllowance()">Decrease Allowance</button>
+                        </div>
+                        <div class="crypto-Info">
+                            <button (click)="viewAllowance()" class="crypto-Button">Change Wallet</button>
+                        </div>
+                    </div>
+                    <ng-template #ViewBidAllowance>
+                        <div class="form-Text">Your bid allowance is what allows you to place and raise bids with decentraland mana. You can raise or lower your bid allowance below.</div>
+                        <div class="crypto-Info">
+                            <button (click)="viewAllowance()" class="crypto-Button">View Bid Allowance</button>
+                        </div>
+                    </ng-template>
+                </ng-template>
+            </div>
+
+            <div class="form">
+                <div class="form-Header">Channel Funding Allowance</div>
+                <div class="form-Info" *ngIf="personalWallet; else fundingNonCreator">
+                    <div class="form-Text">Your channel funding allowance is what allows you to fund channels with decentraland mana. You can raise or lower your channel funding allowance below.</div>
+                    <div class="form-Text allowance">Your Allowance: {{fundingAllowance  | numberFormat}} mana for {{connectedWallet! | addressShortener}}</div> 
+                    <div class="alterAllowance" [formGroup]="increaseFundingAllowanceForm">
+                        <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                        <button (click)="increaseFundingAllowance()">Increase Allowance</button>
+                    </div>
+                    <div class="alterAllowance" [formGroup]="decreaseFundingAllowanceForm" style="margin-top: 10px; margin-bottom: 10px;">
+                        <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                        <button (click)="decreaseFundingAllowance()">Decrease Allowance</button>
+                    </div>
+                    <div class="crypto-Info">
+                        <button (click)="viewAllowance()" class="crypto-Button">Change Wallet</button>
+                    </div>
+                </div>
+                <ng-template #fundingNonCreator>
+                    <div class="form-Info" *ngIf="connectedWallet; else ViewFundingAllowance">
+                        <div class="form-Text">Your channel funding allowance is what allows you to fund channels with decentraland mana. You can raise or lower your channel funding allowance below.</div>
+                        <div class="form-Text allowance">Your Allowance: {{fundingAllowance  | numberFormat}} mana for {{connectedWallet | addressShortener}}</div> 
+                        <div class="alterAllowance" [formGroup]="increaseFundingAllowanceForm">
+                            <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                            <button (click)="increaseFundingAllowance()">Increase Allowance</button>
+                        </div>
+                        <div class="alterAllowance" [formGroup]="decreaseFundingAllowanceForm" style="margin-top: 10px; margin-bottom: 10px;">
+                            <input type="number" [placeholder]="'Enter Mana Amount'" [formControlName]="'manaAmount'" name="manaAmount" id="manaAmount">
+                            <button (click)="decreaseFundingAllowance()">Decrease Allowance</button>
+                        </div>
+                        <div class="crypto-Info">
+                            <button (click)="viewAllowance()" class="crypto-Button">Change Wallet</button>
+                        </div>
+                    </div>
+                    <ng-template #ViewFundingAllowance>
+                        <div class="form-Text">Your channel funding allowance is what allows you to fund channels with decentraland mana. You can raise or lower your channel funding allowance below.</div>
+                        <div class="crypto-Info">
+                            <button (click)="viewAllowance()" class="crypto-Button">View Funding Allowance</button>
+                        </div>
+                    </ng-template>
+                </ng-template>
+            </div>
+
+        </div>
+    </div>
+
+</body>

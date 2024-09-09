@@ -1,0 +1,19 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 100%;
+    font-size: 18px;
+}
+
+a{
+    outline: none;
+    color: gold;
+}

@@ -1,0 +1,46 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.text{
+    padding-bottom: 20px;
+}
+
+.refund{
+    padding-bottom: 20px;
+}
+
+.buttons{
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.mainButton{
+    display: inline-block;
+    outline: 0;
+    border: 0;
+    cursor: pointer;
+    background: #5c5c5c;
+    color: white;
+    border-radius: 8px;
+    padding: 7px 14px 8px;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 200ms,;
+}
+
+
+.mainButton:hover{
+    transform: translateY(-2px);
+}

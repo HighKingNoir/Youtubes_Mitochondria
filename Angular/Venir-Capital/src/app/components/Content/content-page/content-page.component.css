@@ -1,0 +1,322 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+.content{
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    top: 65px;
+    left: 180px;
+    height: calc(100% - 65px);
+    width: calc(100% - 180px);
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.content .header{
+    position: relative;
+    width: 100%;
+    height: 150px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.content .header h2{
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+}
+.content .header ul{
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    list-style: none;
+    margin-top: 45px;
+}
+
+.content .header ul li{
+    margin: 20px;
+    margin-bottom: 0px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+
+.content .noVideos{
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+
+}
+
+.noVideos button{
+    margin-top: 200px;
+    
+}
+
+.YoutubeLogo{
+    width: 35px;
+    height: 100%;
+    margin-right: 10px;
+}
+
+.gridHeader{
+    display: grid;
+    grid-template-columns: .5fr 2fr 1fr 1fr 1fr;
+    border-bottom: 1px solid rgb(190, 190, 190);
+    color: wheat;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.gridHeader .status{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid rgb(190, 190, 190);;
+}
+
+.gridHeader .video{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid rgb(190, 190, 190);;
+}
+
+.gridHeader .type{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid rgb(190, 190, 190);;
+}
+
+.gridHeader .releaseDate{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid rgb(190, 190, 190);;
+    
+}
+
+.gridHeader .hype{
+    display: flex;
+    justify-content: center;
+}
+
+.displayVideos:hover {
+    color: rgb(200, 200, 200);
+  }
+
+.displayVideos{
+    display: grid;
+    grid-template-columns: .5fr 2fr 1fr 1fr 1fr;
+    width: 100%;
+    position: relative;
+    color: white;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.videoContainer{
+    align-items: center;
+    margin-left: 10px;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
+.videoContainer .videoInfo{
+    display: flex;
+    position: relative;
+}
+
+.videoInfo .edit{
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+}
+
+.videoInfo .edit:hover{
+    color: white;
+    cursor: pointer;
+}
+
+.edit i{
+    font-size: 20px;
+}
+
+.edit i[ngbDropdownToggle]::after{
+    content: none;
+}
+
+[ngbDropdownMenu]{
+    background-color: #707070;
+}
+
+.dropdown-item{
+    color: rgb(230, 230, 230);
+}
+
+.dropdown-item i{
+    margin-right: 5px;
+    width: 20px;
+}
+
+.dropdown-item:hover{
+    background-color: #8e8e8e;
+}
+
+.dropdown-item.delete{
+    color: rgb(179, 20, 20);
+}
+
+.dropdown-item.complete{
+    color: lightgreen;
+}
+
+.videoContainer .contentImg img{
+    width: 100px;
+    height: 100px;
+    border-radius: 5px;
+}
+
+.videoContainer .contentDescriptors{
+    margin-left: 5px;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
+.videoContainer .contentDescriptors .title{
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden
+}
+
+.videoContainer .contentDescriptors .description{
+    max-height: 100%;
+    color: gray;
+    font-size: 13px;
+    max-width: 100%;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+} 
+
+.contentType{
+    display: flex;
+    justify-content: center;
+}
+
+.contentReleaseDate{
+    display: flex;
+    justify-content: center;
+}
+
+.contentHype{
+    display: flex;
+    justify-content: center;
+}
+
+.circle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+.circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.status-red {
+    background: linear-gradient(180deg, red, rgb(189, 0, 0), rgb(90, 0, 0));
+}
+  
+.status-yellow {
+    background: linear-gradient(180deg, yellow, rgb(189, 189, 0), rgb(90, 90, 0));
+}
+
+.status-green {
+    background: linear-gradient(180deg, #00ff00, #00b700, #004000);
+}
+
+.status-grey {
+    background: linear-gradient(180deg, rgb(220, 220, 220), rgb(180, 180, 180), rgb(90, 90, 90));
+}
+
+.mainButton {
+    align-items: center;
+    appearance: none;
+    background-color: #3f3f3f;
+    border-radius: 4px;
+    border-width: 0;
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#3b3b3b 0 -3px 0 inset;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: "Open Sans", sans-serif;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-align: left;
+    text-decoration: none;
+    transition: box-shadow .15s,transform .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    white-space: nowrap;
+    will-change: box-shadow,transform;
+    font-size: 18px;
+  }
+  
+  
+  .mainButton:hover {
+    box-shadow: rgba(126, 126, 126, 0.4) 0 4px 8px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #6f6f6f 0 -3px 0 inset;
+    transform: translateY(-2px);
+  }
+
+  

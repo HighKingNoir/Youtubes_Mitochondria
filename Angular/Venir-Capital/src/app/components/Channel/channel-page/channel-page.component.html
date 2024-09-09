@@ -1,0 +1,93 @@
+<body>
+    <app-header></app-header>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false">
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <app-home-sidebar></app-home-sidebar>
+    <div [ngClass]="{'banner': true, 'transparent-bg': hasBanner()}">
+        <img class="channelBanner" *ngIf="channel.channelBanner" [src]="channel.channelBanner" alt="">
+    </div>
+    <div class="channelInfo-Container">
+        <div class="channelInfo">
+            <img class="channelLogo" [src]="channel.channelLogo" alt="">
+            <div class="channelDescriptors">
+                <div class="layer-One">
+                    <div>{{channel.channelName}}</div>
+                    <button *ngIf="!isOwner && isLoggedIn" (click)="subscribe()" class="subscribe-Button">
+                        <div *ngIf="!isSubscribed; else Unsubscribe">Subscribe</div>
+                        <ng-template #Unsubscribe>Unsubscribe</ng-template>
+                    </button>
+                </div>
+                <div class="descriptionContainer">
+                    <div class="channelDescription">{{channel.channelDescription}}</div>
+                </div>           
+            </div>
+        </div>
+        <div class="alter-ChannelInfo">
+            <div class="alter-ChannelInfo-Object" *ngIf="isOwner" (click)="editChannel()">Edit Channel</div>
+
+            <div class="alter-ChannelInfo-Object"  *ngIf="isOwner && channel.channelStatus === 'Disapproved'" routerLink="/Change/Channel/{{channel.channelName}}" >Resubmit</div>
+            <button class="fund-Button" [disabled]="isInactive" (click)="openFundChannel()">Fund Channel</button>
+        </div>
+    </div>
+    <div class="streamerLinksContainer">
+        <div class="streamerLinks" *ngFor="let streamerLink of channel.streamerInfo">
+            <div *ngIf="streamerLink.platform === 'Youtube'; else NotYoutube">
+                <div *ngIf="streamerLink.youtubeChannelId">
+                    <div>{{streamerLink.platform}}: <a (click)="redirectToStream(streamerLink.platform, streamerLink.youtubeChannelId)">{{streamerLink.username}}</a></div>
+                </div>
+            </div>
+            <ng-template #NotYoutube>
+                <div>{{streamerLink.platform}}: <a (click)="redirectToStream(streamerLink.platform, streamerLink.username)">{{streamerLink.username}}</a></div>
+            </ng-template>
+        </div>
+    </div>
+    <div class="videos">
+        <div class="header">Recently Purchased Content</div>
+        <div class="videoContainer">
+            <div class="card" *ngFor="let i of videoIndices">
+                <img routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}" src="{{ChannelPurchasedVideos.content[i].thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+                <div class="card-body">
+                    <h6 routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}" class="contentType">
+                        <div *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.content[i].sentEmails == true" class="isActive">
+                            <div class="activeIndicator"></div>
+                        </div>
+                        {{ChannelPurchasedVideos.content[i].contentType}}
+                    </h6>
+                    <div class="info"> 
+                    <div routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
+                        <img class="youtubeProfilePicture" src="{{ChannelPurchasedVideos.content[i].youtubeProfilePicture}}" alt="">
+                    </div>
+                    
+                    <div class="info-Colunm">
+                        <div class="first-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
+                            <h5 class="contentName">{{ChannelPurchasedVideos.content[i].contentName}}</h5>
+                        </div>
+                        <div class="second-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
+                            <p class="youtubeUsername">{{ChannelPurchasedVideos.content[i].youtubeUsername}}</p>
+
+                        </div>
+                        <div class="third-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
+                            <p class="releaseDate">Release: {{ChannelPurchasedVideos.content[i].releaseDate | formateDate}}</p>
+                        </div>
+                    </div>
+                    <div class="options" placement="bottom-end" ngbDropdown container="body">
+                        <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
+                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="watchVideo(ChannelPurchasedVideos.content[i].youtubeMainVideoID!)"><i class="fa-brands fa-youtube"></i>Watch Video</button>
+                            <button class="dropdown-item" (click)="watchTrailer(ChannelPurchasedVideos.content[i].youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
+                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'Active' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="openCancelModal(ChannelPurchasedVideos.payment[i], i)"><i class="fa-solid fa-delete-left"></i>Refund</button>
+                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="reportVideo(ChannelPurchasedVideos.content[i].contentId)"><i class="fa-solid fa-triangle-exclamation"></i>Report</button>
+                            <button class="dropdown-item delete" (click)="deleteVideo(ChannelPurchasedVideos.content[i])" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'Inactive' || ChannelPurchasedVideos.payment[i].status === 'RefundedPurchase' && isOwner"><i class="fa-solid fa-trash"></i>Remove</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>

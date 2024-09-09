@@ -1,0 +1,170 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+
+.model-steps{
+    display: flex;
+    justify-content: space-around;
+}
+
+.model-steps p{
+    margin-top: 10px;
+    border-bottom: 2px solid white;
+}
+
+.model-steps p:nth-child(1){
+border-bottom: 2px solid gold;
+}
+
+.modal-body .description{
+    display: flex;
+    padding-bottom: 5px;
+}
+
+.modal-body .limit{
+    padding-left: 5px;
+}
+
+
+.modal-body .icon{
+    cursor: pointer;
+    padding-left: 5px;
+
+}
+
+.modal-body input{
+    border: 1px solid #7d7d7d;
+    padding-left: 5px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    color: #d5d5d5;
+    width: 50%;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0; 
+}
+
+
+.modal-body .videotype-Selection{
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
+.videotype-Selection select{
+    border-radius: 5px;
+}
+
+.error-message {
+    color: lightcoral;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+select.ng-touched.ng-invalid {
+    border: 1px solid lightcoral;
+    margin-bottom: 5px;
+}
+
+textarea.ng-dirty.ng-touched.ng-invalid {
+    border: 1px solid lightcoral;
+    margin-bottom: 5px;
+    padding-bottom: 0px;
+}
+
+input.ng-touched.ng-invalid {
+    border: 1px solid lightcoral;
+    margin-bottom: 5px;
+}
+
+
+.videotitle-Selection textarea{
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+    margin-bottom: 15px;
+}
+
+.trailer-Link{
+    display: flex;
+    flex-direction: column;
+}
+
+.trailerWarningMessage{
+    margin-top: 10px;
+    text-align: center;
+    color: yellow;
+}
+
+.trailerErrorMessage{
+    margin-top: 10px;
+    text-align: center;
+    color: lightcoral;
+}
+
+
+
+.linkTrailer{
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+}
+
+.removeTrailer{
+    border-style: none;
+    color: lightcoral;
+    margin-left: 10px;
+    border-radius: 10px;
+    font-weight: 900;
+}
+
+.videoDescription-Selection textarea{
+    width: 100%;
+    resize: none;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+    margin-bottom: 15px;
+}
+
+.modal-footer .submit{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.releaseDate-Selection{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.releaseDate-Selection input{
+    margin-bottom: 0px;
+}
+
+.releaseDate-Selection input:focus{
+    background-color: transparent;
+}
+
+.form-control{
+    border: 1px solid #7d7d7d;
+}
+
+.releaseDate-Selection .releaseDateButton{
+    width: 10%;
+}
+
+.invalid{
+    border: 1px solid lightcoral;
+    margin-bottom: 5px;
+}

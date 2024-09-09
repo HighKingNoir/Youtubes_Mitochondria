@@ -1,0 +1,22 @@
+<div class="modal-body">
+    <div class="wallet-Contents">
+        <div class="linked-Wallets" *ngIf="connectedWallet; else ConnectWallet">
+            <div class="userAddress">
+                <div>Selected Wallet</div>
+                <div class="swap-Address">
+                    <div>{{connectedWallet | addressShortener}}</div>
+                </div>
+            </div>
+            <div>
+                <button class="connectWallet-Button" (click)="connect()">Set As Personal Wallet</button>
+            </div>
+        </div>
+        <ng-template #ConnectWallet>
+            <div class="text">In order to post your first video on Sivantis, you must first connect a crypto wallet.</div>
+            <button class="connectWallet-Button" [disabled]="nextWalletChange" (click)="this.activeModal.close('connecting Wallet')">Connect Wallet</button>
+            <div class="nextWalletChange" *ngIf="nextWalletChange">{{nextWalletChange}}</div>
+            <div class="note">*Sivantis will NEVER ask for your private wallet information. Please keep your private wallet information safe and secure.*</div>
+            <div class="note">*Wallet must be compatable with the polygon network. You may set a new wallet every 24 hours.*</div>
+        </ng-template>
+    </div>
+</div>

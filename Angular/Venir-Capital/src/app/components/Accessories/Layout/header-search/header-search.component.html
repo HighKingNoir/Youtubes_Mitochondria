@@ -1,0 +1,72 @@
+<header>
+    <h1 class="navbar-brand" routerLink=""><img [src]="Logo"> Sivantis</h1>   
+    <form  class="seach-Bar" (ngSubmit)="search()">
+        <input type="text" name="box" placeholder="Search {{searchText}}" [(ngModel)]="searchQuery">
+        <button type="submit" [disabled]="searchQuery.length == 0" (click)="search()"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </form >
+    <div *ngIf="isLoggedIn, else isLoggedOut">
+        <div class="navigation">
+            <ul>
+                <li class = "list">
+                    <a routerLink="">
+                        <span class="icon"><i class="fa-solid fa-house-chimney"></i></span>
+                    </a>
+                </li>
+                <li class = "list">
+                    <a routerLink="/Content">
+                        <span class="icon"><i class="fa-solid fa-video"></i></span>
+                    </a>
+                </li>
+                <li *ngIf="Authorized()" class = "list">
+                    <a routerLink="/AuthorizedUser">
+                        <span class="icon"><i class="fa-solid fa-user-secret"></i></span>
+                    </a>
+                </li>
+                <li class="list dropleft">
+                    <a id="dropdownMenuButton" ngbDropdown placement="bottom-end" autoClose="outside">
+                        <span class="icon"><i class="fa-sharp fa-solid fa-bell" id="dropdownBasic1" ngbDropdownToggle></i></span>
+                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1" class="custom-dropdown-menu">
+                            <a class="dropdown-item header">Unread Messages</a>
+                            <a class="dropdown-item messages" *ngFor="let message of unReadMessages; let i = index">
+                                <div class="messagesText" *ngIf="i < calculatedValue">
+                                    <div class="messageEnum" (click)="selectMessage(message)">{{ addSpaceBeforeUppercase(message.messageEnum) }}</div>
+                                    <button *ngIf="message.messageEnum !== 'YoutubeEmails'" (click)="readMessage(message.messageId)">Mark As Read</button>
+                                </div>
+                                <div class="messagesText" *ngIf="i === calculatedValue && calculatedValue === unReadMessages.length - 1">
+                                    <div class="messageEnum" (click)="selectMessage(message)">{{ addSpaceBeforeUppercase(message.messageEnum) }}</div>
+                                    <button *ngIf="message.messageEnum !== 'YoutubeEmails'" (click)="readMessage(message.messageId)">Mark As Read</button>
+                                </div>
+                                <div class="messagesText" *ngIf="i === calculatedValue && calculatedValue < unReadMessages.length - 1">
+                                    <div class="messageEnum text" routerLink="/Messages">{{unReadMessages.length - calculateValue()}} more unread messages</div>
+                                </div>
+                            </a>
+                            <a class="dropdown-item footer" routerLink="/Messages">
+                                <div class="footerText">View All Messages</div>
+                            </a>
+                        </div>
+                    </a>
+                    <div *ngIf="unReadMessages.length != 0" class="unreadMessagesAlert"></div>
+                </li>                
+                <li class = "list">
+                    <a routerLink="/Settings/Profile">
+                        <span class="icon"><i class="fa-solid fa-gear"></i></span>
+                    </a>
+                </li>
+                <li class = "list">
+                    <a routerLink="" (click)="LogOut()">
+                        <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <ng-template #isLoggedOut>
+        <div class = "navigation">   
+            <button class="btn login" (click)="logIn()">Login</button>
+            <button class="button btn-primary signin" (click)="signUp()">Sign up</button>   
+        </div> 
+    </ng-template>
+</header>
+
+
+

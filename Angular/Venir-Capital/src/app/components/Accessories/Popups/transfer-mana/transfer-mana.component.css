@@ -1,0 +1,49 @@
+*{
+    background-color: #3f3f3f;
+    color: #d5d5d5;
+}
+
+.modal-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.Header{
+    color: white;
+    margin-bottom: 15px;
+    font-size: 25px;
+}
+
+.instructions{
+    margin-bottom: 15px;
+}
+
+ul{
+    text-align: start;
+    margin-bottom: 15px;
+}
+
+.example{
+    text-align: start;
+    margin-bottom: 15px;
+}
+
+.goldText{
+    color: gold;
+    text-decoration: none;
+    outline: none;
+}
+
+button{
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+}
+
+button:hover{
+    color: rgb(181, 154, 0);
+}

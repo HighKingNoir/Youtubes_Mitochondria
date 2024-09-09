@@ -1,0 +1,281 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.content{
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    top: 65px;
+    left: 180px;
+    height: 100%;
+    width: calc(100% - 180px);
+}
+
+.content .header{
+    position: relative;
+    width: 100%;
+    height: 150px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.content .header h2{
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+    
+}
+.content .header ul{
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    list-style: none;
+    margin-top: 45px;
+    margin-right: 20px;
+}
+
+.content .header ul li{
+    margin: 20px;
+    margin-bottom: 0px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+
+
+.content .videos{
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    background-color: orange;
+    width: 100%;
+    
+}
+
+.gridHeader{
+    display: grid;
+    grid-template-columns: .5fr 2fr 1fr 1fr 1fr;
+    border-bottom: 1px solid wheat;
+    color: wheat;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.gridHeader .status{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid gold;
+}
+
+.gridHeader .video{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid gold;
+}
+
+.gridHeader .type{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid gold;
+}
+
+.gridHeader .releaseDate{
+    display: flex;
+    justify-content: center;
+    border-right: 1px solid gold;
+    
+}
+
+.gridHeader .mana{
+    display: flex;
+    justify-content: center;
+}
+
+
+
+
+.displayVideos:hover {
+    color: rgb(200, 200, 200);
+  }
+
+.displayVideos{
+    display: grid;
+    grid-template-columns: .5fr 2fr 1fr 1fr 1fr;
+    width: 100%;
+    position: relative;
+    color: white;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.videoContainer{
+    margin-left: 10px;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
+.videoContainer .videoInfo{
+    display: flex;
+    position: relative;
+}
+
+.videoContainer .contentImg img{
+    width: 100px;
+    height: 100px;
+    border-radius: 5px;
+}
+
+.videoContainer .contentDescriptors{
+    margin-left: 5px;
+    margin-bottom: 15px;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.videoContainer .contentDescriptors .title{
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
+.videoContainer .contentDescriptors .description{
+    max-height: 100%;
+    color: gray;
+    font-size: 13px;
+    max-width: 100%;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+}
+
+.videoInfo .edit{
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+}
+
+.videoInfo .edit:hover{
+    color: white;
+    cursor: pointer;
+}
+
+.edit i{
+    font-size: 20px;
+}
+
+.edit i[ngbDropdownToggle]::after{
+    content: none;
+}
+
+[ngbDropdownMenu]{
+    background-color: #707070;
+}
+
+.dropdown-item{
+    color: rgb(230, 230, 230);
+}
+
+.dropdown-item i{
+    margin-right: 5px;
+    width: 20px;
+}
+
+.dropdown-item:hover{
+    background-color: #8e8e8e;
+}
+
+.dropdown-item.delete{
+    color: rgb(179, 20, 20);
+}
+
+.contentType{
+    display: flex;
+    justify-content: center;
+}
+
+.contentReleaseDate{
+    display: flex;
+    justify-content: center;
+}
+
+.manaAmount{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.manaAmount .decentralandLogo{
+    height: 18px;
+    width: 18px;
+    margin-left: 3px;
+}
+
+.circle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+.circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.status-red {
+    background: linear-gradient(180deg, red, rgb(189, 0, 0), rgb(90, 0, 0));
+}
+  
+.status-yellow {
+    background: linear-gradient(180deg, yellow, rgb(189, 189, 0), rgb(90, 90, 0));
+}
+
+.status-green {
+    background: linear-gradient(180deg, #00ff00, #00b700, #004000);
+}
+
+.status-grey {
+    background: linear-gradient(180deg, rgb(220, 220, 220), rgb(180, 180, 180), rgb(90, 90, 90));
+}

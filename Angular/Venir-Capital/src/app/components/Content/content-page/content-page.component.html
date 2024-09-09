@@ -1,0 +1,79 @@
+<body>
+    <app-header></app-header>
+    <app-channel-sidebar></app-channel-sidebar>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div class="header">
+            <h2>Content</h2>
+        </div>
+        <div class="gridHeader">
+              <div class="status">Status</div>
+              <div class="video">Video</div>
+              <div class="type">Type</div>
+              <div class="releaseDate">Release Date</div>
+              <div class="hype">Hype</div>
+          </div>
+        
+            <ng-container
+                *ngIf="UserCreatedVideos?.length !== 0; then displayVideos; else noVideos">
+            </ng-container>
+                <ng-template #displayVideos>
+                        <div class="displayVideos" *ngFor="let video of UserCreatedVideos; let i = index">
+                            <div class="circle-container" >
+                                <div class="circle" autoClose="false"  placement="bottom" [closeDelay]="50" [openDelay]="100" [ngbTooltip]="getStatus(video.contentEnum, video.isComplete)" 
+                                 [ngClass]="getStatusClass(video.contentEnum, video.isComplete)"></div>
+                            </div>
+                            <div class="videoContainer">
+                                <div class="videoInfo">
+                                    <div class="contentImg">
+                                        <img src="{{video.thumbnail}}" alt="">
+                                    </div>
+                                    <div class="contentDescriptors">
+                                        <div class="title">{{video.contentName}}</div>
+                                        <div class="description">{{video.description}}</div>
+                                    </div>
+
+                                    <div class="edit" placement="bottom-end" ngbDropdown container="body">
+                                        <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
+                                        <i class="fa-solid fa-bars" id="dropdownBasic1" ngbDropdownToggle></i>
+                                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                                            <button class="dropdown-item" (click)="editVideo(video)"><i class="fa-solid fa-pen-to-square"></i>Edit</button>
+                                            <button class="dropdown-item" (click)="viewPage(video.contentId, video.contentType)"><i class="fa-solid fa-video"></i>View Page</button>
+                                            <button class="dropdown-item complete" *ngIf="!video.isComplete" (click)="completeVideo(video)"><i class="fa-solid fa-check"></i>Complete</button>
+                                            <button class="dropdown-item" (click)="reactivateVideo(video)"><i class="fa-solid fa-repeat"></i>Reactivate</button>
+                                            <button class="dropdown-item delete" (click)="deleteVideo(video)"><i class="fa-solid fa-trash"></i>Delete</button>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>
+                                
+                            <div class="contentType">{{video.contentType}}</div>
+                            <div class="contentReleaseDate">{{video.releaseDate | formateDate}}</div>
+                            <div class="contentHype">{{video.hype | numberFormat}}</div>
+                        </div>
+                </ng-template>
+            <ng-template #noVideos >
+                <div class="noVideos">
+                    <ng-template *ngIf="isLoggedIn(); then addVideo; else signIn"></ng-template>  
+                        <ng-template #addVideo>
+                            <div class="addVideos">
+                                <button class="mainButton" (click)="importYoutubeVideo()">Import Video</button>
+                            </div>
+                        </ng-template>
+                        <ng-template #signIn>
+                            <div class="youtubeSignIn">
+                                <button class="mainButton" (click)="LinkYoutube()"><img class="YoutubeLogo" [src]="YoutubeLogo" alt="">Sign into your Youtube Channel</button>
+                            </div>
+                        </ng-template>
+                </div>   
+            </ng-template>
+        </div>
+
+    
+</body>
+

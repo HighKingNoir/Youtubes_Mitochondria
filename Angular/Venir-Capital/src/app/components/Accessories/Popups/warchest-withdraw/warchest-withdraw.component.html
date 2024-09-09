@@ -1,0 +1,47 @@
+<div class="modal-body">
+    <div *ngIf="connectedWallet; else ConnectWallet" class="body-Container">
+        <div class="userWithdrawContainer">
+            <div class="warchest">
+                <div class="warchestbalance">WarChest balance</div>
+                <div class="userbalance" *ngIf="userbalance;else Getbalance">
+                    <div>${{userbalance}}</div>
+                    <button class="icon" (click)="getbalance()"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <ng-template #Getbalance>
+                    <button class="latestbalance" (click)="getbalance()">Get Latest balance</button>
+                </ng-template>
+            </div>
+        </div>
+        <div class="buttons">
+            <div class="input-box" [formGroup]="dollarForm">
+                <span class="dollar-sign">$</span>
+                <input  type="number" name="dollarAmount" id="dollarAmount" formControlName="dollarAmount" required />
+                <button class="fund-button" [disabled]="!userbalance" (click)="withdrawFunds()">Withdraw</button>
+            </div>
+        </div>
+        <div style="padding-top: 10px;" *ngIf="dollarForm.get('dollarAmount')?.invalid && dollarForm.get('dollarAmount')?.touched" class="error-message">
+            Please enter a valid dollar amount (e.g., 10.00)
+          </div>
+          <div *ngIf="dollarForm.get('dollarAmount')?.value && dollarForm.get('dollarAmount')?.valid" class="note">
+            <div class="note-layer">
+              <span class="note-part">Requested</span>
+              <span class="note-center">-</span>
+              <span class="note-part">Total</span>
+            </div>
+            <div class="note-layer">
+              <span class="note-part">{{ dollarForm.get('dollarAmount')?.value }}</span>
+              <span class="note-center">-</span>
+              <span class="note-part">{{ totalWithdrawn | number: '1.2-2' }}</span>
+            </div>
+            <div class="note-layer" style="padding-top: 10px;">
+              You will have a withdrawal fee of ${{ totalWithdrawn - dollarForm.get('dollarAmount')?.value | number: '1.2-2' }} if you choose to withdraw the requested amount of {{ dollarForm.get('dollarAmount')?.value }}.
+            </div>    
+        </div>
+    </div>
+    <ng-template #ConnectWallet >
+        <div class="connectWallet-Text">In order to withdraw funds, you must first view your latest WarChest balance. Connect a crypto wallet to view your balance.</div>
+        <button class="connectWallet-Button" (click)="this.activeModal.close('connecting Wallet')">Connect Wallet</button>
+        <div class="note">*Must be at least Sentinel Rank (Rank 2) to withdraw your funds.*</div>
+    </ng-template>
+</div>
+

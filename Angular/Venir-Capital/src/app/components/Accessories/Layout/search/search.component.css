@@ -1,0 +1,326 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.notFound{
+    position: relative;
+    display: flex;
+    color: white;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: larger;
+    left: 180px;
+    width: calc(100% - 180px);
+    height: 100%;
+    top: 80px;
+    padding: 0 25px 0 25px;
+}
+
+.channels{
+    padding: 0px 50px 0 50px;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 20px;
+    left: 180px;
+    width: calc(100% - 180px);
+    top: 130px;
+}
+
+.channels .card-body{
+    background-color: #373737;
+    border-radius: 5px;
+    padding: 3px;
+}
+
+.logoContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.channelLogo{
+    height: 150px;
+    width: 150px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.channelName{
+    color: white;
+    text-align: center;
+    font-size: 20px;
+}
+
+.channelDescription{
+    color: rgb(180, 180, 180);
+    font-size: 13px;
+    max-width: 100%;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+}
+
+.videos{
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 20px;
+    left: 180px;
+    width: calc(100% - 180px);
+    top: 80px;
+    padding: 0 25px 0 25px;
+}
+
+@media screen and (max-width: 1350px) {
+    .videos {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .channels {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .videos {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .channels {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (max-width: 950px) {
+    .videos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .channels {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 675px) {
+    .videos {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    .channels {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+.card {
+    cursor: pointer;
+    background-color: transparent;
+    color: rgb(200, 200, 200);
+    border: none;
+}
+.card:hover {
+    color: rgb(241, 241, 241);
+}
+
+.card-body{
+    padding: 0px;
+}
+
+.contentThumbnail{
+    border-radius: 15px;
+    height: 150px;
+    margin-bottom: 2px;
+}
+
+.contentType{
+    justify-content: center;
+    display: flex;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    background: radial-gradient(ellipse at center, rgb(65, 65, 65), rgb(0, 0, 0));
+    color: white;
+    letter-spacing: 1px;
+}
+
+.type-grey {
+    background-color: grey;
+}
+
+.info{
+    display: flex;
+    width: 100%;
+    border-radius: 5px;
+    padding: 2px;
+}
+
+
+.info .youtubeProfilePicture{
+    border-radius: 50%;
+    height: 35px;
+    width: 35px;
+}
+
+.info .info-Colunm{
+    padding-left: 5px;
+    width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+    overflow: hidden
+}
+
+.info .contentName{
+    color: white;
+    margin-bottom: 4px;
+    max-height: 50px;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+    font-size: 16px;
+}
+
+.info .info-Colunm .second-Row{
+    display: flex;
+    flex-direction: row;
+    justify-content:space-between;
+    margin: 0;
+}
+
+.second-Row .youtubeUsername{
+    margin-bottom: 2px;
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 75%;
+    display: block;
+    overflow: hidden
+}
+
+.second-Row .isScum{
+    margin-bottom: 2px;
+    color: lightcoral;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.third-Row .releaseDate{
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+
+.info .info-Colunm .forth-Row{
+    display: flex;
+    flex-direction: row;
+    justify-content:space-between;
+    height: auto;
+}
+
+.forth-Row .pricing-Group{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.pricing-Group .singleBuyer{
+    display: flex;
+    position: relative;
+}
+
+.pricing-Group .communityBuyer{
+    display: flex;
+    position: relative;
+}
+
+.pricing-Group .startingCost{
+    padding-left: 5px;
+    font-size: 14px;
+}
+
+.channelNeeded{
+    color: gold;
+}
+
+p {
+    font-size: 14px;
+}
+
+.icon {
+    position: relative;
+    display: flex;
+    top:3px;
+    font-size: 14px;
+}
+
+.options{
+    width: 20px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.options i{
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.options i:hover{
+    background-color: rgb(103, 103, 103);
+}
+
+[ngbDropdownToggle]::after{
+    content: none;
+}
+
+[ngbDropdownMenu]{
+    background-color: #707070;
+    
+}
+
+.dropdown-item{
+    color: rgb(230, 230, 230);
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-item i{
+    margin-right: 5px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropdown-item:hover{
+    background-color: #8e8e8e;
+}

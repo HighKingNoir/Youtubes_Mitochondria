@@ -1,0 +1,59 @@
+<div class="modal-body" >
+    <div *ngIf="videoConfirmation" class="videoContainer">
+        <img src="{{videoConfirmation.thumbnail}}" alt="">
+        <div class="video-info">
+            <div class="contentName">{{videoConfirmation.contentName}}</div>
+            <div class="description">{{videoConfirmation.description}}</div>
+        </div>
+    </div>
+    <div *ngIf="youtubeVideoInfo" class="videoContainer">
+        <img src="{{this.youtubeVideoInfo.snippet.thumbnails.high.url}}" alt="">
+        <div class="video-info">
+            <div class="contentName">{{this.youtubeVideoInfo.snippet.title}}</div>
+            <div class="description">{{this.youtubeVideoInfo.snippet.description}}</div>
+        </div>
+    </div>
+    <div class="error-message" *ngIf="youtubeVideoInfo && youtubeVideoInfo.status.privacyStatus !== 'private'">
+        The Selected Video doesn't have it's privacy status set to 'private'.
+    </div>  
+    <div class="error-message" *ngIf="youtubeVideoInfo && lessThan10Minutes(youtubeVideoInfo.contentDetails.duration)">
+        The Selected Video is less than 10 minutes long.
+    </div>  
+    <div *ngIf="reactivateContent" [formGroup]="releaseDateForm">
+        <div class="releaseDate-Selection">
+            <div class="input-group">
+                <input formControlName="ReleaseDate"
+                    class="form-control"
+                    placeholder="yyyy-mm-dd"
+                    name="dp"
+                    ngbDatepicker
+                    #d="ngbDatepicker"
+                    placement="left"
+                    [positionTarget]="buttonEl"
+                    autocomplete="off"
+                />
+                <button #buttonEl 
+                class="btn btn-outline-secondary bi bi-calendar3 releaseDateButton" 
+                (click)="d.toggle()" 
+                type="button"
+                [class.invalid]="releaseDateForm.get('ReleaseDate')?.invalid && releaseDateForm.get('ReleaseDate')?.touched"
+                >
+                    <i class="fa-solid fa-calendar"></i>
+                </button>
+            </div>
+            <div class="error-message" *ngIf="releaseDateForm.get('ReleaseDate')?.invalid && releaseDateForm.get('ReleaseDate')?.touched">
+                Select a Release Date that's at least three days from now to proceed.
+            </div>         
+        </div>
+    </div>
+    <div class="text">
+        {{message}}
+    </div>
+    <div class="buttons">
+        <button class="mainButton" (click)="activeModal.close('back')">Back</button>
+        <button class="mainButton" (click)="continue()">Continue</button>
+    </div>  
+</div>
+
+
+

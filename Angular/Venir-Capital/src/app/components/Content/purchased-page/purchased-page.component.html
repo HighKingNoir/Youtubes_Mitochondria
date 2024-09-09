@@ -1,0 +1,68 @@
+<body>
+    <app-header></app-header>
+    <app-channel-sidebar></app-channel-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <div class="content">
+        <div class="header">
+            <h2>Purchased Content</h2>
+        </div>
+        <div class="gridHeader">
+            <div class="status">Status</div>
+            <div class="video">Video</div>
+            <div class="type">Type</div>
+            <div class="releaseDate">Release Date</div>
+            <div class="mana">Mana</div>
+        </div>
+      
+          <ng-container
+              *ngIf="UserPurchasedVideos; then displayVideos; else noVideos">
+          </ng-container>
+              <ng-template #displayVideos>
+                      <div class="displayVideos" *ngFor="let i of videoIndices" [class.selected]="selectedIndex === i" (click)="editVideo(i)">
+                        <div class="circle-container" >
+                            <div class="circle" autoClose="false"  placement="bottom" [closeDelay]="50" [openDelay]="100" [ngbTooltip]="getStatus(UserPurchasedVideos.payment[i].status)" 
+                                 [ngClass]="getStatusClass(UserPurchasedVideos.payment[i].status)"></div>
+                        </div>
+                          <div class="videoContainer">
+                            <div class="videoInfo">
+                                <div class="contentImg">
+                                    <img src="{{UserPurchasedVideos.content[i].thumbnail}}" alt="">
+                                </div>
+                                <div class="contentDescriptors">
+                                    <div class="title">{{UserPurchasedVideos.content[i].contentName}}</div>
+                                    <div class="description">{{UserPurchasedVideos.content[i].description}}</div>
+                                </div>
+                                <div class="edit" placement="bottom-end" ngbDropdown container="body">
+                                    <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
+                                    <i class="fa-solid fa-bars" id="dropdownBasic1" ngbDropdownToggle></i>
+                                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                                        <button class="dropdown-item" (click)="viewPage(UserPurchasedVideos.content[i].contentId, UserPurchasedVideos.content[i].contentType)"><i class="fa-solid fa-video"></i>View Page</button>
+                                        <button class="dropdown-item" *ngIf="UserPurchasedVideos.content[i].contentEnum === 'InProgress' && UserPurchasedVideos.payment[i].status === 'Purchased'" (click)="watchVideo(UserPurchasedVideos.content[i].youtubeMainVideoID!)"><i class="fa-brands fa-youtube"></i>Watch Video</button>
+                                        <button class="dropdown-item" (click)="watchVideo(UserPurchasedVideos.content[i].youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
+                                        <button class="dropdown-item"  *ngIf="UserPurchasedVideos.content[i].contentEnum === 'InProgress' && UserPurchasedVideos.payment[i].status === 'Purchased'" (click)="reportVideo(UserPurchasedVideos.content[i].contentId)"><i class="fa-solid fa-triangle-exclamation"></i>Report</button>
+                                        <button class="dropdown-item delete" (click)="deleteVideo(UserPurchasedVideos.content[i])" *ngIf="UserPurchasedVideos.content[i].contentEnum === 'Inactive' || UserPurchasedVideos.payment[i].status === 'RefundedPurchase'"><i class="fa-solid fa-trash"></i>Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                              
+                          </div>
+                          <div class="contentType">{{UserPurchasedVideos.content[i].contentType}}</div>
+                          <div class="contentReleaseDate">{{UserPurchasedVideos.content[i].releaseDate | formateDate}}</div>
+                          <div class="manaAmount">{{UserPurchasedVideos.payment[i].manaAmount | manaStringFormat}}
+                            <img class="decentralandLogo" src="{{decentralandLogo}}" alt="">
+                          </div>
+                      </div>
+              </ng-template>
+          <ng-template #noVideos >
+              <div class="noVideos">
+                  <div>Looks Like you got no purchased videos</div>
+              </div>   
+          </ng-template>
+    </div>
+    
+</body>

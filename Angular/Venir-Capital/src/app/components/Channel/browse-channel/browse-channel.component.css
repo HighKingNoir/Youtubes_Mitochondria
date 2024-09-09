@@ -1,0 +1,160 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+  
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.sub-Header{
+    position: fixed;
+    display: flex;
+    top: 65px;
+    height: 50px;
+    width: calc(100% - 180px);
+    left: 180px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sub-Header .left-Side{
+    padding-left: 15px;
+}
+
+
+.channels{
+    padding: 0px 50px 0 50px;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 20px;
+    left: 180px;
+    width: calc(100% - 180px);
+    top: 130px;
+}
+
+@media screen and (max-width: 1350px) {
+    .channels {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .channels {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (max-width: 950px) {
+    .channels {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 675px) {
+    .channels {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+.card-body{
+    background-color: #373737;
+    border-radius: 5px;
+    padding: 3px;
+}
+
+.logoContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.channelLogo{
+    height: 150px;
+    width: 150px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.channelName{
+    color: white;
+    text-align: center;
+    font-size: 20px;
+}
+
+.channelDescription{
+    color: rgb(180, 180, 180);
+    font-size: 13px;
+    max-width: 100%;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+}
+
+/* CSS */
+.mainButton {
+    margin-right: 10px;
+    align-items: center;
+    appearance: none;
+    background-color: #3f3f3f;
+    border-radius: 4px;
+    border-width: 0;
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#3b3b3b 0 -3px 0 inset;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: "Open Sans", sans-serif;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-align: left;
+    text-decoration: none;
+    transition: box-shadow .15s,transform .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    white-space: nowrap;
+    will-change: box-shadow,transform;
+    font-size: 18px;
+  }
+  
+  .mainButton.active{
+    background-color: rgb(130, 130, 130);
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,rgb(100, 100, 100) 0 -3px 0 inset;
+  }
+  
+  .mainButton:hover {
+    box-shadow: rgba(126, 126, 126, 0.4) 0 4px 8px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #6f6f6f 0 -3px 0 inset;
+    transform: translateY(-2px);
+  }
+  

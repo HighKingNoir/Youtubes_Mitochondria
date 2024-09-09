@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-venircapital-dev-203019-authRole",
+      "UnauthRoleArn": "arn:aws:iam::570418936584:role/amplify-venircapital-dev-203019-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::570418936584:role/amplify-venircapital-dev-203019-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-venircapital-dev-203019-deployment",
+      "UnauthRoleName": "amplify-venircapital-dev-203019-unauthRole",
+      "StackName": "amplify-venircapital-dev-203019",
+      "StackId": "arn:aws:cloudformation:us-east-1:570418936584:stack/amplify-venircapital-dev-203019/33441dd0-624d-11ee-a2e7-0af9916ee013",
+      "AmplifyAppId": "d103stn0dct1a8"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d103stn0dct1a8",
+          "type": "cicd"
+        }
+      }
+    }
+  }
+}

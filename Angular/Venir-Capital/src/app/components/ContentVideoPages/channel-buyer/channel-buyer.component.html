@@ -1,0 +1,123 @@
+<body>
+    <app-header></app-header>
+    <div class="loading-screen" *ngIf="loading">
+        <div class="loader"></div>
+        <p>Loading...</p>
+    </div>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+   
+    <div class="body">
+        <div class="body-container">
+            <div class="videoInfo-Container">
+                <div class="image" (click)="navigateToYouTubeTrailer()">
+                    <img class="thumbnail" (click)="navigateToYouTubeTrailer()" [src]="videoInfo.thumbnail" alt="">
+                    <div class="image-Content">
+                        Watch Trailer
+                    </div>
+                </div>
+                <div class="video-Descriptors">
+                    <div class="layer-One">
+                        <div class="content-Status">
+                            <div class="contentName" [ngClass]="getStatusClass(videoInfo.contentEnum)">{{addSpaceBeforeUppercase(videoInfo.contentEnum)}}</div>
+                            <div class="isViolator" *ngIf="videoInfo.isViolator">SCUM</div>
+                        </div>
+                        <div class="duration">Duration: 
+                            <div *ngIf="videoInfo.duration; else NotAvailable" class="video-duration">{{formatDuration(videoInfo.duration)}}</div>
+                            <ng-template #NotAvailable class="not-Available">N/A</ng-template>
+                        </div>
+                    </div>
+                    <div class="layer-Two">
+                        <div class="youtube-Info">
+                            <img class="youtubeProfilePicture" src="{{videoInfo.youtubeProfilePicture}}" alt="">
+                            <div class="descriptors">
+                                <div class="contentName">{{videoInfo.contentName}}</div>
+                                <div class="youtubeUsername">{{videoInfo.youtubeUsername}} </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layer-Three">
+                        <div class="descriptors">
+                            <div class="hype">{{videoInfo.hype | numberFormat}} hype</div>
+                            <div class="dot"></div>
+                            <div class="releaseDate">{{videoInfo.releaseDate | formateDate}}</div>
+                        </div>
+                        <div class="video-Buttons">
+                            <div class="payLater" (click)="payLater()">
+                                <button class="payLater-Button">Pay Later</button>
+                                <div class="payLater-Status">
+                                    <i *ngIf="isPayLater; else Add" class="fa-solid fa-check"></i>
+                                    <ng-template #Add><i class="fa-solid fa-plus"></i></ng-template>
+                                </div>
+                            </div>
+                            
+                            <div class="watchTrailer" (click)="navigateToYouTubeTrailer()">
+                                <button class="watchTrailer-Button">Watch Trailer</button>
+                            </div>                
+                        </div>
+                    </div>
+                    <div class="description">{{videoInfo.description}}</div>
+                </div>
+            </div>
+            <div class="middle">
+                <div class="manaPrice">
+                    ${{MANA_PRICE.toFixed(2)}}
+                    <img class="decentralandLogo" src="{{decentralandLogo}}" alt=""> Mana
+                </div>
+                <div class="cost" *ngIf="hasChannel()">Cost: ${{(getCost(videoInfo.contentType) * highestActiveWeeklyViewers) | numberFormat}}</div>
+                <div class="channel-Contents">
+                    <div class="linked-Channel" *ngIf="hasChannel(); else CreateChannel">
+                        <div class="channelbalance">
+                            <div class="header">Channel balance</div>
+                            <div>{{channelDollarbalance | numberFormat}} mana (${{(channelDollarbalance * MANA_PRICE) | numberFormat}})</div>
+                        </div>
+                        <div class="buy">
+                            <div *ngIf="hasPurchased(); else Buy">
+                                <button class="mainButton" [disabled]="loading || !isActive()" (click)="openCancelModal()">Cancel Purchase</button>
+                            </div>
+                            <ng-template #Buy>
+                                <div class="purchase">
+                                    <button class="mainButton" [disabled]="loading || !isActive()" (click)="purchase(channel!.channelName)">Buy</button>
+                                    <div style="margin-bottom: 15px;"></div>
+                                    <button class="mainButton" style="opacity: 0; cursor:default;" [disabled]="loading || !isActive()" (click)="openWatchNowPayLaterModal(channel!.channelName)">Watch Now, Pay Later</button>
+                                </div>
+                            </ng-template>
+                        </div>
+                        <div class="fund-Channel">
+                            <button class="mainButton" (click)="openFundChannelModal()">Fund Channel</button>
+                        </div>
+                        <div class="get-More-Mana">
+                            <button class="mainButton" (click)="getMoreMana()">Get More Mana</button>
+                        </div>
+                    </div>
+                    
+                    <ng-template #CreateChannel>
+                        <div class="linked-Channel">
+                            <div class="createNewChannel" >
+                                <button class="mainButton" (click)="createChannel()">Create New Channel</button>
+                            </div>
+                            <div *ngIf="!isLoggedIn" class="createNewChannel">
+                                <button routerLink="/" class="mainButton">Back Home</button>
+                            </div>
+                        </div>
+                        
+                    </ng-template>
+                </div>
+            </div>  
+        
+        
+            <div class="right-side">
+                <div class="buy-Title">Owners (Available : {{maxNumberOfBuyers - numberOfBuyers}})</div>     
+                <div *ngFor="let buyer of sortedListOfBuyers" class="buyers" >     
+                    <div class="buyer-ChannelName">{{buyer[0]}}</div>
+                    <div class="buyer-Amount">{{buyer[1] | numberFormat}}</div>
+                    <img class="decentralandLogo" src="{{decentralandLogo}}" alt=""> 
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

@@ -1,0 +1,160 @@
+.sub-Header{
+    position: relative;
+    display: flex;
+    top: 65px;
+    height: 50px;
+    color: white;
+    width: calc(100% - 200px);
+    left: 200px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sub-Header-Title{
+    font-size: 20px;
+    padding-left: 20px;
+}
+
+.channels{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 200px);
+    left: 200px;
+    top: 75px;
+    padding: 10px;
+}
+.channel-Request-Info{
+    padding: 10px;
+    background-color: rgb(101, 101, 101);
+    border-radius: 10px;
+    color: rgb(0, 0, 0);
+    margin-bottom: 10px;
+}
+
+
+.channel-Request-Info .layer-One{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border-bottom: 1px solid black;
+}
+.channel-Request-Info .layer-One .channel-Label{
+    display: flex;
+}
+
+.channel-Request-Info .streamerInfo{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.streamerInfo-Header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    color: black;
+    font-weight: 700;
+}
+
+.channel{
+    font-weight: 700;
+    margin-right: 3px;
+}
+
+.channelID{
+    font-weight: 700;
+    margin-right: 3px;
+}
+
+.channel-Request-Info .streamerInfo .username{
+    flex: 1;
+    text-align: center;
+    width: 100%;
+}
+.channel-Request-Info .decision{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    border-top: 1px solid black;
+}
+
+.NewStreamerInfo{
+    display: flex;
+    justify-content: center;
+}
+
+.decision button{
+    outline: none;
+    background-color: rgb(182, 182, 182);
+    border: 1px solid rgb(110, 110, 110);
+    border-radius: 5px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+input{
+    background-color: gray;
+    border-radius: 5px;
+    color: rgb(230, 230, 230);
+    border-style: none;
+    border: 1px solid black;
+}
+
+input::placeholder{
+    color: rgb(175, 175, 175);
+}
+
+.channelLogo{
+    border-radius: 50%;
+    height: 25px;
+    width: 25px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+}
+
+.mainButton {
+    margin-right: 10px;
+    align-items: center;
+    appearance: none;
+    background-color: #3f3f3f;
+    border-radius: 4px;
+    border-width: 0;
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#3b3b3b 0 -3px 0 inset;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: "Open Sans", sans-serif;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-align: left;
+    text-decoration: none;
+    transition: box-shadow .15s,transform .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    white-space: nowrap;
+    will-change: box-shadow,transform;
+    font-size: 18px;
+  }
+  
+  .mainButton.active{
+    background-color: rgb(130, 130, 130);
+    box-shadow: rgba(28, 28, 28, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,rgb(100, 100, 100) 0 -3px 0 inset;
+  }
+  
+  .mainButton:hover {
+    box-shadow: rgba(126, 126, 126, 0.4) 0 4px 8px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #6f6f6f 0 -3px 0 inset;
+    transform: translateY(-2px);
+  }

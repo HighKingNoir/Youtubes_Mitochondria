@@ -1,0 +1,180 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+.content{
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    top: 65px;
+    left: 180px;
+    height: calc(100% - 65px);
+    width: calc(100% - 180px);
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.content .header{
+    position: relative;
+    width: 100%;
+    height: 75px;
+}
+
+.content .header h2{
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.content .settings{
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.settings .form{
+    margin-bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+}
+
+.form .form-Header{
+    font-size: 25px;
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+    display: flex;
+}
+
+.form input{
+    background-color: transparent;
+    border-style: none;
+    color: white;
+    padding-left: 10px;
+    border: 1px solid grey;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    width: 30%;
+}
+
+.form input:focus{
+    outline: none;
+}
+
+.form .form-Info{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.userEmail{
+    font-size: 18px;
+}
+
+.delete-Info{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.form-Text{
+    text-align: start;
+    color: rgb(186, 186, 186);
+    margin-bottom: 10px;
+}
+
+.delete-Info .delete-Button{
+    border-style: none;
+    background-color: red;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid black;
+    font-size: 20px;
+}
+
+.input-box.error-Border{
+    border: 2px solid red;
+}
+
+.error-message{
+    text-align: start;
+    color: lightcoral;
+}
+
+.form-button{
+    padding: 10px;
+    border: 2px solid rgb(76, 76, 76);
+    border-radius: 10px;
+    background-color: rgb(200, 200, 200);
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.input-box{
+    position: relative;
+    width: 195px;
+    height: 40px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(95, 95, 95);
+    border: 1px solid rgb(195, 195, 195);
+}
+
+.input-box label{
+    position: absolute;
+    top: 58%;
+    left: 5px;
+    transform: translateY(-65%);
+    font-size: 1em;
+    color: white;
+    font-weight: 500;
+    pointer-events: none;
+    transition: .5s;
+    padding-left: 5px;
+}
+
+.input-box input:focus~label,
+.input-box input:valid~label{
+    top: -10px;
+
+}
+
+.input-box input{
+    color: rgb(19, 19, 19);
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    outline: none;
+    border: none;
+    font-size: 1em;
+    font-weight: 600;
+    padding-left: 10px;
+    padding-right: 5px;
+}

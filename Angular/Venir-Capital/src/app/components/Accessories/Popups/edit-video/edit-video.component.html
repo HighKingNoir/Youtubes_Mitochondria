@@ -1,0 +1,62 @@
+
+<div class="modal-header">
+    <h4 class="modal-title">Edit Video</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body" >
+    <form action="" method="post" [formGroup]="EditVidoForm">
+            <div class="videotitle">
+                <div class="description">
+                    <div class="header">Video Title</div>
+                    <div class="videotitle-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Create a catchy title that grabs the attention of the user. 
+                        Learn more" container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                    <div class="limit">
+                        <div class="counter" *ngIf="showTitleCounter">{{ currentTitleLength }}/100</div>
+                    </div>
+                </div>
+                <div class="videotitle-Selection">
+                    <textarea name="videotitle" id="videotitle" (input)="updateTitleCounter()" placeholder="Enter a title for your video" rows="1" maxlength="100" (keydown)="onTitleTextareaKeydown($event)"  formControlName="VideoTitle" (input)="resizeTitleTextarea()" required ></textarea>
+                    <div class="error-message" *ngIf="EditVidoForm.get('VideoTitle')?.hasError('required') && EditVidoForm.get('VideoTitle')?.touched">
+                        Video Title must be between 1 and 100 charecters long.
+                    </div>
+                </div>
+            </div>
+        
+            <div class="videoDescription">
+                <div class="description">
+                    <div class="header">Description</div>
+                    <div class="videoDescription-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Create an intriguing description for the user. 
+                        Learn more" container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                    <div class="limit">
+                        <div class="counter">{{ currentDescriptionLength }}/5000</div>
+                    </div>
+                </div>
+                <div class="videoDescription-Selection">
+                    <textarea name="videoDescription" id="videoDescription" (input)="updateDescriptionCounter()" placeholder="Enter a description for your video" rows="10" maxlength="5000" (keydown)="onDescriptionTextareaKeydown($event)" formControlName="Description" (input)="resizeDescriptionTextarea()" ></textarea>
+                </div>
+            </div>
+            
+        <div class="trailer-Link">
+            <div class="header">Change Trailer</div>
+            <div>
+                <a href="https://www.youtube.com/watch?v={{trailerID}}" target="_blank">
+                    https://www.youtube.com/watch?v={{trailerID}}
+                </a>
+                <button class="removeTrailer" (click)="swapTrailer()"><i class="fa-solid fa-rotate"></i></button>
+                <div class="trailerWarningMessage" *ngIf="trailerMessage">{{trailerMessage}}</div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <div class="submit">
+        <button type="button" class="btn btn-light" ngbAutofocus (click)="submit()" >Submit</button>
+    </div>
+</div>
+
+
+

@@ -1,0 +1,52 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 100%;
+}
+
+.linked-Wallets{
+    font-size: 20px;
+}
+
+.swap-Address{
+    font-size: 17px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.connectWallet-Button{
+    margin-top: 20px;
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+}
+
+.connectWallet-Button:disabled{
+    color: rgb(146, 124, 0);
+
+}
+
+.nextWalletChange{
+    color: lightcoral;
+    margin-top: 10px;
+}
+
+.text{
+    font-size: 18px;
+}
+
+.note{
+    font-size: 14px;
+    padding-top: 20px;
+    color: #8d8d8d;
+}

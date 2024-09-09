@@ -1,0 +1,261 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0% {
+      background-color: rgb(190, 161, 0); /* Starting color */
+      transform: scale(1);
+    }
+    50% {
+      background-color: rgb(246, 255, 0); /* Midway color */
+      transform: scale(1.1);
+    }
+    100% {
+      background-color: rgb(190, 161, 0); /* Ending color */
+      transform: scale(1);
+    }
+  }
+
+  .sidebar {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    border-right: solid #3d3d3d 1px;
+    left: 0;
+    width: 240px;
+    top: 65px;
+    height: calc(100% - 65px);
+    max-height: calc(100% - 65px);
+    overflow-y: auto; 
+}
+
+.messages {
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    cursor: pointer;
+
+}
+
+
+
+.messages:hover{
+    background-color: #313131;
+}
+
+.info{
+    display: flex;
+    align-items: center;
+}
+
+.unread{
+    width: 8px;
+    height: 8px;
+    animation: pulse 3s infinite;
+    border-radius: 50%;
+    margin-right: 3px;
+}
+
+.content{
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    padding-left: 50px;
+    padding-right: 50px;
+    top: 65px;
+    left: 240px;
+    height: calc(100% - 65px);
+    width: calc(100% - 240px);
+    color: white;
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
+}
+
+.message-Info{
+    display: flex;
+    flex-direction: column;
+}
+
+.content .header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    margin-top: 15px;
+}
+
+.content .info {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    font-size: 20px;
+    color: rgb(190, 190, 190);
+}
+
+.instructions{
+    margin-top: 30px;
+    text-align: center;
+}
+
+.header .username::first-letter {
+    text-transform: capitalize;
+}
+
+.header .username{
+    color: gold;
+    padding-left: 10px;
+}
+
+
+a{
+    color: gold !important;
+    text-decoration: none;
+}
+
+.video{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.videoContainer{
+    display: flex;
+    justify-content: flex-start;
+    height: 100px;
+    width: 400px;
+    background-color: gray;
+    border: 2px solid rgb(190, 190, 190);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.videoContainer img{
+    height: 100%;
+    border-radius: 5px;
+    margin-right: 3px;
+}
+
+.contentName{
+    max-width: 100%;
+    white-space: normal; /* Allow text to wrap within the container */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Set the number of lines before ellipsis */
+    -webkit-box-orient: vertical;
+    color: black;
+}
+
+.transactionHash{
+    color: gold;
+    text-decoration: none
+}
+
+.rank{
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    display: flex;
+}
+
+.rank-Number{
+    background: radial-gradient(circle, white, rgba(0, 0, 24, 0.48));
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 25px;
+    margin-top: 10px;
+    font-family: "Times New Roman";
+   color: black;
+}
+
+.rank-Title{
+    color: lightcoral;
+    text-decoration: none;
+}
+
+.rewards{
+    color: gold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.link{
+    color: gold;
+    display: flex;
+    font-size: 22px;
+    justify-content: center;
+    margin-top: 15px;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+.email{
+    padding-left: 5px;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.error-message{
+    color: lightcoral;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.complete-message{
+    color: lightgreen;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.instructions.reason{
+    color: gold !important;
+}
+
+.scum{
+    color: lightcoral;
+}
+
+.report{
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.report .button{
+    border-radius: 5px;
+    padding: 5px;
+    background-color: gray;
+    color: rgb(230, 230, 230);
+    border: 2px solid rgb(187, 187, 187);
+    
+}

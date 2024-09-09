@@ -1,0 +1,88 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+.modal-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.icon-Container{
+    margin-bottom: 20px;
+}
+
+.image-Container{
+    margin-bottom: 20px;
+    width: 150px;
+    height: 150px;
+}
+
+.image-Container img{
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    background-color: gray;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+}
+
+.instructions{
+    color: rgb(190, 190, 190);
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+::ng-deep .digit-otp {
+    height: 60px !important;
+    border-radius: 8px !important;
+    background-color: #6f6f6f;
+    color: gold;
+
+    &::placeholder {
+        color: gold;
+
+    }
+
+    &:focus {
+        outline-color: gold;
+        border-color: gold;
+    }
+}
+
+
+.ng-touched {
+    border: 2px solid gold !important;
+}
+
+.button{
+    border-style: none;
+    border: 2px solid gray;
+    border-radius: 8px;
+    margin-top: 15px;
+    padding: 10px;
+    font-size: 25px;
+    width: 100%;
+}
+
+.btn-gray{
+    background-color: #555555;
+    box-shadow: rgb(43, 43, 43) 0 -3px 0 inset;
+}
+
+.btn-green{
+    background-color: rgb(0, 130, 0);
+    box-shadow: rgb(0, 71, 0) 0 -3px 0 inset;
+}
+
+.btn-red{
+    background-color: rgb(189, 0, 0);
+    box-shadow: rgb(100, 5, 0) 0 -3px 0 inset;
+}
+
+
+  
+  

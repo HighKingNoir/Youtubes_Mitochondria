@@ -1,0 +1,43 @@
+<div class="modal-header">
+    <h4 class="modal-title">Select The Main Video</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body" (scroll)="onScroll($event)">
+    
+    <ng-template [ngIf]="isEmpty()" [ngIfElse]="displayVideos">
+        <div class="noVideo" >
+            <div class="text">Looks like you don't have any Youtube videos on this account. 
+                Upload a video on your Youtube channel or swap to another Youtube Account.</div>
+        </div>
+    </ng-template>
+    <ng-template #displayVideos>
+        <div *ngIf="!isChecked; else LiveStream">
+            <div class="text">The selected video must be set to "private" and must be at least 10 minutes long.</div>
+        </div>
+        <ng-template #LiveStream>
+            <div class="text">The selected live stream must be set to "private" and 'upcoming'.</div>
+        </ng-template>
+        <div class="broadcast">
+            <input type="checkbox" [(ngModel)]="isChecked" (click)="handleCheckboxClick()">
+            <div>Live Broadcast</div>
+        </div>
+        
+        <div *ngFor="let video of uploadedVideos; let i = index" [class.selected]="selectedIndex === i" class="video" (click)="selectVideo(i)">
+            <div class="thumbnail">
+                <img [src]="video.thumbnails.high.url" alt="">
+            </div>
+            <div class="descriptors">
+                <div class="title">
+                    <h2>{{ video.title }}</h2>
+                </div>
+            </div>
+            <div class="date">
+                <p>{{ video.publishTime | date}}</p>
+            </div>
+        </div>
+       </ng-template>
+</div>
+<div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="back()">Back</button>
+        <button type="button" class="btn btn-light" [disabled]="!hasSelectedVideo" ngbAutofocus (click)="submitVideo()">Select</button>
+</div>

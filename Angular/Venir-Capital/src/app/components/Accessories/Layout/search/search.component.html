@@ -1,0 +1,84 @@
+<body>
+    <app-header-search></app-header-search>
+    <app-home-sidebar></app-home-sidebar>
+    <div *ngIf="isVideoSearch; else Channels">
+        <div *ngIf="videos.length == 0; else DisplayVideos">
+            <div class="notFound">
+                No video with a title of "{{searchQuery}}" has been found. Try another search.
+            </div>
+        </div>
+        <ng-template #DisplayVideos>
+            <div class="videos">
+                <div class="card" *ngFor="let video of videos">
+                    <img routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+                    <div class="card-body">
+                    <h6 routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}" class="contentType">{{video.contentType}}</h6>
+                    <div class="info"> 
+                        <div routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}">
+                            <img class="youtubeProfilePicture" src="{{video.youtubeProfilePicture}}" alt="">
+                        </div>
+                        
+                        <div class="info-Colunm">
+                            <div class="first-Row" routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}">
+                                <h5 class="contentName">{{video.contentName}}</h5>
+                            </div>
+                            <div class="second-Row" routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}">
+                                <p class="youtubeUsername">{{video.youtubeUsername}}</p>
+                                <p class="isScum" *ngIf="video.isViolator">SCUM</p>
+                            </div>
+                            <div class="third-Row" routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}">
+                                <p class="releaseDate">Release: {{video.releaseDate | formateDate}}</p>
+                            </div>
+                            <div class="forth-Row" routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}">
+                                <p class="hype">{{video.hype | numberFormat}} hype</p>
+                                <div class="pricing-Group">
+                                    <div class="singleBuyer" *ngIf="isSingleBuyer(video.contentType), else CommunityBuyer">
+                                        <i class="fa-solid fa-user icon"></i>
+                                        <p class="startingCost">${{video.startingCost}}</p>
+                                    </div>
+                                    <ng-template #CommunityBuyer>
+                                        <div class="communityBuyer" *ngIf="hasChannel(); else ChannelNeeded">
+                                            <i class="fa-solid fa-users icon"></i>
+                                            <p class="startingCost">${{getCost(video.contentType)}}</p>
+                                        </div>
+                                        <ng-template #ChannelNeeded>
+                                            <p class="channelNeeded">Channel Needed</p>
+                                        </ng-template>
+                                    </ng-template>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="options" placement="bottom-end" ngbDropdown container="body">
+                            <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
+                            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                                <button class="dropdown-item" (click)="watchTrailer(video.youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
+                                <button class="dropdown-item" (click)="togglePayLater(video.contentId)"><i class="fa-solid fa-cart-shopping"></i>{{payLaterText(video.contentId)}}Pay Later</button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+    </div>
+    <ng-template #Channels>
+        <div *ngIf="channels.length == 0; else DisplayChannels">
+            <div class="notFound">
+                No channel with a name of "{{searchQuery}}" has been found. Try another search.
+            </div>
+        </div>
+        <ng-template #DisplayChannels>
+            <div class="channels">
+                <div *ngFor="let channel of channels" class="channel-Info" routerLink="/Channel/{{channel.channelName}}">
+                    <div class="logoContainer">
+                        <img src="{{channel.channelLogo}}" class="card-img-top channelLogo" alt="...">
+                    </div>
+                    <div class="card-body">
+                        <div class="channelName">{{channel.channelName}}</div>
+                        <div class="channelDescription">{{channel.channelDescription}}</div>
+                    </div>
+                </div>      
+            </div>
+        </ng-template>
+    </ng-template>
+</body>

@@ -1,0 +1,153 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 100%;
+}
+
+.body-Container{
+    width: 100%;
+    font-size: 20px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0; 
+}
+
+.connectWallet-Text{
+    font-size: 17px;
+}
+
+.connectWallet-Button{
+    margin-top: 20px;
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+}
+
+.warchest .latestbalance{
+    border-style: none;
+    color: gold;
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+.warchest .userbalance{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.userbalance .icon{
+    border-style: none;
+    font-size: 15px;
+}
+
+
+.buttons{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.buttons .purchase:disabled{
+    color: grey;
+}
+
+.note{
+    font-size: 14px;
+    padding-top: 20px;
+    color: #8d8d8d;
+}
+
+.note {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .note-layer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .note-part {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .note-center {
+    flex: 0;
+    margin: 0 10px;
+  }
+
+.mainButton{
+    display: inline-block;
+    outline: 0;
+    border: 0;
+    cursor: pointer;
+    background: #5c5c5c;
+    color: white;
+    border-radius: 8px;
+    padding: 7px 14px 8px;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 200ms,;
+}
+
+
+.mainButton:hover{
+    transform: translateY(-2px);
+}
+
+.input-box{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-box input,
+.input-box button{
+    margin-top: 20px;
+    outline: none;
+    border: none;
+    background: #5c5c5c;
+    color: white;
+    border-radius: 8px;
+    font-size: 17px;
+}
+
+.dollar-sign {
+    position: absolute;
+    background-color: transparent;
+    left: 20px;
+    margin-top: 20px;
+}
+
+.input-box input{
+    width: 0px;
+    padding-left: 20px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    width: 100%;
+}
+
+.input-box button{
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    background-color: gray;
+}

@@ -1,0 +1,48 @@
+<body>
+    <app-header></app-header>
+    <app-profile-sidebar></app-profile-sidebar>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div class="header">
+            <h2>Profile</h2>
+        </div>
+        <div class="settings">
+            <div class="form">
+                <div class="form-Header">Email</div>
+                <div class="form-Info">
+                    <div class="userEmail">{{userEmail}}</div>
+                </div>
+            </div>
+            <form [formGroup]="usernameForm" class="form">
+                <div class="form-Header">Username</div>
+                <div class="form-Info">
+                    <div class="input-box" [ngClass]="{ 'error-Border': usernameForm.get('username')?.invalid && usernameForm.get('username')?.touched }">
+                        <input type="text"  name="username" id="username" [formControlName]="'username'" required>
+                    </div>
+                    <div *ngIf="usernameForm.get('username')?.touched && usernameForm.get('username')?.hasError('pattern') || usernameForm.get('username')?.hasError('required')" class="error-message">
+                        Username must be between 3 - 15 charecters long and no spaces.
+                    </div>
+                    <div *ngIf="usernameForm.get('username')?.value != username && usernameForm.get('username')?.hasError('usernameTaken')" class="error-message">
+                        Username already Taken.
+                    </div>
+                    <button class="form-button" [disabled]="usernameForm.get('username')?.invalid || usernameForm.get('username')?.value == username" (click)="changeUsername()">Change Username</button> 
+                </div>
+            </form>
+            <div class="form">
+                <div class="form-Header">Delete Account</div>
+                <div class="delete-Info">
+                    <div class="form-Text">In order to delete your account, you need to wait till all your uploaded content is inactive.
+                        You can restore your account by logging in within 30 days.
+                         After your account is deleted, Sivantis cannot send weekly mana to your wallet. Make sure you withdraw all your funds. </div>
+                    <button class="delete-Button" (click)="deleteUser()">Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>

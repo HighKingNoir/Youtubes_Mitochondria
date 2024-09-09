@@ -1,0 +1,41 @@
+<body>
+    <app-header></app-header>
+    <app-authorized-access-sidebar></app-authorized-access-sidebar>
+    <div class="sub-Header">
+        <div class="sub-Header-Title">Channel Request</div>
+        <div class="channel-Categories">
+            <button class="mainButton"  routerLink="/AuthorizedUser/Channels/Updates">Updates</button>
+            <button class="mainButton"  routerLink="/AuthorizedUser/Channels/Change">Change</button>
+            <button class="mainButton active"  routerLink="/AuthorizedUser/Channels/Request">New</button>
+        </div> 
+    </div>
+    <div class="channels">
+        <div *ngFor="let channel of ChannelRequest" class="channel-Request-Info">
+            <div class="layer-One">
+                <div class="channel-Label">
+                    <div class="channel">Channel:</div>
+                    <div>{{channel.channelName}}</div>
+                    <img class="channelLogo" src="{{channel.channelLogo}}" alt="">
+                </div>
+                <div style="display: flex;">
+                    <div class="channelID">Channel ID:</div>
+                    <div>{{channel.channelId}}</div>
+                </div>
+            </div>
+            <div  class="streamerInfo-Header">
+                <div class="platform">Platform</div>
+                <div class="username">Username</div>
+                <div class="averageWeeklyViewers">AWV</div>
+            </div>
+            <div *ngFor="let streamerInfo of channel.streamerInfo; let i = index" class="streamerInfo" [formGroup]="AWVForm">
+                <div class="platform">{{streamerInfo.platform}}</div>
+                <div class="username">{{streamerInfo.username}}</div>
+                <input type="text" placeholder="Average Weekly Viewers" (change)="updateAWV(channel.streamerInfo, i)" [formControlName]="'averageWeeklyViewers'"  class="averageWeeklyViewers">
+            </div>
+            <div class="decision">
+                <button (click)="disapproveChannel(channel.channelId, channel.channelName)" [disabled]="loading">Disapprove</button>
+                <button (click)="approveChannel(channel.channelId, channel.streamerInfo)" [disabled]="loading">Approve</button>
+            </div> 
+        </div>
+    </div> 
+</body>

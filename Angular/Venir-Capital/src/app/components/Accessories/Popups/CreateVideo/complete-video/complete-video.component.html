@@ -1,0 +1,203 @@
+
+<div class="modal-header">
+    <h4 class="modal-title">Video Details</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body" >
+    <form action="" method="post" [formGroup]="StageOneForm" *ngIf="showStageOne; else StageTwo">
+        <div class="videotype">
+            <div class="description">
+               <div class="header">Video Type</div> 
+               <div class="videotype-tooltip">
+                    <span class="icon" placement="right" triggers="click" ngbTooltip="Select the type of video you wish to publish.
+                    " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                </div>
+            </div>
+            <div class="videotype-Selection">
+                <select name="videotype" id="videotype"  required formControlName="VideoType">
+                    <option [value]="''" disabled selected> -- select an option -- </option>
+                    <option [value]="'Invention'" value="Invention">Invention</option>
+                    <option [value]="'Innovation'" value="Innovation">Innovation</option>
+                    <option [value]="'Short Film'" *ngIf="!isLive() && !greaterThanOrEqualOneHourFifteenMinutes()" value="Short Film">Short Film</option>
+                    <option [value]="'Sports'" *ngIf="isLive()" value="Sports">Sports</option>
+                    <!-- <option [value]="'Concerts'" *ngIf="isLive()" value="Concerts">Concerts</option> -->
+                    <option [value]="'Movies'" *ngIf="!isLive() && greaterThanOrEqualOneHourFifteenMinutes()" value="Movies">Movies</option>
+                </select>     
+                <div class="error-message" *ngIf="StageOneForm.get('VideoType')?.invalid && StageOneForm.get('VideoType')?.touched">
+                    Select a video type to proceed.
+                </div> 
+            </div>
+        </div>
+            
+        <div *ngIf="isAuction(StageOneForm.get('VideoType')?.value); else Buy">
+            <div class="videotitle">
+                <div class="description">
+                    <div class="header">Video Title</div>
+                    <div class="videotitle-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Create a catchy title that grabs the attention of the user. 
+                        " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                    <div class="limit">
+                        <div class="counter" *ngIf="showTitleCounter">{{ currentTitleLength }}/100</div>
+                    </div>
+                </div>
+                <div class="videotitle-Selection">
+                    <textarea name="videotitle" id="videotitle" (input)="updateTitleCounter()" placeholder="Enter a title for your video" rows="1" maxlength="100" (keydown)="onTitleTextareaKeydown($event)"  formControlName="VideoTitle" (input)="resizeTitleTextarea()" required ></textarea>
+                    <div class="error-message" *ngIf="StageOneForm.get('VideoTitle')?.hasError('required') && StageOneForm.get('VideoTitle')?.touched">
+                        Video Title must be between 1 and 100 charecters long.
+                    </div>
+                </div>
+            </div>
+        
+            <div class="bidder">
+                <div class="description">
+                    <div class="header">Number of Bidders</div>
+                    <div class="bidder-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Select the maximum amount of winners this auction can have. 
+                        " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                    <div class="limit">(Max: {{maxBuyers}})</div>
+                </div>
+                <div class="bidder-Selection">
+                    <input type="number" name="bidder" id="bidder" min="1" max="{{maxBuyers}}" [placeholder]="'Enter a number'" formControlName="NumBidders" required>
+                    <div class="error-message" *ngIf="StageOneForm.get('NumBidders')?.invalid && StageOneForm.get('NumBidders')?.touched">
+                        Number of bidders must be between 1 and {{maxBuyers}}.
+                    </div>
+                </div>
+            </div>
+
+            <div class="startingCost">
+                <div class="description">
+                    <div class="header">Minimum Cost</div>
+                    <div class="startingCost-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Select the minimum cost to enter this auction.
+                         " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                </div>
+                <div class="startingCost-Selection">
+                    <input type="number" name="startingCost" id="startingCost" [placeholder]="'Enter a number'" min="5" formControlName="StartingCost" required>
+                    <div class="error-message" *ngIf="StageOneForm.get('StartingCost')?.invalid && StageOneForm.get('StartingCost')?.touched">
+                        Starting cost must be greater than $5.
+                    </div>
+                </div>
+            </div>
+            
+        <div *ngIf="trailerID; else linkTrailer" class="trailer-Link">
+            <div>
+                <a href="https://www.youtube.com/watch?v={{trailerID}}" target="_blank">
+                    https://www.youtube.com/watch?v={{trailerID}}
+                </a>
+                <button class="removeTrailer" (click)="removeTrailer()">X</button>
+                <div class="trailerWarningMessage" *ngIf="trailerMessage">{{trailerMessage}}</div>
+            </div>
+        </div>
+        <ng-template #linkTrailer>
+            <button class="linkTrailer" (click)="onLinkTrailer()">Link Trailer</button>
+            <div class="trailerErrorMessage" *ngIf="trailerMessage">{{trailerMessage}}</div>
+        </ng-template>
+
+        </div>
+        <ng-template #Buy>
+            <div *ngIf="StageOneForm.get('VideoType')?.value === 'Short Film' || StageOneForm.get('VideoType')?.value === 'Sports' || StageOneForm.get('VideoType')?.value === 'Concerts' || StageOneForm.get('VideoType')?.value === 'Movies'" >
+                <div class="videotitle">
+                    <div class="description">
+                        <div class="header">Video Title</div>
+                        <div class="videotitle-tooltip">
+                            <span class="icon" triggers="click" placement="right" ngbTooltip="Create a catchy title that grabs the attention of the user. 
+                            " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                        </div>
+                        <div class="limit">
+                            <div class="counter" id="counter" >{{ currentTitleLength }}/100</div>
+                        </div>
+                    </div>
+                    <div class="videotitle-Selection">
+                        <textarea name="videotitle" id="videotitle" (input)="updateTitleCounter()" placeholder="Enter a title for your video" rows="2" maxlength="100" (keydown)="onTitleTextareaKeydown($event)"  formControlName="VideoTitle" (input)="resizeTitleTextarea()" required></textarea>
+                    </div>
+                </div>
+
+                <div *ngIf="trailerID; else linkTrailer" class="trailer-Link">
+                    <div>
+                        <a href="https://www.youtube.com/watch?v={{trailerID}}" target="_blank">
+                            https://www.youtube.com/watch?v={{trailerID}}
+                        </a>
+                        <button class="removeTrailer" (click)="removeTrailer()">X</button>
+                        <div class="trailerWarningMessage" *ngIf="trailerMessage">{{trailerMessage}}</div>
+                    </div>
+                </div>
+                <ng-template #linkTrailer>
+                    <button class="linkTrailer" (click)="onLinkTrailer()">Link Trailer</button>
+                    <div class="trailerErrorMessage" *ngIf="trailerMessage">{{trailerMessage}}</div>
+                </ng-template>
+            </div>
+        </ng-template>
+         
+    </form>
+    <ng-template #StageTwo>
+        <form action="" method="post" [formGroup]="StageTwoForm">
+            <div class="releaseDate">
+                <div class="description">
+                    <div class="header">Select A Release Date</div>
+                    <div class="releaseDate-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Select a release date for this video. 
+                        " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                </div>
+                <div class="releaseDate-Selection">
+                    <div class="input-group">
+                        <input formControlName="ReleaseDate"
+                            class="form-control"
+                            placeholder="yyyy-mm-dd"
+                            name="dp"
+                            ngbDatepicker
+                            #d="ngbDatepicker"
+                            [positionTarget]="buttonEl"
+                            autocomplete="off"
+                        />
+                        <button #buttonEl 
+                        class="btn btn-outline-secondary bi bi-calendar3 releaseDateButton" 
+                        (click)="d.toggle()" 
+                        type="button"
+                        [class.invalid]="StageTwoForm.get('ReleaseDate')?.invalid && StageTwoForm.get('ReleaseDate')?.touched"
+                        >
+                            <i class="fa-solid fa-calendar"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" *ngIf="StageTwoForm.get('ReleaseDate')?.invalid && StageTwoForm.get('ReleaseDate')?.touched">
+                        Select a Release Date that's at least three days from now to proceed.
+                    </div>         
+                </div>
+            </div>
+    
+            <div class="videoDescription">
+                <div class="description">
+                    <div class="header">Description</div>
+                    <div class="videoDescription-tooltip">
+                        <span class="icon" triggers="click" placement="right" ngbTooltip="Create an intriguing description for the user. 
+                        " container="body"><i class="fa-regular fa-circle-question"></i></span>
+                    </div>
+                    <div class="limit">
+                        <div class="counter">{{ currentDescriptionLength }}/5000</div>
+                    </div>
+                </div>
+                <div class="videoDescription-Selection">
+                    <textarea name="videoDescription" id="videoDescription" (input)="updateDescriptionCounter()" placeholder="Enter a description for your video" rows="10" maxlength="5000" (keydown)="onDescriptionTextareaKeydown($event)" formControlName="Description" (input)="resizeDescriptionTextarea()" ></textarea>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+</div>
+<div class="modal-footer">
+    <div class="next" *ngIf="showStageOne; else StageTwoNav">
+        <button type="button" class="btn btn-light" [disabled]="!isStageOneFormValid()" ngbAutofocus (click)="next()">Next</button>
+    </div>
+    <ng-template #StageTwoNav>
+        <div class="submit">
+            <button type="button" class="btn btn-light" (click)="this.showStageOne = true">Back</button>
+            <div *ngIf="loading">{{loading}}</div>
+            <button type="button" class="btn btn-light" [disabled]="loading" ngbAutofocus (click)="submit()" >Submit</button>
+        </div>
+    </ng-template>
+</div>
+
+
+

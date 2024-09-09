@@ -1,0 +1,30 @@
+<div class="modal-header">
+    <h4 class="modal-title">Select The Trailer</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body" (scroll)="onScroll($event)">
+    <ng-template [ngIf]="isEmpty()" [ngIfElse]="displayVideos">
+        <div class="noVideo" >
+            <div class="channel-icon">Looks like you dont have any videos on this account</div>
+        </div>
+    </ng-template>
+    <ng-template #displayVideos>
+        <div class="video" *ngFor="let video of uploadedVideos; let i = index" [class.selected]="selectedIndex === i" (click)="selectVideo(i)">
+            <div class="thumbnail">
+                    <img [src]="video.thumbnails.high.url" alt="">
+                </div>
+                <div class="descriptors">
+                    <div class="title">
+                        <h2>{{ video.title }}</h2>
+                    </div>
+                </div>
+                <div class="date">
+                    <p>{{ video.publishTime | date}}</p>
+                </div>
+            </div>
+       </ng-template>
+</div>
+<div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="activeModal.close('back')">Back</button>
+        <button type="button" class="btn btn-light" ngbAutofocus (click)="submitVideo()">Select</button>
+</div>

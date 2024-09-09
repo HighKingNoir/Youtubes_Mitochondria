@@ -1,0 +1,45 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    flex-direction: column;
+}
+
+.header{
+    text-align: center;
+    font-size: 25px;
+    margin-bottom: 10px;
+    
+}
+
+.instructions{
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+a{
+    color: gold !important;
+    text-decoration: none;
+}
+
+.scum{
+    color: lightcoral !important;
+}
+
+.understood{
+    margin-top: 10px;
+}
+
+.understood{
+    padding: 5px;
+    border-style: none;
+    border: 1px solid black;
+    border-radius: 5px;
+}
+
+.understood:hover{
+    background-color: #525252;
+}

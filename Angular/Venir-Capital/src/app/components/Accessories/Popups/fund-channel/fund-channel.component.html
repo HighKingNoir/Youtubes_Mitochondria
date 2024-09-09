@@ -1,0 +1,29 @@
+<div class="modal-body">
+    <div class="wallet-Contents">
+        <div class="linked-Wallets" *ngIf="connectedWallet; else ConnectWallet">
+            
+            <div class="userAddress">
+                <div>Connected Wallet</div>
+                <div class="swap-Address">
+                    <div>{{connectedWallet | addressShortener}}</div>
+                    <div>({{accountbalance | numberFormat}} Mana)</div>
+                </div>
+            </div>
+            
+            <button class="mainButton" (click)="getMoreMana()">Get More Mana</button>
+
+
+            
+
+            <div class="input-box" [formGroup]="manaForm" [class.clicked]="isClicked" (click)="toggleClick()">
+                <input *ngIf="isClicked" type="text" placeholder="Mana"name="amountOfMana" id="amountOfMana" formControlName="amountOfMana" required />
+                <div class="mainButton" *ngIf="!isClicked">Fund Channel</div>
+                <button class="fund-button" *ngIf="isClicked" [disabled]="loading" (click)="fundChannel()">Fund</button>
+            </div>
+        </div>
+        <ng-template #ConnectWallet>
+            <div>Connect a crypto wallet to fund this channel.</div>
+            <button class="connectWallet-Button" (click)="this.activeModal.close('connecting Wallet')">Connect Wallet</button>
+        </ng-template>
+    </div>
+</div>

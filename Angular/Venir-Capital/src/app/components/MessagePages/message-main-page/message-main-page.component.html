@@ -1,0 +1,446 @@
+<body>
+    <app-header></app-header>
+    <div class="sidebar" (scroll)="onScroll($event)">
+        <div class="messages" *ngFor="let message of allMessages;" (click)="selectMessage(message)">
+                <div class="info">
+                        <div class="unread" *ngIf="!message.hasRead"></div>
+                        <div>{{addSpaceBeforeUppercase(message.messageEnum)}}</div>
+                </div>
+                <div>{{message.creationDate | timestampConverter}}</div>
+        </div>
+    </div>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div [ngSwitch]="selectedEnum">
+            <ng-container *ngSwitchCase="MessageEnum.NewUser">
+                <div class="header">Welcome <div class="username">{{messageContent.extraInfo[0]}}</div></div>
+                <div class="info">
+                    <div class="instructions" >
+                        Welcome to Sivantis! 
+                        Step into a world where your creative videos captivate the globe. 
+                        Here, your hard work, determination, and dedication will propel you to new heights. 
+                        Break through your limits, shape an incredible future, and make history with your unique creations. 
+                        Let's embark on this thrilling journey together!
+                    </div>
+                    <div class="instructions" style="text-align: start;">
+                        You can begin your journey by heading over to the <a routerLink="/Content" target="_blank">Contents page</a> to post your first video.
+                    </div>
+                    <div class="instructions" style="text-align: start;">
+                        Need to change any of your settings? 
+                        Head over to the <a routerLink="/Settings/Profile" target="_blank">Settings page</a> and while you're there, set up <a routerLink="/Settings/Security" target="_blank">Two Factor Authentication</a>.
+                    </div>
+                </div>
+            </ng-container>
+          
+            <ng-container *ngSwitchCase="MessageEnum.Payment">
+                <div class="header">Payment</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        You have successfully placed a bid for the video above.
+                        You can view the payment with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You've spent {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                    </div>
+                </div>
+            </ng-container>
+          
+            <ng-container *ngSwitchCase="MessageEnum.Refund">
+                <div class="header">Refund</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        Your bid for the video above has successfully been refunded.
+                        If you did not initiate this refund, it's likely due to this bid losing the auction.
+                        You can view the refund with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You've been refunded {{manaAmount | numberFormat}} Mana 
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.RankUp">
+                <div class="header">Rank Up</div>
+                <div class="rank">
+                    <div class="rank-Number">{{romanNumerals[getRank(messageContent.extraInfo[0])]}}</div>
+                </div>    
+                <div class="info">
+                    <div class="instructions">
+                        You have ranked up to <a class="rank-Title">{{messageContent.extraInfo[1]}}</a>. Click <a class="rewards" (click)="openRankModal()">Here</a> to see what your rewards are for achieving this rank.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.YoutubeEmails">
+                <div class="header">Youtube Emails</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <a class="link" href="https://www.youtube.com/watch?v={{messageContent.extraInfo[2]}}" target="_blank">Link To Your Video</a>
+                    <div *ngIf="messageContent.extraInfo.length > 4; else NoBuyers">
+                        <div class="instructions">
+                            Congrats. You're one step closer to getting your mana.
+                            All that's left is sharing your video with your buyers.
+                            In order to do this, click the link to your video.
+                            Then click the 'Edit video' button. 
+                            Finally, locate and click the 'Visibility' dropdown and hit 'Share Privately'.
+                        </div>
+                        <div class="instructions" style="margin-bottom: 20px;">
+                            Great. Below are your buyer's emails. 
+                            Click a checkbox to copy the email and paste it inside the 'Invitees' box.
+                        </div>
+                        <div class="error-message" *ngIf="clipboardError">
+                            There was an error copying to your clipboard.
+                            If this persists, continue to click the checkboxes and manually copy each email.
+                        </div>
+                        <div *ngFor="let emails of messageContent.extraInfo; let i = index" class="emails">
+                            <div *ngIf="(i + 4) < messageContent.extraInfo.length">
+                                <input type="checkbox" #myCheckbox (click)="copyLabel(myCheckbox, ( i + 4 ))">
+                                <label class="email">{{messageContent.extraInfo[i + 4]}}</label>
+                            </div>
+                        </div>
+                        <div class="error-message" *ngIf="sentVideoEmails && sendVideoError">
+                            Stand By. There was an issue finalizing everything on our end.
+                        </div>
+                        <div class="complete-message" *ngIf="sentVideoEmails && !sendVideoError">
+                            All set. Great Job.
+                        </div>
+                    </div>
+                    <ng-template #NoBuyers>
+                        <div class="instructions">
+                            Unfortunately, there were no buyers for the above video. 
+                            The video has been set to Inactive and you can reactivate this video and try again.
+                        </div>
+                    </ng-template>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.UpdatedPayment">
+                <div class="header">Updated Payment</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        You have successfully raised your bid for the video above.
+                        You can view the payment with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You've spent {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                    </div>
+                    <div class="instructions">
+                        A total of {{totalManaAmount | numberFormat}} Mana
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.FailedVideo">
+                <div class="header">Failed Video</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        Unfortunate. You had the video above scheduled for <a class="date">{{messageContent.extraInfo[2]}}</a> and fell short.
+                        All your buyers will have their mana returned.
+                        The video above will now be inactive and all your content will be labeled as <a class="scum">SCUM</a> until you finish a video successfully on Sivantis with at least one buyer.
+                    </div>
+                    <div class="instructions">
+                        Don't let this discourage you.
+                        You can always reactivate this content and try again.
+                        Try not to let this happen again.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.SuccessfulVideo">
+                <div class="header">Successful Video</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        <a class="complement">Excellent work.</a> You have successfully finished this video.
+                        All the hype this video generated will now go towards your rank progress.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.WarningMessage">
+                <div class="header">Warning</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        You have 48 hours to complete this video. Failure to complete this video will result in mana being returned to the buyers.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.ApprovedChannel">
+                <div class="header">Approved Channel</div>
+                <div class="info">
+                    <div class="instructions">
+                        The channel <a>{{messageContent.extraInfo[0]}}</a> has been approved.
+                    </div>
+                    <div class="instructions">
+                        You and your audience will now be able to fund this channel.
+                    </div>
+                    <div class="instructions">
+                        It's important to note there is a threshold you must maintain to continue purchasing content on Sivantis.
+                        The threshold is <a>{{minAWV * .9}}</a> average weekly viewers. 
+                        If you fall below this number, you will no longer be able to purchase content until you regain this threshold.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.DisapprovedChannel">
+                <div class="header">Disapproved Channel</div>
+                <div class="info">
+                    <div class="instructions">
+                        Unfortunately, the channel <a>{{messageContent.extraInfo[0]}}</a> has been disapproved. The reason:
+                    </div>
+                    <div class="instructions reason">{{messageContent.extraInfo[1]}}</div>
+                    <div class="instructions">
+                        Don't worry. Your channel isn't going anywhere yet. Fix the problem then head over to your channel page and resubmit your request. You can resubmit once a day, so check back in around this time tomorrow. 
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.ChannelPayment">
+                <div class="header">Channel Payment</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[1]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[2]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        <a>{{messageContent.extraInfo[0]}}</a> has successfully purchased the video above.
+                        You can view the payment with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You've spent {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.ChannelRefund">
+                <div class="header">Channel Refund</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[1]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[2]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        <a>{{messageContent.extraInfo[0]}}</a> has been successfully refunded for the video above.
+                        You can view the refund with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You've been refunded {{manaAmount | numberFormat}} Mana 
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.FundChannel">
+                <div class="header">Fund Channel</div>
+                <div class="info">
+                    <div class="instructions">
+                        You have successfully funded <a>{{messageContent.extraInfo[0]}}</a>.
+                    </div>
+                    <div class="instructions">
+                        You've sent {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                    </div>
+                </div>
+            </ng-container>
+            
+            <ng-container *ngSwitchCase="MessageEnum.FailedRefund">
+                <div class="header">Failed Refund</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        The video above has been flagged.
+                        Unfortunately your owed amount of <a>{{manaAmount | numberFormat}}</a> Mana didn't return successfully.
+                        However, Sivantis will make sure this issue is resolved.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.FailedChannelRefund">
+                <div class="header">Failed Channel Refund</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[1]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[2]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        The video above has been flagged.
+                        Unfortunately your owed amount of <a>{{manaAmount | numberFormat}}</a> Mana didn't return successfully for {{messageContent.extraInfo[0]}}.
+                        However, Sivantis will make sure this issue is resolved.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.UserWithdraw">
+                <div class="header">User Withdraw</div>
+                <div class="info">
+                    <div class="instructions">
+                        You have successfully withdrawn mana.
+                        Remember Sivantis a withdrawal fee of all user withdraws.
+                        You can view the withdraw with this transaction hash:
+                    </div>
+                    <div class="instructions">
+                        <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                    <div class="instructions">
+                        You recieved {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.FailedToSendEmails">
+                <div class="header">Failed To Send Emails</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions" style="text-align: start;">
+                        Unfortunate. You had the video above scheduled for <a class="date">{{messageContent.extraInfo[2]}}</a> and fell short.
+                        All your buyers will have their mana returned.
+                        The video above will now be inactive and all your content will be labeled as <a class="scum">SCUM</a> until you finish a video successfully on Sivantis.
+                    </div>
+                    <div class="instructions" style="text-align: start;">
+                        Why did this happen? The day before your set release date, you received a "Youtube Emails" message.
+                        In this message you were supposed to share this video with all your buyers. 
+                        You will know if you did it successfully if you clicked on all the checkboxes the message is no longer flashing gold.
+                    </div>
+                    <div class="instructions" style="text-align: start;">
+                        Don't let this discourage you.
+                        You can always reactivate this content and try again.
+                        Try not to let this happen again.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.SentVideo">
+                <div class="header">Sent Video</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <a class="link" href="https://www.youtube.com/watch?v={{messageContent.extraInfo[2]}}" target="_blank">Watch Video</a>
+                    <div class="instructions">
+                        This video is ready for your viewing. Make sure the youtube account you're logged in as is the same email you have on file.
+                    </div>
+                    <div class="instructions">
+                        Have any issues with the video? Send in a report.
+                    </div>
+                    <div class="report">
+                        <button class="button" (click)="reportVideo(messageContent.extraInfo[3])">Report Video</button>
+                    </div>
+                    
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.FailedAuctionPayment">
+                <div class="header">Failed Auction Payment</div>
+                <div class="info">
+                    <div class="video">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[0]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[1]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        Good news and bad news. Goods news, congrats on successfully finishing an auction.
+                        Bad news, the mana you earned didn't transfer properly. 
+                        This could be due to a plethora of reasons, but whatever the case we'll make sure you get your mana very soon.
+                    </div>
+                    <div class="instructions">
+                        Don't let this discourage you.
+                        Keep producing bigger and better content.
+                    </div>
+                </div>
+            </ng-container>
+          
+            <!-- Add ngSwitchCase for other enum values as needed -->
+          
+            <ng-container *ngSwitchDefault>
+                <div class="header">Message Center</div>
+                <div class="info">
+                    <div class="instructions">
+                       Welcome to your message center.
+                       This is where you'll get notified on your payments, rank, and video status.
+                       You can view any of your messages by clicking the messages on the left panel.
+                       Any message with a dot in front of it is marked as unread. 
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</body>

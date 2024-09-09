@@ -1,0 +1,74 @@
+<div class="modal-body">
+    <div *ngIf="bidContract; else channelContract">
+        <div *ngIf="approveContract; else increaseAllowance">
+            <div class="Header">Approve Bid Contract</div>
+            <div class="instructions">
+                To place bids on Sivantis, you need to approve the spending of
+                Polygon Decentraland Mana on Sivantis' Bid Service Smart Contract. Please follow the steps below:
+            </div>
+            <ul>
+                <li>Below is the link to allow the tranfer of a set amount of your polygon mana to our smart contract.</li>
+                <li>Once you approve this transaction, you will be able send mana to our bid service smart contract.</li>
+                <li>The allowance is linked to the crypto wallet, not your account with us. If you transact with multiple crypto wallets, you need to set an allowance for each one.</li>
+                <li>Each time you place a bid, you will lower the allowed mana you can send to our bid service smart contract. Heres an example:</li>
+            </ul>
+            <div class="example">
+                Lets say you set an allowance of 500 mana.
+                If you decide to place a bid worth 300 mana, your new allowance will be 200 mana.
+                If you were to place another bid worth 300 mana, you will get notified that you need to increase your allowance.
+                You can view your allowance <a class="goldText" routerLink="/Settings/CryptoWallet" target="_blank">Here</a>.
+            </div>
+            <button (click)="approveBidService()">Approve Contract</button>
+        </div>
+
+        <ng-template #increaseAllowance>
+            <div class="Header">Increase Bid Allowance</div>
+            <div class="instructions">
+                To continue placing bids on Sivantis, you need to increase your allowance of
+                Polygon Decentraland Mana. Please follow the steps below:
+            </div>
+            <ul>
+                <li>Below is the link to allow the tranfer of more polygon mana to our smart contract from your crypto address.</li>
+                <li>Your current allowance is <a class="goldText">{{allowance | numberFormat}}</a> mana and you tried to placed/raised a bid worth <a class="goldText">{{mana | numberFormat}}</a> mana.</li>
+                <li>To complete this transaction, you must first raise your allowance.</li>
+            </ul>
+            <button (click)="increaseBidAllowance()">Increase Allowance</button>
+        </ng-template>
+    </div> 
+
+    <ng-template #channelContract>
+        <div *ngIf="approveContract; else increaseAllowance">
+            <div class="Header">Approve Channel Contract</div>
+            <div class="instructions">
+                To fund a channel on Sivantis, you need to approve the spending of
+                Polygon Decentraland Mana on Sivantis' Channel Service Smart Contract. Please follow the steps below:
+            </div>
+            <ul>
+                <li>Below is the link to allow the tranfer of a set amount of your polygon mana to our smart contract.</li>
+                <li>Once you approve this transaction, you will be able send mana to our channel service smart contract.</li>
+                <li>The allowance is linked to the crypto wallet, not your account with us. If you transact with multiple crypto wallets, you need to set an allowance for each one.</li>
+                <li>Each time you fund a channel, you will lower the allowed mana you can send to our channel service smart contract. Heres an example:</li>
+            </ul>
+            <div class="example">
+                Lets say you set an allowance of 200 mana.
+                If you decide to fund a channel and send 150 mana, your new allowance will be 50 mana.
+                If you were to fund another channel and send 150 mana, you will get notified that you need to increase your allowance.
+                You can view your allowance <a class="goldText" routerLink="/Settings/CryptoWallet" target="_blank">Here</a>.
+            </div>
+            <button (click)="approveChannelService()">Approve Contract</button>
+        </div>
+        <ng-template #increaseAllowance>
+            <div class="Header">Increase Channel Funding Allowance</div>
+            <div class="instructions">
+                To continue funding channels on Sivantis, you need to increase your allowance of
+                Polygon Decentraland Mana. Please follow the steps below:
+            </div>
+            <ul>
+                <li>Below is the link to allow the tranfer of more polygon mana to our smart contract from your crypto address.</li>
+                <li>Your current allowance is <a class="goldText">{{allowance | numberFormat}}</a> mana and you tried to fund a channel by sending <a class="goldText">{{mana | numberFormat}}</a> mana.</li>
+                <li>To complete this transaction, you must first raise your allowance.</li>
+            </ul>
+            <button (click)="increaseChannelFundAllowance()">Increase Allowance</button>
+        </ng-template>
+    </ng-template>
+</div>

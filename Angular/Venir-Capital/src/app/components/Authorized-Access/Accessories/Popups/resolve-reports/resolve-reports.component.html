@@ -1,0 +1,31 @@
+<div class="modal-body">
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.close('Done')"></button>
+    <div class="contentThumbnail">
+        <img src="{{content.thumbnail}}" alt="...">
+    </div>
+    <div style="display: flex; margin-bottom: 10px;">
+        <div class="description" style="text-align: center;">Description</div>
+        <div class="timeStamp">Time</div>
+    </div>
+    <div *ngFor="let reports of content.contentReports; let i = index">
+        <div *ngIf="!reports.isResolved">
+            <div class="report">
+                
+                <div style="display: flex;">
+                    <div class="description">{{reports.report}}</div>
+                    <div class="timeStamp">{{reports.timeStamp | timestampConverter}}</div>
+                </div>
+            </div>
+            <div class="buttons">
+                <button type="button" class="btn btn-light" (click)="ignore(content.contentReports[i].reporterID)">Ignore</button>
+                <button type="button" class="btn btn-light" ngbAutofocus (click)="resolve(content.contentReports[i].reporterID)" >Resolve</button>
+            </div>
+        </div>
+        
+    </div>
+</div>
+<div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="ignoreAll()" >Ignore All</button>
+        <button type="button" class="btn btn-light" ngbAutofocus (click)="resolveAll()" >Resolve All</button>
+</div>
+

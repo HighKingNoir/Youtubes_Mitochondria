@@ -1,0 +1,81 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.noVideo{
+    text-align: center;
+
+}
+
+.video{
+    position: relative;
+    display: flex;
+    margin-bottom: 15px;
+    justify-content: space-between;
+}
+
+.text{
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 17px;
+}
+
+.video::before {
+    content: "";
+    position: absolute;
+    border-radius: 5px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(105, 105, 105, 0.25);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.3s ease; /* Add a smooth transition effect */
+}
+
+/* Change the background when the video element is hovered */
+.video:hover::before {
+    opacity: 1;
+    
+}
+
+.video.selected::before {
+    content: "";
+    position: absolute;
+    border-radius: 5px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none; /* Allows mouse events to pass through to the underlying content */
+    transition: opacity 0.3s ease; /* Add a smooth transition effect */
+}
+
+/* Change the background when the video element is hovered */
+.video.selected::before {
+    background-color: rgba(191, 191, 191, 0.25); /* Your selected background color */
+    opacity: 1;
+}
+
+
+
+
+.video .thumbnail img{
+    margin-right: 10px;
+    width: 130px;
+    height: 130px;
+    border-radius: 5px;
+}
+
+.video .descriptors{
+    width: 100%;
+}
+
+
+.modal-footer{
+    display: flex;
+    justify-content: space-between;
+}

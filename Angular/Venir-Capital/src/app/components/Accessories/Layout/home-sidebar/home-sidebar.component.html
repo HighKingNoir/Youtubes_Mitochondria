@@ -1,0 +1,38 @@
+<div class="sidebar">
+    <div class="route-Section">
+            <button class="nav-Button" routerLink="" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active" [ngClass]="{ 'active': isActiveHomeRoute() }"><i class="fa-solid fa-house"></i>Home</button>
+            <button class="nav-Button" routerLink="/Channels" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-tv"></i>Channels</button>
+            <!-- <button class="nav-Button" routerLink="/LeaderBoard" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-ranking-star"></i>Leaderboard</button> -->
+            <button class="nav-Button" routerLink="/PayLater" routerLinkActive="active" [disabled]="!isLoggedIn"><i class="fa-solid fa-cart-shopping"></i>Pay Later</button>
+            <button class="nav-Button" (click)="getMoreMana()">Get More Mana</button>
+    </div>
+    <div class="your-Channel-Section">
+        <div class="header">Your Channel</div>
+        <div *ngIf="isLoggedIn && userChannels.length != 0">
+            <div class="userChannel" *ngFor="let userChannel of userChannels" routerLink="/Channel/{{userChannel.channelName}}">
+                <img class="channelLogo" src="{{userChannel.channelLogo}}" alt="">
+                <div class="channelName">{{userChannel.channelName}} </div>
+
+            </div>
+        </div>
+        <a *ngIf="userChannels.length != maxNumberOfChannels" (click)="navigateToCreateChannel($event)">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Channel</span>
+        </a>
+    </div>
+    <div class="channel-Section">
+        <div class="header">Subscriptions</div>
+            <div class="userChannel" *ngFor="let channelSubscription of channelsSubscribedTo" routerLink="/Channel/{{channelSubscription.channelName}}">
+                <img class="channelLogo" src="{{channelSubscription.channelLogo}}" alt="">
+                <div class="channelName">{{channelSubscription.channelName}} </div>
+            </div>
+    </div>
+    <div class="footer-Section">
+        <div class="footerText">
+            <a class="link" href="/Info/TOS" target="_blank">Terms of Service</a>
+            <a class="link" href="/Info/Privacy" target="_blank">Privacy Policy</a>
+            <a class="link" (click)="openLimitedUsePolicy()">Limited Use Policy</a>
+            <a style="cursor: default;">&copy; <a></a>{{year}} Noirelic LLC</a>
+        </div>
+    </div>
+</div>
