@@ -1,0 +1,32 @@
+*{
+    background-color: #3f3f3f;
+    color: #d5d5d5;
+}
+
+.Header{
+    margin-bottom: 20px;
+    font-size: 25px;
+    text-align: center;
+    color: white;
+}
+
+.formHeader{
+    display: flex;
+}
+
+.counter{
+    margin-left: 5px;
+}
+
+a{
+    color: gold !important;
+}
+
+textarea{
+    width: 100%;
+    resize: none;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+    margin-bottom: 15px;
+}

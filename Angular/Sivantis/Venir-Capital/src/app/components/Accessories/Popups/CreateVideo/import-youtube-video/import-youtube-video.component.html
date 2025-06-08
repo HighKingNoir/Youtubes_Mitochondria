@@ -1,0 +1,34 @@
+<div class="modal-header">
+    <h4 class="modal-title">Import Your Youtube Video</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+    <div class="import-Container" >
+        <div class="completeBuild">
+            <div class="text">Already finshed the Youtube video?</div>
+            <button class="mainButton" (click)="importYoutubeVideo()">Import Finished Video</button>
+            <div class="text mistake" *ngIf="mistake">{{mistake}}</div>
+        </div>
+        <div class="inDevelopment">
+            <div class="tokens">
+                <div class="token-Header">
+                    Tokens Available
+                    <span class="icon" triggers="click" placement="right" ngbTooltip="Sivantis Tokens can be used to post content you haven't finished yet. 
+                    Let's say the main video you're working on won't be done in a week. 
+                    Post your trailer and come back when the main video is done." container="body"><i class="fa-regular fa-circle-question"></i></span> 
+                </div>
+                <div class="token-available">
+                    <div>{{tokens}}</div>
+                    <img [src]="SivantisToken" alt="">
+                </div>
+                
+            </div>
+            <button class="mainButton" [disabled]="tokens == 0" (click)="videoInDevelopment()">Video In Development</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+

@@ -1,0 +1,41 @@
+.sidebar{
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    border-right: solid #3d3d3d 1px;
+    background-color: #101010;
+    left: 0;
+    width: 200px;
+    height: 100%;
+    top: 65px;
+}
+
+.navigation{
+    padding: 0 10px 3px 5px;
+    border-bottom: solid #3d3d3d 1px;
+    display: flex;
+    flex-direction: column;
+}
+
+.navigation .nav-Button{
+    margin-top: 3px;
+    width: 100%;
+    justify-content: left;
+    align-items: center;
+    display: flex;
+    background-color: #101010;
+    color: white;
+    border-color: #101010;
+    border-radius: 10px;
+    border-style: none;
+    
+}
+
+.navigation .nav-Button:hover{
+    background-color: #313131;
+}
+
+.nav-Button i{
+    padding-right: 5px;
+    width: 30px;
+}

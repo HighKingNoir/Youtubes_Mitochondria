@@ -1,0 +1,9 @@
+<div class="sidebar">
+    <div class="navigation">
+        <button class="nav-Button active" routerLink="/AuthorizedUser/Logs/All"><i class="fa-solid fa-book"></i>Contract Logs</button>
+        <button class="nav-Button" routerLink="/AuthorizedUser/Channels/Updates"><i class="fa-solid fa-tv"></i>Channels</button>
+        <button *ngIf="AuthorizedAdmin()" class="nav-Button" routerLink="/AuthorizedUser/AdminDashboard"><i class="fa-solid fa-chart-column"></i>Admin Dashboard</button>
+        <button class="nav-Button" routerLink="/AuthorizedUser/Reports"><i class="fa-solid fa-flag"></i>Reports</button>
+    </div>
+</div>
+

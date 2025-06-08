@@ -1,0 +1,466 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_bidAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_channelAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_warChestAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "_authorizedAddresses",
+				"type": "address[]"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "addAuthorizedAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_averageWeeklyViewers",
+				"type": "uint256"
+			}
+		],
+		"name": "addChannel",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_userID",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_personalWallet",
+				"type": "address"
+			},
+			{
+				"internalType": "uint8",
+				"name": "_rank",
+				"type": "uint8"
+			}
+		],
+		"name": "addContentCreator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "authorizedAddresses",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "contentID",
+				"type": "string"
+			}
+		],
+		"name": "bidServiceAllowList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "channelName",
+				"type": "string"
+			}
+		],
+		"name": "channelServiceAllowList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_maxWinners",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_minEntryCost",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_creatorAddress",
+				"type": "address"
+			}
+		],
+		"name": "createNewAuction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_userID",
+				"type": "string"
+			}
+		],
+		"name": "increaseCreatorRank",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentCreatorID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_pricePerHundredAWV",
+				"type": "uint256"
+			}
+		],
+		"name": "payForContent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "string[]",
+				"name": "previousWinners",
+				"type": "string[]"
+			}
+		],
+		"name": "reactivateContent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_authorizedAddresses",
+				"type": "address"
+			}
+		],
+		"name": "removeAuthorizedAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_userID",
+				"type": "string"
+			}
+		],
+		"name": "returnBid",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			}
+		],
+		"name": "sendMana",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentCreatorID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			}
+		],
+		"name": "sendRefundPayment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentCreatorID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			}
+		],
+		"name": "sendWatchNowPayLaterRefundPayment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "creatorID",
+				"type": "string"
+			}
+		],
+		"name": "sendWeeklyMana",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "string[]",
+				"name": "previousWinners",
+				"type": "string[]"
+			}
+		],
+		"name": "setAuctionToActive",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			}
+		],
+		"name": "setAuctionToInactive",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_newAverageWeeklyViewers",
+				"type": "uint256"
+			}
+		],
+		"name": "updateAverageWeeklyViewers",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_userID",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_newPersonalWallet",
+				"type": "address"
+			}
+		],
+		"name": "updatePersonalWallet",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "contentCreatorID",
+				"type": "string"
+			}
+		],
+		"name": "warChestAllowList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentCreatorID",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_pricePerHundredAWV",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "paymentIncrements",
+				"type": "uint8"
+			}
+		],
+		"name": "watchNowPayLater",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_channelName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contentID",
+				"type": "string"
+			}
+		],
+		"name": "watchNowPayLaterPayment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]

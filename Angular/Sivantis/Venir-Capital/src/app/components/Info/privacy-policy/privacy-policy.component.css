@@ -1,0 +1,93 @@
+body{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #191919;
+    height: 65px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+img{
+    height: 35px;
+    
+  }
+
+  h1,
+h1:hover {
+    font-family: Avantgarde, TeX Gyre Adventor, URW Gothic L, sans-serif;
+    letter-spacing: .5px;
+    margin-top: 7px;
+      font-size:  25px;
+      margin-left: 20px;
+      cursor: pointer;
+      color: rgba(255, 217, 0, 0.89);
+  }
+
+.Privacy-Container{
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+@media screen and (max-width: 600px) {
+    .Privacy-Container {
+        width: 100%;
+    }
+}
+
+.headerText{
+    font-size: 25px;
+}
+
+.welcome{
+    font-size: 20px;
+    margin-top: 15px;
+}
+
+.bold{
+    text-decoration: none;
+    font-weight: 700;
+    color: white
+}
+
+li{
+    margin-top: 10px;
+}
+
+.tableItem{
+    margin-top: 0px;
+}
+
+.link{
+    text-decoration: none;
+}
+
+.info-Container{
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    justify-items: flex-start;
+    border-radius: 10px;
+}
+
+.section{
+    margin-bottom: 15px;
+}
+
+.sectionHeader{
+    font-weight: 700;
+    font-size: 18px;
+    color: rgba(218, 185, 1, 0.89);
+}

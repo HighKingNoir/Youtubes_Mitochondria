@@ -1,0 +1,21 @@
+<div class="modal-body">
+    <div class="Header">Report Video</div>
+    <div class="instructions" style="margin-bottom: 20px;">If you see "This video is private" screen, make sure you're logged in as <a>{{userEmail}}</a>.</div>
+    <div class="instructions" style="margin-bottom: 20px;">Otherwise</div>
+    <form action="" [formGroup]="reportVideoForm">
+        <div class="formHeader" style="margin-bottom: 5px;">
+            <div class="instructions">Provide a description of the issue you're facing.
+                Providing visual aid will help a lot too.
+                If you wish, provide a link to an image or video on twitter or youtube. {{ currentReportLength }}/300</div>
+            <div class="counter"></div>
+        </div>
+        <div class="report-Selection">
+            <textarea name="reportText" id="reportText" (input)="updateReportCounter()" placeholder="Enter the issue" rows="10" maxlength="300" (keydown)="onReportTextareaKeydown($event)" formControlName="report" (input)="resizeReportTextarea()" ></textarea>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <div class="submit">
+        <button type="button" class="btn btn-light" [disabled]="!reportVideoForm.valid" ngbAutofocus (click)="submit()" >Submit</button>
+    </div>
+</div>

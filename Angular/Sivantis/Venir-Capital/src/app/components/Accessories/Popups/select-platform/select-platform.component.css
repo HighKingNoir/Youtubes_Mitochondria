@@ -1,0 +1,107 @@
+
+.modal-body{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #3f3f3f;
+}
+
+.circle-outer {
+    position: relative;
+    border: 2px solid rgb(29, 29, 29);
+    padding: 0;
+    margin: 1em auto;
+    width: 430px;
+    height: 430px;
+    border-radius: 50%;
+    list-style: none;
+    overflow: hidden;
+  }
+  .circle {
+    position: absolute;
+    border: 1px solid black;
+    padding: 0;
+    margin: 1em auto;
+    width: 580px;
+    height: 580px;
+    border-radius: 50%;
+    list-style: none;
+    overflow: hidden;
+    left: -70px;
+    top: -95px;
+  }
+
+  .background{
+    border: 1px solid black;
+  }
+ 
+  li .background {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 50%;
+    transform-origin: 0% 100%;
+  }
+  .content {
+    position: absolute;
+    z-index: 30;
+    text-align: center;
+    width: 200px;
+  }
+  .content .icon {
+    font-size: 80px;
+    color: #000;
+  }
+  .content.first {
+    left: 13%;
+    top: 25%;
+    cursor: pointer;
+  }
+  .content.second {
+    right: 15%;
+    top: 25%;
+    cursor: pointer;
+  }
+  .content.third {
+    bottom: 16%;
+    left: 32%;
+    cursor: pointer;
+  }
+  
+  li:first-child .background {
+    transform: rotate(0deg) skewY(30deg);
+  }
+  li:nth-child(2) .background {
+    transform: rotate(120deg) skewY(30deg);
+  }
+  li:nth-child(3) .background {
+    transform: rotate(240deg) skewY(30deg);
+  }
+  li:first-child .background {
+    background: 	#6441a5;
+  }
+  li:nth-child(2) .background {
+    background: #00e701;
+  }
+  li:nth-child(3) .background {
+    background: #FF0000;
+  }
+
+  p{
+    font-size: 20px;
+    color: black;
+  }
+
+  .note{
+    color: #9b9b9b;
+  }
+
+  .text{
+    color: white;
+    text-align: center;
+    font-size: 20px !important;
+  }

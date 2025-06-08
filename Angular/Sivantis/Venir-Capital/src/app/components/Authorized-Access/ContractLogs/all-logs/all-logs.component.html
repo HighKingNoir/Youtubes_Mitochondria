@@ -1,0 +1,59 @@
+<body>
+    <app-header></app-header>
+    <app-authorized-access-sidebar></app-authorized-access-sidebar>
+        <div class="sub-Header">
+            <div class="sub-Header-Title">All Logs</div>
+            <div class="log-Categories">
+                <button class="mainButton active"  routerLink="/AuthorizedUser/Logs/All">All</button>
+                <button class="mainButton"  routerLink="/AuthorizedUser/Logs/Failed">Failed</button>
+            </div>
+        </div>
+        <div class="logs">
+            <div *ngFor="let log of allLogs" class="latest-Logs-Info" [ngClass]="getStatusClass(log.contractTransactionReceipt.contractStatusEnum)">
+                <div *ngIf="log.contractEnum === 'MultiCall' || log.contractEnum === 'ClientMultiCall'; else SingleFunction">
+                    <div class="layer-One">
+                        <div class="contractStatusEnum">{{log.contractTransactionReceipt.contractStatusEnum}} </div>
+                        <div class="contractEnum">{{log.contractEnum}}</div>
+                        <div>Log ID: {{log.logId}}</div>
+                    </div>
+                    <div class="layer-Two">
+                        <div class="contractFunctionEnum" *ngIf="log.contractEnum === 'MultiCall'">{{log.contractFunctionDetails[0].contractFunctionEnum}}</div>
+                        <div *ngIf="log.totalManaAmount && log.contractTransactionReceipt.contractStatusEnum === 'Completed'" class="totalManaAmount">Total Mana Transfered: {{log.totalManaAmount | numberFormat}}</div>
+                        <div *ngIf="log.manaToCompany && log.contractTransactionReceipt.contractStatusEnum === 'Completed'" class="manaToCompany">Mana to Company: {{log.manaToCompany | numberFormat}}</div>
+                        <div *ngIf="log.contractTransactionReceipt.gasUsed" class="gas">Gas Used: {{log.contractTransactionReceipt.gasUsed| numberFormat}}</div>
+                    </div>
+                    <div class="layer-Three">
+
+                    </div>
+                    <div class="layer-Four">
+                        <div class="transactionHash" *ngIf="log.contractTransactionReceipt.contractStatusEnum === 'Completed'">Hash: {{log.contractTransactionReceipt.transactionHash}}</div>
+                        <div class="creationDate">{{getDate(log.creationDate) | date}}</div>
+                    </div>  
+                </div>
+                <ng-template #SingleFunction>
+                    <div *ngFor="let contractFunctionDetails of log.contractFunctionDetails">
+                        <div class="layer-One">
+                            <div class="contractStatusEnum">{{log.contractTransactionReceipt.contractStatusEnum}} </div>
+                            <div class="contractEnum">{{log.contractEnum}}</div>
+                            <div>Log ID: {{log.logId}}</div>
+                        </div>
+                        <div class="layer-Two">
+                            <div class="contractFunctionEnum">{{contractFunctionDetails.contractFunctionEnum}}</div>
+                            <div *ngIf="log.totalManaAmount && log.contractTransactionReceipt.contractStatusEnum === 'Completed'" class="totalManaAmount">Total Mana Transfered: {{log.totalManaAmount | numberFormat}}</div>
+                            <div *ngIf="log.manaToCompany && log.contractTransactionReceipt.contractStatusEnum === 'Completed'" class="manaToCompany">Mana to Company: {{log.manaToCompany | numberFormat}}</div>
+                            <div *ngIf="log.contractTransactionReceipt.gasUsed" class="gas">Gas Used: {{log.contractTransactionReceipt.gasUsed| numberFormat}}</div>
+                        </div>
+                        <div class="layer-Three">
+                            <div *ngIf="contractFunctionDetails.contentID" class="contentID">Content ID: {{contractFunctionDetails.contentID}}</div>
+                            <div *ngIf="contractFunctionDetails.userID" class="userID">User ID: {{contractFunctionDetails.userID}}</div>
+                            <div *ngIf="contractFunctionDetails.channelName" class="channelName">Channel Name: {{contractFunctionDetails.channelName}}</div>
+                        </div>
+                        <div class="layer-Four">
+                            <div class="transactionHash" *ngIf="log.contractTransactionReceipt.contractStatusEnum === 'Completed'">Hash: {{log.contractTransactionReceipt.transactionHash}}</div>
+                            <div class="creationDate">{{getDate(log.creationDate) | date}}</div>
+                        </div>  
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+</body>

@@ -1,0 +1,77 @@
+
+<div class="sidebar">
+    <ng-template [ngIf]="!isLoggedIn()" [ngIfElse]="signedIn">
+        <div class="youtubeInfo" >
+            <div class="channel-icon" (click)="getYoutubeAccount()"><img class="YoutubeLogo small" [src]="YoutubeLogo" alt="">Connect Account</div>
+            <div class="info">
+                <button class="connectYoutube-Button" (click)="getYoutubeAccount()"><img class="YoutubeLogo" [src]="YoutubeLogo" alt="">Link Account </button>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #signedIn>
+        <div class="youtubeInfo" >
+            <img class="ProfilePicture" src="{{UserInfo?.info?.picture}}" alt="">
+            <div class="info">
+                
+                <h3>{{UserInfo?.info?.name}}</h3>
+                <button class="connectYoutube-Button" (click)="getYoutubeAccount()"><img class="YoutubeLogo" [src]="YoutubeLogo" alt="">Switch Account</button>
+            </div>
+        </div>
+       </ng-template>
+    <div class="categories">
+        <ul>
+            <li class = "list" (click)="openCreate()">
+                <a >
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Create</span>
+                </a>
+            </li>
+            <span style="margin-top: 3px;"></span>
+            <li class = "list" routerLink="/Content" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                <a >
+                    <i class="fa-solid fa-clapperboard"></i>
+                    <span>Content</span>
+                </a>
+            </li>
+            <span style="margin-top: 3px;"></span>
+            <li class = "list" routerLink="/Content/Purchased" routerLinkActive="active">
+                <a >
+                    <i class="fa-solid fa-dollar-sign"></i>
+                    <span>Purchased</span>
+                </a>
+            </li>
+            <span style="margin-top: 3px;"></span>
+            <li class = "list" routerLink="/Content/Dashboard" routerLinkActive="active">
+                <a >
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <span style="margin-top: 3px;"></span>
+            <li class = "list" (click)="openContentTeir()">
+                <a>
+                    <i class="fa-solid fa-star"></i>
+                    <span>Rank</span>
+                </a>
+            </li>
+            <span style="margin-top: 3px;"></span>
+            <li class = "list" (click)="openWarChestModal()">
+                <a >
+                    <i class="fa-solid fa-sack-dollar"></i>
+                    <span>WarChest</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="footer-Section">
+        <div class="footerText">
+            <a class="link" href="/Info/TOS" target="_blank">Terms of Service</a>
+            <a class="link" href="/Info/Privacy" target="_blank">Privacy Policy</a>
+            <a class="link" (click)="openLimitedUsePolicy()">Limited Use Policy</a>
+            <a style="cursor: default;">&copy;<a></a>  {{year}} Noirelic LLC</a>
+        </div>
+    </div>
+</div>
+
+
+

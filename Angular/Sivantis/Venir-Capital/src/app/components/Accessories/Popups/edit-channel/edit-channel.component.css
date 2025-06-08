@@ -1,0 +1,124 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-header{
+    display: flex;
+    justify-content: center;
+    font-size: 25px;
+}
+
+.header{
+    font-size: 20px;
+}
+
+.btn-close{
+    position: absolute;
+    right: 0;
+    margin-right: 15px;
+    background-color: gray;
+}
+
+.description{
+    display: flex;
+    padding-bottom: 5px;
+    align-items: center;
+}
+
+ .icon{
+    cursor: pointer;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.channelLogo{
+    margin-top: 20px;
+}
+
+.channelBanner{
+    margin-top: 20px;
+}
+
+.channelDescription{
+    margin-top: 20px;
+}
+
+.channelLinks{
+    margin-top: 20px;
+}
+
+
+.channelLinks-Selection{
+    display: flex;
+    justify-content: space-between;
+}
+
+.channelLinks-Selection .youtube{
+    display: flex;
+    align-items: center;
+}
+
+.channelLinks-Selection input{
+    margin: 0px 0px 0px 2px;
+    font-size: 12px;
+}
+
+ input{
+    border: 1px solid #7d7d7d;
+    padding-left: 5px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    width: 165px;
+    color: white;
+    background-color: #7d7d7d;
+    outline: none;
+    margin-right: 10px;
+}
+
+input::placeholder{
+    color: rgb(45, 45, 45);
+}
+
+
+.custom-file-input {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 5px;
+    background-color: #5b5b5b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.controlHeader{
+    margin-top: 20px;
+}
+
+textarea{
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+}
+ 
+
+.entered-Channel-Logo{
+    margin-left: 10px;
+    border-radius: 50%;
+    height: 35px;
+    width: 35px;
+}
+
+.entered-Channel-Banner{
+    margin-top: 5px;
+    width: 100%;
+    height: 100px;
+}
+
+.hidden-input {
+    display: none;
+}

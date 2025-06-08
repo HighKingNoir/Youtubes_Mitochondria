@@ -1,0 +1,11 @@
+<div class="modal-body">
+    <div class="text">There is a 10% cancellation fee. Do you wish to continue?</div>
+    <div class="refund">
+        <div class="refund-Header">Refund Amount</div>
+        <div class="refund-Amount">${{refundAmount}}</div>
+    </div>
+    <div class="buttons">
+        <button class="mainButton" (click)="this.activeModal.close('close');">Back</button>
+        <button class="mainButton" (click)="this.activeModal.close('refund content');">Refund</button>
+    </div>
+</div>

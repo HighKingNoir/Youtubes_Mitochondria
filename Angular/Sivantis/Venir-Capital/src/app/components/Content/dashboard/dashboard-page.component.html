@@ -1,0 +1,239 @@
+<body>
+    <app-header></app-header>
+    <app-channel-sidebar></app-channel-sidebar>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div class="content-Header">
+            <h2>Dashboard</h2>
+            <div class="dashboard-Update">(updates in: {{countdown}} sec)</div>
+        </div>
+        <div class="totals">
+            <div class="total">
+                <div class="total-Group">
+                    <div class="header">Mana</div>
+                    <div class="number">{{manaChange[0] | numberFormat}} <img class="decentralandLogo" src="{{decentralandLogo}}" alt=""></div>
+                    <div class="dollarAmount">(${{manaChange[0] * MANA_PRICE | numberFormat}})</div>
+                </div>
+                <div class="change-Container">
+                    <ng-container *ngIf="manaChange[1] > 0; else manaNegativeOrZero">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Positive">
+                                    {{manaChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Positive">
+                                    <i class="fa-solid fa-angle-up"></i> 
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                               up since last month
+                            </div>
+                        </div>          
+                    </ng-container>
+                    <ng-template #manaNegativeOrZero>
+                        <ng-container *ngIf="manaChange[1] < 0">
+                            <div class="changes">
+                                <div class="change-Indicators">
+                                    <div class="change-Value value-Negative">
+                                        {{manaChange[1].toFixed(1)}}%
+                                    </div>
+                                    <div class="change-Icon icon-Negative">
+                                        <i class="fa-solid fa-angle-down"></i>
+                                    </div>
+                                </div>  
+                                <div class="change-Text">
+                                   down since last month
+                                </div>
+                            </div>
+                        </ng-container>
+                        <ng-container *ngIf="manaChange[1] === 0">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Neutral">
+                                    {{manaChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Neutral">
+                                    <i class="fa-solid fa-minus"></i>
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                                since last month
+                            </div>
+                        </div>
+                        </ng-container>
+                    </ng-template>
+                </div>
+            </div>
+            <div class="total">
+                <div class="total-Group">
+                    <div class="header">Hype</div>
+                    <div class="number">{{hypeChange[0] | numberFormat}}</div>
+                </div>
+                <div class="change-Container">
+                    <ng-container *ngIf="hypeChange[1] > 0; else hypeNegativeOrZero">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Positive">
+                                    {{hypeChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Positive">
+                                    <i class="fa-solid fa-angle-up"></i> 
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                               up since last month
+                            </div>
+                        </div>          
+                    </ng-container>
+                    <ng-template #hypeNegativeOrZero>
+                        <ng-container *ngIf="hypeChange[1] < 0">
+                            <div class="changes">
+                                <div class="change-Indicators">
+                                    <div class="change-Value value-Negative">
+                                        {{hypeChange[1].toFixed(1)}}%
+                                    </div>
+                                    <div class="change-Icon icon-Negative">
+                                        <i class="fa-solid fa-angle-down"></i>
+                                    </div>
+                                </div>  
+                                <div class="change-Text">
+                                   down since last month
+                                </div>
+                            </div>
+                        </ng-container>
+                        <ng-container *ngIf="hypeChange[1] === 0">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Neutral">
+                                    {{hypeChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Neutral">
+                                    <i class="fa-solid fa-minus"></i>
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                                since last month
+                            </div>
+                        </div>
+                        </ng-container>
+                    </ng-template>
+                </div>
+            </div>
+            <div class="total">
+                <div class="total-Group">
+                    <div class="header">Videos</div>
+                    <div class="number">{{videoChange[0]}}</div>
+                </div>
+                <div class="change-Container">
+                    <ng-container *ngIf="videoChange[1] > 0; else videoNegativeOrZero">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Positive">
+                                    {{videoChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Positive">
+                                    <i class="fa-solid fa-angle-up"></i> 
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                               up since last month
+                            </div>
+                        </div>          
+                    </ng-container>
+                    <ng-template #videoNegativeOrZero>
+                        <ng-container *ngIf="videoChange[1] < 0">
+                            <div class="changes">
+                                <div class="change-Indicators">
+                                    <div class="change-Value value-Negative">
+                                        {{videoChange[1].toFixed(1)}}%
+                                    </div>
+                                    <div class="change-Icon icon-Negative">
+                                        <i class="fa-solid fa-angle-down"></i>
+                                    </div>
+                                </div>  
+                                <div class="change-Text">
+                                   down since last month
+                                </div>
+                            </div>
+                        </ng-container>
+                        <ng-container *ngIf="videoChange[1] === 0">
+                        <div class="changes">
+                            <div class="change-Indicators">
+                                <div class="change-Value value-Neutral">
+                                    {{videoChange[1].toFixed(1)}}%
+                                </div>
+                                <div class="change-Icon icon-Neutral">
+                                    <i class="fa-solid fa-minus"></i>
+                                </div>
+                            </div>
+                            <div class="change-Text">
+                                since last month
+                            </div>
+                        </div>
+                        </ng-container>
+                    </ng-template>
+                </div>
+            </div>
+            <div class="total">
+                <div class="total-Group">
+                    <div class="header">Rank</div>
+                    <div class="number">{{Titles[userRankData[0] - 1]}}</div>
+                </div>
+                <div class="progress">
+                    <div class="hype-Remaining">{{(HypeCap[userRankData[0] - 1] - userRankData[1]).toFixed(0)}} hype</div>
+                    <div class="progress-Text">till next rank up</div>
+                </div>
+            </div>
+        </div>
+        <div class="graph">
+            <div class="header">
+                <div class="title">Earnings</div>
+                <div class="durations">
+                    <div class="duration" [class.active]="activeDuration === 'year'" (click)="yearChart()">Year</div>
+                    <div class="duration" [class.active]="activeDuration === 'month'" (click)="monthChart()">Month</div>
+                    <div class="duration" [class.active]="activeDuration === 'week'" (click)="weekChart()">Week</div>
+                </div>
+            </div>
+            <div class="canvas-Container" >
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+        <div class="userStats">
+            <div class="Stats">
+                <div class="header">Top Videos</div>
+                <div class="video-Stats" >
+                    <div class="video-Container" *ngFor="let video of topVideos">
+                        <div class="thumbnail">
+                            <img src="{{video.thumbnail}}" alt="">
+                        </div>
+                        <div class="video-Body">
+                            <div class="contentName">{{video.contentName}}</div>
+                            <div class="contentType">{{video.contentType}}</div>
+                            <div class="hype">{{video.hype | numberFormat}} hype</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="Stats">
+                <div class="header">Upcoming Releases</div>
+                <div class="video-Stats" >
+                    <div class="video-Container" *ngFor="let video of upcomingVidoes">
+                        <div class="thumbnail">
+                            <img src="{{video.thumbnail}}" alt="">
+                        </div>
+                        <div class="video-Body">
+                            <div class="contentName">{{video.contentName}}</div>
+                            <div class="contentType">{{video.contentType}}</div>
+                            <div class="releaseDate">{{video.releaseDate | formateDate}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>     
+    </div>
+</body>

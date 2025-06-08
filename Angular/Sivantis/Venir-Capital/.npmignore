@@ -1,0 +1,9 @@
+node_modules/@walletconnect/modal/dist/_types/src/client.d.ts
+node_modules/@web3modal/core/dist/_types/src/controllers/ClientCtrl.d.ts
+node_modules/@web3modal/ethereum/dist/_types/src/client.d.ts
+node_modules/@web3modal/ethereum/dist/_types/src/utils.d.ts
+node_modules/@web3modal/html/dist/_types/src/client.d.ts
+
+node_modules/@walletconnect/modal/dist/_types/index.d.ts
+
+node_modules/@web3modal/ethereum/dist/_types/index.d.ts

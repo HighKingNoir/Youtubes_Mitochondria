@@ -1,0 +1,66 @@
+
+<body>
+    <app-header-search></app-header-search>
+    <app-home-sidebar></app-home-sidebar>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
+    <div class="sub-Header">
+            <button class="mainButton" routerLink="/UpcomingReleases">Upcoming Releases</button>
+            <button class="mainButton" routerLink="/MostHyped">Most Hyped</button>
+            <button class="mainButton" routerLink="/Inventions">Inventions</button>
+            <button class="mainButton" routerLink="/Innovations">Innovations</button>
+            <button class="mainButton" routerLink="/ShortFilms">Short films</button>
+            <button class="mainButton active" routerLink="">Movies</button>
+            <button class="mainButton" routerLink="/Sports">Sports</button>
+            <!-- <button class="mainButton" routerLink="/Concerts">Concerts</button> -->
+    </div>
+    <div class="videos">
+        <div class="card" *ngFor="let video of Content">
+            <img routerLink="/Buy/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+            <div class="card-body">
+              <h6 routerLink="/Buy/{{video.contentId}}" class="contentType">{{video.contentType}}</h6>
+              <div class="info"> 
+                <div routerLink="/Buy/{{video.contentId}}">
+                    <img class="youtubeProfilePicture" src="{{video.youtubeProfilePicture}}" alt="">
+                </div>
+                <div class="info-Colunm">
+                    <div class="first-Row" routerLink="/Buy/{{video.contentId}}">
+                        <h5 class="contentName">{{video.contentName}}</h5>
+                    </div>
+                    <div class="second-Row" routerLink="/Buy/{{video.contentId}}">
+                        <p class="youtubeUsername">{{video.youtubeUsername}}</p>
+                        <p class="isScum" *ngIf="video.isViolator">SCUM</p>
+                    </div>
+                    <div class="third-Row" routerLink="/Buy/{{video.contentId}}">
+                        <p class="releaseDate">Release: {{video.releaseDate | formateDate}}</p>
+                    </div>
+                    <div class="forth-Row" routerLink="/Buy/{{video.contentId}}">
+                        <p class="hype">{{video.hype | numberFormat}} hype</p>
+                        <div class="pricing-Group">
+                            <div class="communityBuyer" *ngIf="hasChannel(); else ChannelNeeded">
+                                <i class="fa-solid fa-users icon"></i>
+                                <p class="startingCost">${{getCost()}}</p>
+                            </div>
+                            <ng-template #ChannelNeeded>
+                                <p class="channelNeeded">Channel Needed</p>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+                <div class="options" placement="bottom-end" ngbDropdown container="body">
+                    <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
+                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                        <button class="dropdown-item" (click)="watchTrailer(video.youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
+                        <button class="dropdown-item" (click)="togglePayLater(video.contentId)"><i class="fa-solid fa-cart-shopping"></i>{{payLaterText(video.contentId)}}Pay Later</button>
+                    </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+</body>
+

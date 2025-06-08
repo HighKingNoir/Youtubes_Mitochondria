@@ -1,0 +1,122 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body .description{
+    display: flex;
+    padding-bottom: 5px;
+}
+
+.modal-body .limit{
+    padding-left: 5px;
+}
+
+
+.modal-body .icon{
+    cursor: pointer;
+    padding-left: 5px;
+
+}
+
+.modal-body input{
+    border: 1px solid #7d7d7d;
+    padding-left: 5px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    color: #d5d5d5;
+    width: 50%;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0; 
+}
+
+
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+
+textarea.ng-dirty.ng-touched.ng-invalid {
+    border: 1px solid red;
+    margin-bottom: 5px;
+    padding-bottom: 0px;
+}
+
+input.ng-touched.ng-invalid {
+    border: 1px solid red;
+    margin-bottom: 5px;
+}
+
+.videotitle-Selection textarea{
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+    margin-bottom: 15px;
+}
+
+.trailer-Link{
+    display: flex;
+    flex-direction: column;
+}
+
+.trailer-Link a{
+    color: #d5d5d5;
+}
+
+.trailerWarningMessage{
+    margin-top: 10px;
+    text-align: center;
+    color: yellow;
+}
+
+.trailerErrorMessage{
+    margin-top: 10px;
+    text-align: center;
+    color: red;
+}
+
+
+.removeTrailer{
+    border-style: none;
+    color: red;
+    margin-left: 10px;
+    border-radius: 10px;
+    font-weight: 900;
+}
+
+.videoDescription-Selection textarea{
+    width: 100%;
+    resize: none;
+    border-radius: 5px;
+    color: #d5d5d5;
+    padding-left: 5px;
+    margin-bottom: 15px;
+}
+
+.modal-footer .submit{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+
+.form-control{
+    border: 1px solid #7d7d7d;
+}
+
+
+.invalid{
+    border: 1px solid red;
+    margin-bottom: 5px;
+}

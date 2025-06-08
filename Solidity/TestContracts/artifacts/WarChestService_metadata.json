@@ -1,0 +1,483 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "_channelServiceAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "tokenAddress",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "errorMessage",
+						"type": "string"
+					}
+				],
+				"name": "FunctionError",
+				"type": "error"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "fallback"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_userID",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_personalWallet",
+						"type": "address"
+					},
+					{
+						"internalType": "uint8",
+						"name": "_rank",
+						"type": "uint8"
+					}
+				],
+				"name": "addContentCreator",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_newContractAddress",
+						"type": "address"
+					}
+				],
+				"name": "addOverseer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "allowedAddresses",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "basePay",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "channelServiceAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "contentID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "channelName",
+						"type": "string"
+					}
+				],
+				"name": "findBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "balance",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "userID",
+						"type": "string"
+					}
+				],
+				"name": "findContentCreatorByID",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "userID",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "personalWallet",
+						"type": "address"
+					},
+					{
+						"internalType": "int256",
+						"name": "balance",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "rank",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getAllContentCreators",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "userID",
+								"type": "string"
+							},
+							{
+								"internalType": "address",
+								"name": "personalWallet",
+								"type": "address"
+							},
+							{
+								"internalType": "int256",
+								"name": "balance",
+								"type": "int256"
+							},
+							{
+								"internalType": "uint8",
+								"name": "rank",
+								"type": "uint8"
+							}
+						],
+						"internalType": "struct WarChestService.ContentCreator[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_userID",
+						"type": "string"
+					}
+				],
+				"name": "getCreatorsBalance",
+				"outputs": [
+					{
+						"internalType": "int256",
+						"name": "",
+						"type": "int256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_userID",
+						"type": "string"
+					}
+				],
+				"name": "increaseCreatorRank",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_newBasePay",
+						"type": "uint256"
+					}
+				],
+				"name": "raiseBasePay",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_contentID",
+						"type": "string"
+					},
+					{
+						"internalType": "string[]",
+						"name": "previousWinners",
+						"type": "string[]"
+					}
+				],
+				"name": "reactivateContent",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_contentCreatorID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_contentID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_channelName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "receivePayment",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "overseerAddress",
+						"type": "address"
+					}
+				],
+				"name": "removeOverseer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_contentCreatorID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_contentID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_channelName",
+						"type": "string"
+					}
+				],
+				"name": "sendRefundPayment",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_contentCreatorID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_contentID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_channelName",
+						"type": "string"
+					}
+				],
+				"name": "sendWatchNowPayLaterRefundPayment",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "creatorID",
+						"type": "string"
+					}
+				],
+				"name": "sendWeeklyMana",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_userID",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_newPersonalWallet",
+						"type": "address"
+					}
+				],
+				"name": "updatePersonalWallet",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_userID",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_dollarAmountInWei",
+						"type": "uint256"
+					}
+				],
+				"name": "userWithdraw",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "receive"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"TestContracts/WarChestService.sol": "WarChestService"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol": {
+			"keccak256": "0xfe4e8bb4861bb3860ba890ab91a3b818ec66e5a8f544fb608cfcb73f433472cd",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://644cff84052e1e82b5bb502b2a46e8f142a62b0db4cd9b38200798ba8373c6f7",
+				"dweb:/ipfs/QmTa99QHrJBn3SXDizquPBUiTxVCNKQrHgaWJhuds5Sce2"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0xe06a3f08a987af6ad2e1c1e774405d4fe08f1694b67517438b467cecf0da0ef7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://df6f0c459663c9858b6cba2cda1d14a7d05a985bed6d2de72bd8e78c25ee79db",
+				"dweb:/ipfs/QmeTTxZ7qVk9rjEv2R4CpCwdf8UMCcRqDNMvzNxHc3Fnn9"
+			]
+		},
+		"TestContracts/WarChestService.sol": {
+			"keccak256": "0x924bd3942207bc51e12231556e32c33fc67dc672f9bab9ce30c83e7100214ef6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1e8920bea2cc1bb107616af27ee54aa43f770147c13847e40b60196db89e4c1b",
+				"dweb:/ipfs/QmUUkiVxaEnaLxTJMukZxu6t17F9UZREkcp79SJnaNiLpw"
+			]
+		}
+	},
+	"version": 1
+}

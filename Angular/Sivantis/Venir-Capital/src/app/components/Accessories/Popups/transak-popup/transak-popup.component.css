@@ -1,0 +1,47 @@
+*{
+    background-color: #3f3f3f;
+    color: #d5d5d5;
+}
+
+.modal-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.Header{
+    margin-bottom: 20px;
+    font-size: 25px;
+    text-align: center;
+    color: white;
+}
+
+.instructions{
+    margin-bottom: 15px;
+}
+
+ul{
+    text-align: start;
+    margin-bottom: 15px;
+}
+
+a{
+    color: gold;
+    cursor: none;
+    text-decoration: none;
+}
+
+img{
+    width: 100%;
+}
+
+.route{
+    margin-top: 20px;
+    font-size: 25px;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: underline;
+}

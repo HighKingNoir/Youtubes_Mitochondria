@@ -1,0 +1,129 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "_authorizedAddresses",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "addAuthorizedAddress",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "authorizedAddresses",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "transactions",
+						"type": "bytes"
+					}
+				],
+				"name": "multiSend",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_authorizedAddresses",
+						"type": "address"
+					}
+				],
+				"name": "removeAuthorizedAddress",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Stefan George - <stefan@gnosis.io>Richard Meissner - <richard@gnosis.io>",
+			"kind": "dev",
+			"methods": {
+				"multiSend(bytes)": {
+					"details": "Sends multiple transactions and reverts all if one fails.",
+					"params": {
+						"transactions": "Encoded transactions. Each transaction is encoded as a packed bytes of                     operation has to be uint8(0) in this version (=> 1 byte),                     to as a address (=> 20 bytes),                     value as a uint256 (=> 32 bytes),                     data length as a uint256 (=> 32 bytes),                     data as bytes.                     see abi.encodePacked for more information on packed encoding"
+					}
+				}
+			},
+			"title": "Multi Send Call Only - Allows to batch multiple transactions into one, but only calls",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"multiSend(bytes)": {
+					"notice": "The code is for most part the same as the normal MultiSend (to keep compatibility),         but reverts if a transaction tries to use a delegatecall.This method is payable as delegatecalls keep the msg.value from the previous call         If the calling method (e.g. execTransaction) received ETH this would revert otherwise"
+				}
+			},
+			"notice": "The guard logic is not required here as this contract doesn't support nested delegate calls",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"TestContracts/MultiCallTest.sol": "MultiSendCallOnly"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"TestContracts/MultiCallTest.sol": {
+			"keccak256": "0x69ed36289c2556cd81a55e1f4a5acdcd4fec5eaf880c9ffc3ed52e4f756bf8c2",
+			"license": "LGPL-3.0-only",
+			"urls": [
+				"bzz-raw://7b5575e9be05cc7f31d587b3364eba43a50e6de876d465602f9c2cce6c74fa97",
+				"dweb:/ipfs/QmUXKXdsVWrm9Kd9H3mLJjTPKVva2cpVvNnmM2gBMhz1CV"
+			]
+		}
+	},
+	"version": 1
+}

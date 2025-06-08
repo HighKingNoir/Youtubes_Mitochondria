@@ -1,0 +1,84 @@
+<body>
+    <app-header></app-header>
+    <app-profile-sidebar></app-profile-sidebar>
+    <div class="content">
+        <div class="alert-Container">
+            <ngb-alert
+            *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+            {{ alert.message }}
+          </ngb-alert>
+        </div>
+        <div class="header">
+            <h2>Security</h2>
+        </div>
+        <div class="settings">
+            <form [formGroup]="passwordForm" class="form">
+                <div class="form-Header">Password</div>
+                <div class="form-Info">
+                    <div class="input-Container">
+                        <div class="input-box" [ngClass]="{ 'error-Border': passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched && passwordForm.get('currentPassword')?.value !== ''}">
+                            <input [attr.type]="showCurrentPassword ? 'text' : 'password'"  name="currentPassword" id="currentPassword" [formControlName]="'currentPassword'" required>
+                            <label for="currentPassword" >Current Password</label>
+                        </div>
+                        <span class="icon" [ngClass]="{ 'error-Border': passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched && passwordForm.get('currentPassword')?.value !== ''}" (click)="toggleCurrentPasswordVisibility()" >
+                            <i class="fa-solid fa-eye" *ngIf="showCurrentPassword; else Closed"></i>
+                            <ng-template #Closed>
+                                <i class="fa-solid fa-eye-slash" ></i>
+                            </ng-template>
+                        </span>
+                    </div>
+                    <div class="input-Container">
+                        <div class="input-box" [ngClass]="{ 'error-Border': passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.value !== '' }">
+                            <input [attr.type]="showNewPassword ? 'text' : 'password'"  name="newPassword" id="newPassword" [formControlName]="'newPassword'" required>
+                            <label for="newPassword" >New Password</label>
+                        </div>
+                        <span class="icon" [ngClass]="{ 'error-Border': passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.value !== '' }" (click)="toggleNewPasswordVisibility()" >
+                            <i class="fa-solid fa-eye" *ngIf="showNewPassword; else Closed"></i>
+                            <ng-template #Closed>
+                                <i class="fa-solid fa-eye-slash" ></i>
+                            </ng-template>
+                        </span>
+                    </div>
+                    <div class="input-Container">
+                        <div class="input-box" [ngClass]="{ 'error-Border': passwordForm.errors?.['passwordmatcherror'] && passwordForm.get('confirmNewPassword')?.touched && passwordForm.get('newPassword')?.touched }">
+                            <input [attr.type]="showRetryNewPassword ? 'text' : 'password'"  name="confirmNewPassword" id="confirmNewPassword" [formControlName]="'confirmNewPassword'" required>
+                            <label for="confirmNewPassword">Confirm Password</label>
+                        </div>
+                        <span class="icon" [ngClass]="{ 'error-Border': passwordForm.errors?.['passwordmatcherror'] && passwordForm.get('confirmNewPassword')?.touched && passwordForm.get('newPassword')?.touched }" (click)="toggleRetryNewPasswordVisibility()" >
+                            <i class="fa-solid fa-eye" *ngIf="showRetryNewPassword; else Closed"></i>
+                            <ng-template #Closed>
+                                <i class="fa-solid fa-eye-slash" ></i>
+                            </ng-template>
+                        </span>
+                    </div>
+                    <div *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched ||
+                                passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched " class="error-message password">
+                        <div>Password must contain:</div>
+                        <li>8 - 20 charecters</li>
+                        <li>At least 1 uppercase letter</li>
+                        <li>At least 1 digit</li>
+                        <li>At least 1 special charecter</li>
+                    </div>
+                    <div class="error-message" *ngIf="passwordForm.errors?.['passwordmatcherror'] && passwordForm.get('confirmNewPassword')?.touched && passwordForm.get('newPassword')?.touched" >The new passwords don't match.</div>
+                    <div class="error-message" *ngIf="passwordForm.get('currentPassword')?.value == passwordForm.get('newPassword')?.value && passwordForm.get('currentPassword')?.touched && passwordForm.get('newPassword')?.touched" >The old password and new password match.</div>
+                    <button class="form-button" [disabled]="passwordForm.invalid || passwordForm.get('currentPassword')?.value == passwordForm.get('newPassword')?.value" (click)="changePassword()">Change Password</button>
+                </div>            
+            </form>
+            
+            <div class="form">
+                <div class="form-Header">Two Factor Authentication</div>
+                <div class="form-Info">
+                    <div class="form-Text warning">DO NOT DISPLAY THE QR CODE.</div>
+                    <div class="form-Text">To enable Two Factor Authentication, you must first download any of the Time-based One-Time Password (TOTP) apps such as, Google Authenticator, Microsoft Authenticator, Duo Mobile, ect...</div>
+                    <button *ngIf="tfaStatus; else Enable" class="form-button" (click)="toggle2FA()">Disable TFA</button>
+                    <ng-template #Enable>
+                        <button class="form-button" (click)="toggle2FA()">Enable TFA</button>
+                    </ng-template>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+
+</body>

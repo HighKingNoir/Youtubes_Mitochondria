@@ -1,0 +1,62 @@
+<div class="sidebar">
+    <div class="route-Section">
+            <button class="nav-Button" routerLink="" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active" [ngClass]="{ 'active': isActiveHomeRoute() }"><i class="fa-solid fa-house"></i>Home</button>
+            <button class="nav-Button" routerLink="/Channels" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-tv"></i>Channels</button>
+            <!-- <button class="nav-Button" routerLink="/LeaderBoard" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-ranking-star"></i>Leaderboard</button> -->
+            <button class="nav-Button" routerLink="/PayLater" routerLinkActive="active" [disabled]="!isLoggedIn"><i class="fa-solid fa-cart-shopping"></i>Pay Later</button>
+            <button class="nav-Button" (click)="getMoreMana()">Get More Mana</button>
+    </div>
+    <div class="your-Channel-Section">
+        <div class="header">Your Channel</div>
+        <div *ngIf="isLoggedIn && userChannels.length != 0">
+            <div class="userChannel" *ngFor="let userChannel of userChannels" routerLink="/Channel/{{userChannel.channelName}}">
+                <img class="channelLogo" src="{{userChannel.channelLogo}}" alt="">
+                <div class="channelName">{{userChannel.channelName}} </div>
+
+            </div>
+        </div>
+        <a *ngIf="userChannels.length != maxNumberOfChannels" (click)="navigateToCreateChannel($event)">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Channel</span>
+        </a>
+    </div>
+    <div class="channel-Section" [class.expanded]="showAll">
+        <div class="header">Subscriptions</div>
+
+        <ng-container *ngIf="!showAll; else showAllChannels">
+            <ng-container *ngFor="let channel of channelsSubscribedTo.slice(0, 7)">
+                <div class="userChannel" [routerLink]="'/Channel/' + channel.channelName">
+                    <img class="channelLogo" [src]="channel.channelLogo" alt="">
+                    <div class="channelName">{{ channel.channelName }}</div>
+                </div>
+            </ng-container>
+                <div *ngIf="channelsSubscribedTo.length > 8" class="userChannel show-more-button" (click)="toggleShowAll()">
+                <div class="channelName">Show more ▼</div>
+            </div>
+            <div *ngIf="channelsSubscribedTo.length === 8" class="userChannel" [routerLink]="'/Channel/' + channelsSubscribedTo[7].channelName">
+                <img class="channelLogo" [src]="channelsSubscribedTo[7].channelLogo" alt="">
+                <div class="channelName">{{ channelsSubscribedTo[7].channelName }}</div>
+            </div>
+        </ng-container>
+
+        <ng-template #showAllChannels>
+            <ng-container *ngFor="let channel of channelsSubscribedTo">
+            <div class="userChannel" [routerLink]="'/Channel/' + channel.channelName">
+                <img class="channelLogo" [src]="channel.channelLogo" alt="">
+                <div class="channelName">{{ channel.channelName }}</div>
+            </div>
+            </ng-container>
+            <div class="userChannel show-more-button" (click)="toggleShowAll()">
+            <div class="channelName">Show less ▲</div>
+            </div>
+        </ng-template>
+    </div>
+    <div class="footer-Section">
+        <div class="footerText">
+            <a class="link" href="/Info/TOS" target="_blank">Terms of Service</a>
+            <a class="link" href="/Info/Privacy" target="_blank">Privacy Policy</a>
+            <a class="link" (click)="openLimitedUsePolicy()">Limited Use Policy</a>
+            <a style="cursor: default;">&copy; <a></a>{{year}} Noirelic LLC</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,94 @@
+<div class="modal-body">
+    <div class="container">
+        <div class="Createform">
+            <h2>Sign Up</h2>
+            <form action="" method="post" [formGroup]="signinForm" (ngSubmit)="CreateAccount()">
+                <div class="input-box"> 
+                    <span class="icon"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" name="username" id="username" [formControlName]="'Username'"  required>
+                    <label for="username" >Username</label>
+                </div>
+                <div *ngIf="signinForm.get('Username')?.hasError('pattern') || signinForm.get('Username')?.hasError('required') && signinForm.get('Username')?.touched" class="error-message">
+                    Username must be between 3 - 15 charecters long and no spaces.
+                </div>
+                <div *ngIf="signinForm.get('Username')?.hasError('usernameTaken')" class="error-message">
+                    Username already Taken.
+                </div>
+                <div class="input-box">
+                    <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="text" name="email" id="email" [formControlName]="'Email'" required>
+                    <label for="email" >Email</label>
+                </div>
+                <div *ngIf="signinForm.get('Email')?.hasError('email') || signinForm.get('Email')?.hasError('required') && signinForm.get('Email')?.touched" class="error-message">
+                    Invalid email entered.
+                </div>
+                <div *ngIf="signinForm.get('Email')?.hasError('emailTaken')" class="error-message">
+                    Email already Taken.
+                </div>
+                <div class="input-box">
+                    <span class="icon eye" (click)="togglePasswordVisibility()" >
+                        <i class="fa-solid fa-eye" *ngIf="showPassword; else Closed"></i>
+                        <ng-template #Closed>
+                            <i class="fa-solid fa-eye-slash" ></i>
+                        </ng-template>
+                    </span>
+                    <span class="icon"><i class="fa-solid fa-lock"></i></span>
+                    <input [attr.type]="showPassword ? 'text' : 'password'"  name="password" id="password" [formControlName]="'Password'" required>
+                    <label for="password" >Password</label>
+                </div>
+                <div *ngIf="signinForm.get('Password')?.invalid && signinForm.get('Password')?.touched" class="error-message password">
+                    <div>Password must contain:</div>
+                    <li>8 - 20 charecters</li>
+                    <li>At least 1 uppercase letter</li>
+                    <li>At least 1 digit</li>
+                    <li>At least 1 special charecter</li>
+                </div>
+                <div class="input-box">
+                    <span class="icon eye" (click)="toggleConfirmPasswordVisibility()">
+                        <i class="fa-solid fa-eye" *ngIf="showConfirmPassword; else Closed"></i>
+                        <ng-template #Closed>
+                            <i class="fa-solid fa-eye-slash" ></i>
+                        </ng-template>
+                    </span>
+                    <span class="icon"><i class="fa-solid fa-lock"></i></span>
+                    <input
+                        [attr.type]="showConfirmPassword ? 'text' : 'password'" 
+                        type="confirmPassword"
+                        name="confirmPassword"
+                        id="confirmPassword"
+                        [formControlName]="'ConfirmPassword'"
+                        required>
+                    <label for="confirmPassword" >Confirm Password</label>
+                </div>
+                <div *ngIf="signinForm.errors?.['passwordmatcherror'] && signinForm.get('ConfirmPassword')?.touched && signinForm.get('Password')?.touched" class="error-message confirmPassword">
+                    <div>Passwords don't match</div>
+                </div>
+                <div class="tos">
+                    <label for="tos">
+                        <input type="checkbox" name="tos" id="tos" (change)="onChange($event)"> I agree to the  
+                    </label> 
+                    <a routerLink="/Info/TOS" target="_blank"> Terms and Conditions</a>
+                </div>
+                <div class="createAccount">
+                    <button type="submit" [disabled]="signinForm.invalid || !isChecked" class="btn">Create Account</button>
+                </div>
+                <div class="loginAccount">
+                    <p>Have an Account?
+                        <a (click)="logIn()">Login</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+        <button class="google-button" (click)="GoogleSignIn()">
+            <span class="google-icon"><img src="{{GoogleLogo}}" alt=""></span>
+            <span class="google-text">Sign in with Google</span>
+        </button>
+    </div>  
+    <div class="reCAPTCHA">
+        <div>
+            This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy"> Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply.
+        </div>
+    </div>
+</div>
+
+

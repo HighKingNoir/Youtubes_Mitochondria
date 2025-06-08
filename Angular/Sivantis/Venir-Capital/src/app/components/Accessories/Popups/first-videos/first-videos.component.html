@@ -1,0 +1,20 @@
+<div class="modal-body">
+    <div class="header">Your First Video</div>
+    <div class="instructions">
+        Looks like you posted your first video.
+        Now what? 
+    </div>
+    <div class="instructions">
+        On <a>{{dayBefore}}</a>, you will receive the message "Youtube Emails". 
+        Click the message and follow the instructions.
+    </div>
+    <div class="instructions">
+        Keep in mind, you must keep your video set to "private" until <a>{{twoDaysAfter}}</a>. 
+        Failure to do so will result in all the mana you made to be refunded back to the buyers and your account flagged as <a class="scum">SCUM</a>.
+    </div>
+    <div class="instructions">
+        If no issues arise, you will receive the message "Successful Video". 
+        Afterwards, you can repost the same video on Sivantis or make it public on Youtube. The choice is yours.
+    </div>
+    <button class="understood" (click)="this.activeModal.close('understood')" >Understood</button>
+</div>

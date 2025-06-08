@@ -1,0 +1,49 @@
+*{
+    background-color: #3f3f3f;
+    color: white;
+}
+
+.modal-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.verify{
+    color: gold;
+    font-size: 33px;
+}
+
+.emailTo{
+    font-size: 18px;
+    padding-top: 10px;
+}
+
+.email{
+    color: gold;
+    font-size: 20px;
+}
+
+.instructions{
+    font-size: 15px;
+    padding-top: 10px;
+    color: rgb(171, 171, 171);
+}
+
+.findIt{
+    font-size: 15px;
+    padding-top: 10px;
+}
+
+.button{
+    outline: none;
+    border-radius: 8px;
+    border-style: solid;
+    margin-top: 5px;
+    padding: 5px 10px 5px 10px;
+    border-color: rgb(50, 50, 50);
+    background-color: rgb(101, 101, 101);
+    color: white;
+}
