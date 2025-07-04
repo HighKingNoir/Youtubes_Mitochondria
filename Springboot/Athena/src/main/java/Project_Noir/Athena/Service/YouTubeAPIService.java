@@ -32,6 +32,7 @@ public class YouTubeAPIService {
     private final ContentRepository contentRepository;
     private final WatchNowPayLaterRepository watchNowPayLaterRepository;
     private final ServerSideMultiSendContractService serverSideMultiSendContractService;
+    private final Ec2InstanceTagService ec2InstanceTagService;
     @Value("${youtube.api.key}")
     private String API_KEY;
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -67,18 +68,24 @@ public class YouTubeAPIService {
             }
             var allFailedVideosIds = videos.stream().map(Video::getId).toList();
             List<Content> allContentNeedingReturn = new ArrayList<>();
-            for (String youtubeMainVideoID: allFailedVideosIds ){
-                if(contentRepository.findByYoutubeMainVideoID(youtubeMainVideoID).isPresent()){
-                    var content = contentRepository.findByYoutubeMainVideoID(youtubeMainVideoID).get();
-                    allContentNeedingReturn.add(content);
+            if(!allFailedVideosIds.isEmpty()){
+                ec2InstanceTagService.markTransactionInProgress();
+                try {
+                    for (String youtubeMainVideoID: allFailedVideosIds ){
+                        if(contentRepository.findByYoutubeMainVideoID(youtubeMainVideoID).isPresent()){
+                            var content = contentRepository.findByYoutubeMainVideoID(youtubeMainVideoID).get();
+                            allContentNeedingReturn.add(content);
+                        }
+                    }
+                    serverSideMultiSendContractService.returnAllManaMultiCall(allContentNeedingReturn);
+                    for(Content content: allContentNeedingReturn){
+                        messageService.failedVideoMessage(content);
+                    }
+                } finally {
+                    ec2InstanceTagService.clearTransactionTag();
                 }
             }
-            serverSideMultiSendContractService.returnAllManaMultiCall(allContentNeedingReturn);
-            for(Content content: allContentNeedingReturn){
-                messageService.failedVideoMessage(content);
-            }
         }
-
     }
 
     // @dev Returns all YoutubeMainIds labeled 'Active' that have Complete status

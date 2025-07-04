@@ -9,8 +9,9 @@
       </ngb-alert>
     </div>
     <div class="videos">
-        <div class="card" *ngFor="let video of Content">
-            <img routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+        <div class="card" *ngFor="let video of Content; trackBy: trackByVideoId">
+                        <img loading="lazy" routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+
             <div class="card-body">
               <h6 routerLink="/{{navigateToContent(video.contentType)}}/{{video.contentId}}" class="contentType">
                 <div *ngIf="video.contentEnum === 'Active'" class="isActive">

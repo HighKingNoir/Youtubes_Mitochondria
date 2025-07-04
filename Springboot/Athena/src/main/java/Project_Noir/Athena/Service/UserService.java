@@ -12,6 +12,11 @@ import Project_Noir.Athena.Repo.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,27 +35,30 @@ public class UserService {
     private final ContractServiceInterface contractServiceInterface;
     private final TwoFactorAuthenticationService TFAService;
     private final EncryptionService encryptionService;
+    private final Ec2InstanceTagService ec2InstanceTagService;
     private PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final MongoTemplate mongoTemplate;
     private final ContentRepository contentRepository;
     private final ServerSideMultiSendContractService serverSideMultiSendContractService;
 
     //Adds a personal wallet to a user account
     public AuthenticationResponse setPersonalWallet(PersonalWalletRequest personalWalletRequest, String JWT) throws Exception {
         var user = userRepository.findById(jwtService.extractUserId(JWT)).orElseThrow();
-        if(user.getNextWalletChangeTime().isAfter(Instant.now())){
-            throw new SivantisException("Wallet cannot be updated until " + user.getNextWalletChangeTime());
+        if(user.getPersonalWallet() != null && user.getPersonalWallet().equals(personalWalletRequest.getPersonalWallet())){
+            throw new SivantisException("This wallet is already set as your personal wallet");
         }
         if(user.getMfaEnabled() && !personalWalletRequest.getCode().isEmpty()){
             if (!TFAService.isOtpValid(encryptionService.decrypt(user.getMfaSecret()), personalWalletRequest.getCode())){
                 throw new SivantisException("Incorrect Code");
             }
+            Users updatedUser = tryUpdateWallet(user.getUserId(), personalWalletRequest.getPersonalWallet());
+            if (updatedUser == null) {
+                throw new SivantisException("Wallet cannot be updated until " + user.getNextWalletChangeTime());
+            }
             if(user.isContentCreator()){
                 contractServiceInterface.updatePersonalWallet(user.getUserId(), personalWalletRequest.getPersonalWallet());
             }
-            user.setNextWalletChangeTime(Instant.now().plus(1, ChronoUnit.DAYS));
-            user.setPersonalWallet(personalWalletRequest.getPersonalWallet());
-            userRepository.save(user);
             return AuthenticationResponse.builder()
                     .mfaEnabled(true)
                     .build();
@@ -60,15 +68,36 @@ public class UserService {
                     .mfaEnabled(true)
                     .build();
         }
-        if(user.isContentCreator()){
+        Users updatedUser = tryUpdateWallet(user.getUserId(), personalWalletRequest.getPersonalWallet());
+        if (updatedUser == null) {
+            throw new SivantisException("Wallet cannot be updated until " + user.getNextWalletChangeTime());
+        }
+        if(updatedUser.isContentCreator()){
             contractServiceInterface.updatePersonalWallet(user.getUserId(), personalWalletRequest.getPersonalWallet());
         }
-        user.setNextWalletChangeTime(Instant.now().plus(1, ChronoUnit.DAYS));
-        user.setPersonalWallet(personalWalletRequest.getPersonalWallet());
-        userRepository.save(user);
         return AuthenticationResponse.builder()
                 .mfaEnabled(false)
                 .build();
+    }
+
+    public Users tryUpdateWallet(String userId, String newWallet) {
+        Instant now = Instant.now();
+
+        Query query = new Query(Criteria
+                .where("_id").is(userId)
+                .and("nextWalletChangeTime").lt(now) // only allow update if changeTime is in the past
+        );
+
+        Update update = new Update()
+                .set("personalWallet", newWallet)
+                .set("nextWalletChangeTime", now.plus(1, ChronoUnit.DAYS));
+
+        return mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Users.class
+        );
     }
 
     public String getNextWalletChangeTime(String JWT){
@@ -223,8 +252,13 @@ public class UserService {
     @Scheduled(cron = "0 0 22 ? * THU", zone = "America/New_York")
     @SchedulerLock(name = "sendWeeklyMana", lockAtMostFor = "PT1M", lockAtLeastFor = "PT30S")
     public void sendWeeklyMana(){
-        var contentCreatorIds = userRepository.findAllByIsContentCreator(true).stream().map(Users::getUserId).toList();
-         serverSideMultiSendContractService.sendWeeklyManaMultiCall(contentCreatorIds);
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            var contentCreatorIds = userRepository.findAllByIsContentCreator(true).stream().map(Users::getUserId).toList();
+            serverSideMultiSendContractService.sendWeeklyManaMultiCall(contentCreatorIds);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
+        }
     }
 
 

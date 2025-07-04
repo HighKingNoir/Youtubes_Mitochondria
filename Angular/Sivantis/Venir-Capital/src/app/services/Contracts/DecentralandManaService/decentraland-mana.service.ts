@@ -5,11 +5,9 @@ import { BaseError, formatEther, parseEther, parseGwei } from 'viem';
 import { decentralandManaContract } from './decentralandManaContract';
 import { environment } from 'src/Environment/environment';
 import { config } from '../config';
-import { request } from 'http';
-import { polygon } from '@wagmi/core/chains';
-import { ganache } from '../ganache';
 
-const chainID = environment.production ? 137 : 1337
+type SupportedChainID = 137 | 1337;
+const chainID: SupportedChainID = environment.production ? 137 : 1337;
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +40,7 @@ export class DecentralandManaService {
           functionName: 'approve',
           args: [this.bidServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
       simulateContract(config, request).then(() => {
         writeContract(config, request).then(transactionHash => {
@@ -96,6 +95,7 @@ export class DecentralandManaService {
           functionName: 'approve',
           args: [this.channelServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -177,6 +177,7 @@ export class DecentralandManaService {
           functionName: 'increaseAllowance',
           args: [this.bidServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -231,6 +232,7 @@ export class DecentralandManaService {
           functionName: 'increaseAllowance',
           args: [this.channelServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -285,6 +287,7 @@ export class DecentralandManaService {
           functionName: 'decreaseAllowance',
           args: [this.bidServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -339,6 +342,7 @@ export class DecentralandManaService {
           functionName: 'decreaseAllowance',
           args: [this.channelServiceAddress, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(() => {
           writeContract(config, request).then(transactionHash => {

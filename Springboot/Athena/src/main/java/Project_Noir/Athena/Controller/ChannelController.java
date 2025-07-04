@@ -135,15 +135,17 @@ public class ChannelController {
         return new ResponseEntity<>("Channel has been Disapproved", HttpStatus.OK);
     }
 
-//    @PutMapping("/Change")
-//    public ResponseEntity<Channels> changeChannelStreamerInfo(){
-//        return new ResponseEntity<>(channelService.editChannel(editChannelRequest, jwtService.getJWTString(jwt)), HttpStatus.OK);
-//    }
-//
-//    @PutMapping("/Change/Request")
-//    public ResponseEntity<Channels> changeChannelStreamerInfo(){
-//        return new ResponseEntity<>(channelService.editChannel(editChannelRequest, jwtService.getJWTString(jwt)), HttpStatus.OK);
-//    }
+    @PutMapping("/Add")
+    public ResponseEntity<String> addStreamerInfo(@RequestParam(name = "channelName") String channelName, @RequestBody StreamerInfo streamerInfo, @RequestHeader("Authorization") String jwt){
+        channelService.addStreamerInfo(channelName, streamerInfo, jwtService.getJWTString(jwt));
+        return new ResponseEntity<>("Streamer Info Added", HttpStatus.OK);
+    }
+
+    @PutMapping("/Remove")
+    public ResponseEntity<String> removeStreamerInfo(@RequestParam(name = "channelName") String channelName, @RequestParam(name = "indexToRemove") int indexToRemove, @RequestHeader("Authorization") String jwt){
+        channelService.removeStreamerInfo(channelName, indexToRemove, jwtService.getJWTString(jwt));
+        return new ResponseEntity<>("Streamer Info Removed", HttpStatus.OK);
+    }
 
     @PutMapping("/Edit")
     public ResponseEntity<Channels> editChannel(@RequestBody EditChannelRequest editChannelRequest, @RequestHeader("Authorization") String jwt){

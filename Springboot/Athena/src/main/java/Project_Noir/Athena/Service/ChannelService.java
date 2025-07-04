@@ -13,6 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,10 +43,13 @@ public class ChannelService {
     private final PaymentService paymentService;
     private final ChannelRepository channelRepository;
     private final ContractServiceInterface contractServiceInterface;
+
     private final ClientSideMultiSendContractService clientSideMultiSendContractService;
     private final ServerSideEventController serverSideEventController;
     private final WatchNowPayLaterRepository watchNowPayLaterRepository;
+    private final MongoTemplate mongoTemplate;
     private final JwtService jwtService;
+    private final Ec2InstanceTagService ec2InstanceTagService;
     private final PaymentRepository paymentRepository;
     private final ContentRepository contentRepository;
     private final MessageService messageService;
@@ -53,10 +62,18 @@ public class ChannelService {
     private String clientId;
     @Value("${kick.client.secret}")
     private String clientSecret;
+    @Value("${url}")
+    private String frontendURL;
 
     public ResponseEntity<String> exchangeCodeForToken(KickTokenRequest kickTokenRequest) {
         String tokenUrl = "https://id.kick.com/oauth/token";
 
+        String fullUrl = kickTokenRequest.getRedirectUri();
+        URI uri = URI.create(fullUrl);
+        String path = uri.getPath();
+        if (path.startsWith("/Channel")) {
+            kickTokenRequest.setRedirectUri(frontendURL + "/Add/Channel/Kick");
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -109,10 +126,13 @@ public class ChannelService {
     public void removeStreamerInfo(String channelName, int indexToRemove, String JWT){
         var channel = channelRepository.findByChannelName(channelName).orElseThrow();
         if(!channel.getOwnerID().equals(jwtService.extractUserId(JWT))){
-            throw new SivantisException("You are not the owner of this channel");
+            throw new SivantisException("You are not the owner of this channel.");
         }
         if(channel.getStreamerInfo().size() == 1){
-            throw new SivantisException("Must have at least one remaining");
+            throw new SivantisException("Must have at least one remaining.");
+        }
+        if(!channel.getChannelStatus().equals(ChannelStatus.Approved)){
+            throw new SivantisException("Channel must be approved before any changes can be made");
         }
         channel.getStreamerInfo().remove(indexToRemove);
         channelRepository.save(channel);
@@ -120,13 +140,13 @@ public class ChannelService {
 
     public Channels requestChannel(ChannelRequest channelRequest, String JWT) {
         if(channelRepository.findByChannelNameIgnoreCase(channelRequest.getChannelName()).isPresent()){
-            throw new SivantisException("A channel with this name already exist");
+            throw new SivantisException("A channel with this name already exist.");
         }
         if(!hasImageExtension(channelRequest.getChannelLogo())){
             throw new SivantisException("Logo must be in .png, .jpeg, or jpg");
         }
         if(isImageSizeNotValid(channelRequest.getChannelLogo(), maxLogoSize)){
-            throw new SivantisException("Logo too large");
+            throw new SivantisException("Logo too large.");
         }
         isStreamerValid(channelRequest.getSteamerInfo());
         for(StreamerInfo streamerInfo: channelRequest.getSteamerInfo()){
@@ -176,11 +196,7 @@ public class ChannelService {
         var highestAverageWeeklyViewers = paymentService.getMaxNumber(approveChannelRequest.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
         contractServiceInterface.createChannel( channel.getChannelName(), highestAverageWeeklyViewers);
         channel.setStreamerInfo(approveChannelRequest.getStreamerInfo());
-        channel.setChannelStatus(ChannelStatus.Approved);
-        channel.setAwvIsUpdated(true);
-        channel.setApprovedDate(Instant.now());
         channelRepository.save(channel);
-        messageService.approvedChannelMessage(channel);
     }
 
     public void disapproveChannelRequest(DisapproveChannelResponse disapproveChannelResponse){
@@ -288,22 +304,29 @@ public class ChannelService {
         if(!content.getContentEnum().equals(ContentEnum.Active)){
             throw new SivantisException("This video is no longer active");
         }
-        var purchasedContent = paymentService.findChannelPayment(channel.getChannelName(), content.getContentId());
-        if(purchasedContent != null){
-            if(purchasedContent.getStatus().equals(PaymentEnum.Purchased)){
-                throw new SivantisException("Content Already Purchased");
-            }
-            if(purchasedContent.getStatus().equals(PaymentEnum.PendingPurchase)){
-                throw new SivantisException("Purchase is Currently Pending");
-            }
-            if(purchasedContent.getStatus().equals(PaymentEnum.PendingRefund)){
-                throw new SivantisException("Refund is Currently Pending");
-            }
-        }
         var manaPrice = serverSideEventController.latestValue;
         if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1)){
             throw new SivantisException("Insufficient Channel Balance");
         }
+        var purchasedContent = paymentService.findChannelPayment(channel.getChannelName(), content.getContentId());
+        if(purchasedContent == null){
+            boolean lockAcquired = tryCreatePaymentLock(channel.getChannelName(), content.getContentId());
+            if (!lockAcquired) {
+                throw new SivantisException("Another payment is already being processed for this content");
+            }
+        }
+        else{
+            if(purchasedContent.getStatus().equals(PaymentEnum.Purchased)){
+                throw new SivantisException("Content Already Purchased");
+            }
+            if(purchasedContent.getStatus().equals(PaymentEnum.PendingRefund)){
+                throw new SivantisException("Refund is Currently Pending");
+            }
+            if (!tryMarkingPaymentAsPendingPurchase(purchasedContent.getPaymentId())) {
+                throw new SivantisException("Purchase already processed or is pending");
+            }
+        }
+
         this.contractServiceInterface.payForContent(
                 channel,
                 content,
@@ -336,21 +359,27 @@ public class ChannelService {
         if(!content.getContentEnum().equals(ContentEnum.Active)){
             throw new SivantisException("This video is no longer active");
         }
+        var manaPrice = serverSideEventController.latestValue;
+        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1)){
+            throw new SivantisException("Insufficient Channel Balance");
+        }
         var purchasedContent = paymentService.findChannelPayment(channel.getChannelName(), content.getContentId());
-        if(purchasedContent != null){
-            if(purchasedContent.getStatus().equals(PaymentEnum.Purchased)){
-                throw new SivantisException("Content Already Purchased");
+        if(purchasedContent == null){
+            boolean lockAcquired = tryCreatePaymentLock(channel.getChannelName(), content.getContentId());
+            if (!lockAcquired) {
+                throw new SivantisException("Another payment is already being processed for this content");
             }
-            if(purchasedContent.getStatus().equals(PaymentEnum.PendingPurchase)){
-                throw new SivantisException("Purchase is Currently Pending");
-            }
+        }
+        else {
             if(purchasedContent.getStatus().equals(PaymentEnum.PendingRefund)){
                 throw new SivantisException("Refund is Currently Pending");
             }
-        }
-        var manaPrice = serverSideEventController.latestValue;
-        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), watchNowPayLaterRequest.getPaymentIncrements())){
-            throw new SivantisException("Insufficient Channel Balance");
+            if(purchasedContent.getStatus().equals(PaymentEnum.Purchased)){
+                throw new SivantisException("Content Already Purchased");
+            }
+            if (!tryMarkingPaymentAsPendingPurchase(purchasedContent.getPaymentId())) {
+                throw new SivantisException("Purchase already processed or is pending");
+            }
         }
         this.contractServiceInterface.watchNowPayLater(
                 channel,
@@ -382,8 +411,8 @@ public class ChannelService {
         var allApprovedChannels = channelRepository.findAllByChannelStatus(ChannelStatus.Approved);
         for (Channels channel: allApprovedChannels){
             channel.setAwvIsUpdated(false);
-            channelRepository.save(channel);
         }
+        channelRepository.saveAll(allApprovedChannels);
     }
 
     public void banChannel(String channelID, LocalDate unbanDate){
@@ -419,21 +448,21 @@ public class ChannelService {
             if(purchasedContent.getStatus().equals(PaymentEnum.RefundedPurchase)){
                 throw new SivantisException("This video was already refunded");
             }
-            if(purchasedContent.getStatus().equals(PaymentEnum.PendingRefund)){
-                throw new SivantisException("Refund is Currently Pending");
-            }
             if(purchasedContent.getStatus().equals(PaymentEnum.PendingPurchase)){
                 throw new SivantisException("Purchase is Currently Pending");
             }
+            if (!tryMarkingPaymentAsPendingRefund(purchasedContent.getPaymentId())) {
+                throw new SivantisException("Refund already processed or is pending");
+            }
             var manaAmount = content.getListOfBuyerIds().get(channelRefundPaymentRequest.getChannelName());
             var optionalWatchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channel.getChannelName(),channelRefundPaymentRequest.getContentID());
-        if(optionalWatchNowPayLater.isPresent() && optionalWatchNowPayLater.get().getWatchNowPayLaterEnum().equals(WatchNowPayLaterEnum.Unpaid)){
-            var watchNowPayLater = optionalWatchNowPayLater.get();
-            contractServiceInterface.CancelWatchNowPayLaterPayment(watchNowPayLater,content.getCreatorID(), content.getContentId(), channel.getChannelName(), manaAmount);
-        }
-        else{
-            contractServiceInterface.CancelPayment(content.getCreatorID(), content.getContentId(), channel.getChannelName(), manaAmount);
-        }
+            if(optionalWatchNowPayLater.isPresent()){
+                var watchNowPayLater = optionalWatchNowPayLater.get();
+                contractServiceInterface.CancelWatchNowPayLaterPayment(watchNowPayLater,content.getCreatorID(), content.getContentId(), channel.getChannelName(), manaAmount);
+            }
+            else{
+                contractServiceInterface.CancelPayment(content.getCreatorID(), content.getContentId(), channel.getChannelName(), manaAmount);
+            }
     }
 
     public List<Channels> getAllActiveChannels(){
@@ -442,6 +471,42 @@ public class ChannelService {
 
     public List<WatchNowPayLater> getAllWatchNowPayLater(String channelName){
         return watchNowPayLaterRepository.findAllById(channelRepository.findByChannelName(channelName).orElseThrow().getWatchNowPayLaterIDs()).stream().toList();
+    }
+
+    private boolean tryMarkingPaymentAsPendingRefund(String paymentId) {
+        Query query = new Query(Criteria
+                .where("_id").is(paymentId)
+                .and("status").is(PaymentEnum.Purchased.name()));
+
+        Update update = new Update()
+                .set("status", PaymentEnum.PendingRefund.name());
+
+        Payment updatedPayment = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Payment.class
+        );
+
+        return updatedPayment != null;
+    }
+
+    private boolean tryMarkingPaymentAsPendingPurchase(String paymentId) {
+        Query query = new Query(Criteria
+                .where("_id").is(paymentId)
+                .and("status").is(PaymentEnum.RefundedPurchase.name()));
+
+        Update update = new Update()
+                .set("status", PaymentEnum.PendingPurchase.name());
+
+        Payment updatedPayment = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Payment.class
+        );
+
+        return updatedPayment != null;
     }
 
     private List<Channels> getAllBannedChannels(){
@@ -473,6 +538,22 @@ public class ChannelService {
                                 .orElse(Instant.MIN)
                 ))
                 .collect(Collectors.toList());
+    }
+
+    private boolean tryCreatePaymentLock(String channelName, String contentId) {
+        String lockId = channelName + "::" + contentId;
+
+        Query query = new Query(Criteria.where("_id").is(lockId));
+        Update update = new Update().setOnInsert("createdAt", Instant.now());
+
+        PaymentLock lock = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().upsert(true).returnNew(false),
+                PaymentLock.class
+        );
+
+        return lock == null; // If null, we just inserted it → this request "won" the lock
     }
 
     private void isStreamerValid(ArrayList<StreamerInfo> allStreamerInfo){

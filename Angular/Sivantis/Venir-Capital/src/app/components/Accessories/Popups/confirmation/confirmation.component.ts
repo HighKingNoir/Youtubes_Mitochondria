@@ -10,7 +10,7 @@ import { UploadVideoInfoService } from 'src/app/services/Content/VideoInfo/uploa
     standalone: false
 })
 export class ConfirmationComponent {
-
+  releaseDateMin: NgbDateStruct;
   @Input() message = '';
   @Input() videoConfirmation?: VideoConfirmation;
   @Input() reactivateContent = false;
@@ -23,20 +23,29 @@ export class ConfirmationComponent {
     private config:NgbDatepickerConfig,
     private videoInfo: UploadVideoInfoService,
   ){
-    const releaseDate = new Date();
-    releaseDate.setDate(releaseDate.getDate() + 2);
-    this.config.minDate = { year: releaseDate.getFullYear(), month: releaseDate.getMonth() + 1, day: releaseDate.getDate() };
-    const minDate = new Date(releaseDate.getFullYear(), releaseDate.getMonth() + 1, releaseDate.getDate());
+    const twoDaysFromToday = new Date();
+    twoDaysFromToday.setDate(twoDaysFromToday.getDate() + 2); // 2 days ahead
 
-    this.config.markDisabled = (date: NgbDateStruct) => {
-      const selected = new Date(date.year, date.month - 1, date.day);
-      return selected <= releaseDate;
+    this.releaseDateMin = {
+      year: twoDaysFromToday.getFullYear(),
+      month: twoDaysFromToday.getMonth() + 1,
+      day: twoDaysFromToday.getDate()
     };
 
     this.releaseDateForm = this.formBuilder.group({
-      ReleaseDate: new FormControl('', [Validators.required, this.minDateValidator(minDate)]), // Remove square brackets
+      ReleaseDate: new FormControl('', [Validators.required, this.minDateValidator(twoDaysFromToday)]), // Remove square brackets
     });
   }
+
+
+   markDisabled = (date: NgbDateStruct) => {
+    const today = new Date();
+    today.setDate(today.getDate() + 2); // 2 days ahead
+  
+    const current = new Date(date.year, date.month - 1, date.day);
+    return current < today;
+  };
+   
 
   continue(){
     if(this.reactivateContent){

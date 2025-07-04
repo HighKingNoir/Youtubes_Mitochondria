@@ -9,6 +9,7 @@ import { UserService } from 'src/app/services/User/user-service';
 import { VideoConfirmation, ConfirmationComponent } from '../../Accessories/Popups/confirmation/confirmation.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ReportVideoComponent } from '../../Accessories/Popups/report-video/report-video.component';
+import { PurchasedContentDetails } from 'src/app/models/Content/PurchasedContentDetails';
 
 @Component({
     selector: 'app-purchased-page',
@@ -26,7 +27,7 @@ export class PurchasedPageComponent implements OnInit{
   private paymentDate?: string
   private lastVideo = false
   private isScrollHandlerActive = false;
-  videoIndices: number[] = [];
+  videoItems: { content: CreatedContentDetails; payment: PurchasedContentDetails; }[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -46,7 +47,11 @@ export class PurchasedPageComponent implements OnInit{
       next: (data:PurchasedContentResponse) => {
         this.UserPurchasedVideos.content.push(...data.content)
         this.UserPurchasedVideos.payment.push(...data.payment)
-        this.videoIndices = Array.from({ length: this.UserPurchasedVideos.payment.length }, (_, i) => i);
+        console.log(data.payment)
+        this.videoItems = this.UserPurchasedVideos.content.map((content, index) => ({
+          content,
+          payment: this.UserPurchasedVideos.payment[index],
+        }));
         if (data.payment.length == 50) {
           this.paymentDate = data.payment[data.payment.length - 1].paymentDate.toString();
           this.isScrollHandlerActive = true
@@ -84,7 +89,7 @@ export class PurchasedPageComponent implements OnInit{
                 (v) => v.contentId === video.contentId
               );
               if (indexToDelete !== -1) {
-                this.videoIndices.splice(indexToDelete, 1);
+                this.videoItems.splice(indexToDelete, 1);
               }
             },
             error: (error) => {
@@ -106,7 +111,10 @@ export class PurchasedPageComponent implements OnInit{
         next: (data: PurchasedContentResponse) => {
           this.UserPurchasedVideos.content.push(...data.content)
           this.UserPurchasedVideos.payment.push(...data.payment)
-          this.videoIndices = Array.from({ length: this.UserPurchasedVideos.payment.length }, (_, i) => i);
+          this.videoItems = this.UserPurchasedVideos.content.map((content, index) => ({
+            content,
+            payment: this.UserPurchasedVideos.payment[index],
+          }));
           if (data.payment.length == 50) {
             this.paymentDate = data.payment[data.payment.length - 1].paymentDate.toString();
           }
@@ -158,6 +166,11 @@ export class PurchasedPageComponent implements OnInit{
         return 'Inactive';
     }
   }
+
+  trackByVideoId(index: number, item: { content: CreatedContentDetails; payment: PurchasedContentDetails }): string {
+      return item.content.contentId;
+    }
+  
 
   editVideo(index: number) {
     this.selectedIndex = index;

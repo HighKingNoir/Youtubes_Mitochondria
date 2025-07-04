@@ -1,5 +1,6 @@
 package Project_Noir.Athena.Repo;
 
+import Project_Noir.Athena.Model.MessageEnum;
 import Project_Noir.Athena.Model.Messages;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -12,4 +13,6 @@ import java.util.List;
 public interface MessageRepository extends MongoRepository<Messages, String> {
 
     List<Messages> findByMessageIdIn(ArrayList<String> messages, PageRequest of);
+
+    List<Messages> findByMessageEnum(MessageEnum messageEnum);
 }

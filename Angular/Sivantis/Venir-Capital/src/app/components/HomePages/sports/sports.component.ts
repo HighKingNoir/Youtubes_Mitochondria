@@ -92,6 +92,9 @@ export class SportsComponent implements OnInit{
   }
 
 
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
+  }
   
   isSingleBuyer(contentType:string): boolean{
     if(contentType == "Invention" || contentType == "Innovation"){

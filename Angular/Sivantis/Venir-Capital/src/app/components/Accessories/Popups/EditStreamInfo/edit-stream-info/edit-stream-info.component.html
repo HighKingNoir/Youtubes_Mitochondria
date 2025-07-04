@@ -3,16 +3,16 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body">
-    <div class="form-Section" *ngFor="let streamerInfo of formControls.controls;  let i = index">
+    <div class="form-Section" *ngFor="let streamer of streamerInfo;  let i = index">
         <div class="input-Box">
-            <div class="platform">{{streamerInfo.platform}}</div>
+            <div class="platform">{{streamer.platform}}</div>
             <div style="display: flex;">
-                <div style="margin-right: 5px;">{{streamerInfo.username}}</div>                        
+                <div style="margin-right: 5px;">{{streamer.username}}</div>                        
                 <button type="button" class="remove-Input" (click)="removeStreamerInfo(i)"><i class="fa-solid fa-xmark" style="color: #c20000;"></i></button>
             </div>
         </div>
     </div>
     <div class="addForm">
-        <button *ngIf="formControls.length < 3" type="button" class="addForm-Button" (click)="addStreamerInfo()"><i class="fa-solid fa-plus"></i>Add Streamer Channel (Max: 3)</button>
+        <button *ngIf="streamerInfo.length < 3" type="button" class="addForm-Button" (click)="addStreamerInfo()"><i class="fa-solid fa-plus"></i>Add Streamer Channel (Max: 3)</button>
     </div>
 </div>

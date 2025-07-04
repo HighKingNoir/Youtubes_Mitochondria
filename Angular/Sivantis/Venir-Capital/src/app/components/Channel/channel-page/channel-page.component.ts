@@ -45,9 +45,10 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
   channelDollarbalance:number = 0
   priceSubscription!: Subscription;
   MANA_PRICE: number = 0;
-  videoIndices: number[] = [];
+
   isLoggedIn: boolean;
   @ViewChild(HomeSidebarComponent) homeSideBarComponent!: HomeSidebarComponent;
+  videoItems: { content: CreatedContentDetails; payment: PurchasedContentDetails; }[] = [];
  
   
   constructor(
@@ -84,6 +85,7 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
       if(this.isOwner){
         this.channel = channel
       }
+      this.updateOwnership();
     })
 
     if(localStorage.getItem('token')){
@@ -99,13 +101,14 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
           this.isSubscribed = this.isSubscribedTo()
           if(this.userService.getUserID() === ''){
             this.userService.userInfo$.subscribe(() => {
-              this.isOwner = this.channel.ownerID == this.userService.getUserID()
+              this.updateOwnership();
             })
           }
           else{
-            this.isOwner = this.channel.ownerID == this.userService.getUserID()
+            this.updateOwnership();
           }
         }
+        this.updateOwnership();
       }
       else{
         this.isSubscribed = false;
@@ -118,6 +121,10 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
     if(this.priceSubscription){
       this.priceSubscription.unsubscribe()
     }
+  }
+
+  trackByVideoId(index: number, item: { content: CreatedContentDetails; payment: PurchasedContentDetails }): string {
+    return item.content.contentId;
   }
 
   private loadDataForChannel(channelName: string): void {
@@ -134,6 +141,7 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
   ngOnInit(): void {
     this.channelService.getChannel(this.route.snapshot.params['name']).subscribe(channel => {
       this.channel = channel
+      this.updateOwnership();
       if(channel.channelStatus === "Approved"){
         this.isInactive = false
       }
@@ -163,7 +171,10 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
       }
       this.ChannelPurchasedVideos.content.push(...purchasedContent.content)
       this.ChannelPurchasedVideos.payment.push(...purchasedContent.payment)
-      this.videoIndices = Array.from({ length: this.ChannelPurchasedVideos.payment.length }, (_, i) => i);
+      this.videoItems = this.ChannelPurchasedVideos.content.map((content, index) => ({
+        content,
+        payment: this.ChannelPurchasedVideos.payment[index],
+      }));
     })
   }
 
@@ -182,6 +193,10 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
     });
   }
 
+  private updateOwnership(): void {
+    const userId = this.userService.getUserID();
+    this.isOwner = this.channel?.ownerID === userId;
+  }
 
   getbalance(){
     if(!this.isInactive){
@@ -201,7 +216,10 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
         next: (data:PurchasedContentResponse) => {
           this.ChannelPurchasedVideos.content.push(...data.content)
           this.ChannelPurchasedVideos.payment.push(...data.payment)
-          this.videoIndices = Array.from({ length: this.ChannelPurchasedVideos.payment.length }, (_, i) => i);
+          this.videoItems = this.ChannelPurchasedVideos.content.map((content, index) => ({
+            content,
+            payment: this.ChannelPurchasedVideos.payment[index],
+          }));
           if (data.payment.length == 50) {
             this.paymentDate = data.payment[data.payment.length - 1].paymentDate.toString();
             this.isScrollHandlerActive = true
@@ -277,6 +295,7 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
   editStreamInfo(){
     const modelRef = this.modalService.open(EditStreamInfoComponent, {size: 'md', scrollable: true,centered: true , animation: false})
     modelRef.componentInstance.streamerInfo = this.channel.streamerInfo
+    modelRef.componentInstance.channelName = this.channel.channelName
     modelRef.result.then((result) => {
       if(result === 'success'){
         
@@ -353,7 +372,7 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
                 (v) => v.contentId === video.contentId
               );
               if (indexToDelete !== -1) {
-                this.videoIndices.splice(indexToDelete, 1);
+                this.videoItems.splice(indexToDelete, 1);
               }
             },
             error: (error) => {

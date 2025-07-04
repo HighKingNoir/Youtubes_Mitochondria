@@ -13,11 +13,17 @@ import org.springframework.stereotype.Service;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.datatypes.*;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
 import java.io.IOException;
@@ -46,6 +52,7 @@ public class MultiSendHelperService {
     private String infuraAPIKey;
     private Web3j web3j;
     private final CredentialsService credentialsService;
+    private final NonceService nonceService;
     private final GasLimitService gasLimitService;
     private final BigInteger GAS_LIMIT = BigInteger.valueOf(10000000L);
     private final BigInteger baseGas = BigInteger.valueOf(250000L);
@@ -104,7 +111,6 @@ public class MultiSendHelperService {
             ContractFunctionEnum contractFunctionEnum
     ) {
         var multiCallResponses = new ArrayList<MultiCallResponse>();
-        BigInteger gasPrice = getGasPrice(web3j);
         BigInteger GAS_PER_TRANSACTION = gasLimitService.getGasLimit(contractFunctionEnum, 0);
         BigInteger estimatedGas  = baseGas.add(GAS_PER_TRANSACTION.multiply(BigInteger.valueOf(transactions.size())));
         Credentials credentials = getCredentials();
@@ -122,7 +128,7 @@ public class MultiSendHelperService {
             }
             for(List<byte[]> batch: splitTransactionBatches){
                 BigInteger gasLimit  = baseGas.add(GAS_PER_TRANSACTION.multiply(BigInteger.valueOf(batch.size())));
-                var contractTransactionReceipt = executeMultiCall(credentials,gasPrice, gasLimit, batch);
+                var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3j), gasLimit, batch);
                 credentials = getCredentials();
                 var multiCallResponse = MultiCallResponse.builder()
                         .contractTransactionReceipt(contractTransactionReceipt)
@@ -132,7 +138,7 @@ public class MultiSendHelperService {
             }
             return multiCallResponses;
         }
-        var contractTransactionReceipt = executeMultiCall(credentials,gasPrice, estimatedGas, transactions);
+        var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3j), estimatedGas, transactions);
         var multiCallResponse = MultiCallResponse.builder()
                 .contractTransactionReceipt(contractTransactionReceipt)
                 .transactionCount(transactions.size())
@@ -158,31 +164,74 @@ public class MultiSendHelperService {
             System.arraycopy(tx, 0, payload, offset, tx.length);
             offset += tx.length;
         }
-
         var multiSendContract = MultiSendCallOnly.load(multiSendAddress, web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
-        TransactionReceipt multiSendTransaction;
-        try {
-            multiSendTransaction = multiSendContract.multiSend(payload, BigInteger.ZERO).send();
-        } catch (Exception e) {
+        String encodedFunctionData = multiSendContract.multiSend(payload, BigInteger.ZERO).encodeFunctionCall();
+        BigInteger nonce = nonceService.getNextNonce(credentials.getAddress());
+        if(nonce == null){
             return ContractTransactionReceipt.builder()
                     .contractStatusEnum(ContractStatusEnum.Error)
-                    .revertReason(e.getMessage())
+                    .revertReason("Recovery failed: nonce record still null after reset")
                     .build();
         }
-        if (multiSendTransaction == null || multiSendTransaction.getStatus().equals("0x0")) {
+        RawTransaction rawTransaction = RawTransaction.createTransaction(
+                nonce,
+                gasPrice,
+                gasLimit,
+                multiSendAddress,
+                BigInteger.ZERO,
+                encodedFunctionData
+        );
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        String hexValue = Numeric.toHexString(signedMessage);
+        EthSendTransaction ethSendTx;
+        try {
+            ethSendTx = web3j.ethSendRawTransaction(hexValue).send();
+        } catch (IOException e) {
             return ContractTransactionReceipt.builder()
-                    .transactionHash(multiSendTransaction != null ? multiSendTransaction.getTransactionHash() : null)
                     .contractStatusEnum(ContractStatusEnum.Error)
-                    .gasUsed(multiSendTransaction != null ? multiSendTransaction.getGasUsed() : null)
-                    .revertReason(multiSendTransaction != null ? multiSendTransaction.getRevertReason() : "Unknown failure")
+                    .revertReason((e.getMessage() != null ? e.getMessage() : "IOException"))
+                    .build();
+
+        }
+        if (ethSendTx.hasError()) {
+            String errorMsg = ethSendTx.getError().getMessage();
+
+            // Detect nonce mismatch pattern
+            if (errorMsg != null && errorMsg.contains("the tx doesn't have the correct nonce")) {
+                // Reset nonce from chain
+                nonceService.resetNonceFromChain(credentials.getAddress());
+
+                // Log or return a specific response
+                return ContractTransactionReceipt.builder()
+                        .transactionHash(ethSendTx.getTransactionHash())
+                        .contractStatusEnum(ContractStatusEnum.Error)
+                        .revertReason("Nonce mismatch detected. Local nonce has been resynchronized with chain.")
+                        .build();
+            }
+
+            return ContractTransactionReceipt.builder()
+                        .transactionHash(ethSendTx.getTransactionHash())
+                        .contractStatusEnum(ContractStatusEnum.Error)
+                        .revertReason((errorMsg != null ? ethSendTx.getError().getMessage() : "Transaction reverted or failed"))
+                        .build();
+        }
+        String txHash = ethSendTx.getTransactionHash();
+        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3j, 1000, 60);
+        try {
+            TransactionReceipt confirmedReceipt = processor.waitForTransactionReceipt(txHash);
+            return ContractTransactionReceipt.builder()
+                    .transactionHash(confirmedReceipt.getTransactionHash())
+                    .contractStatusEnum(ContractStatusEnum.Completed)
+                    .gasUsed(confirmedReceipt.getGasUsed())
+                    .build();
+        } catch (IOException | TransactionException e) {
+            return ContractTransactionReceipt.builder()
+                    .transactionHash(ethSendTx.getTransactionHash())
+                    .contractStatusEnum(ContractStatusEnum.Error)
+                    .revertReason((e.getMessage() != null ? e.getMessage() : "IOException or TransactionException"))
                     .build();
         }
 
-        return ContractTransactionReceipt.builder()
-                .transactionHash(multiSendTransaction.getTransactionHash())
-                .contractStatusEnum(ContractStatusEnum.Completed)
-                .gasUsed(multiSendTransaction.getGasUsed())
-                .build();
     }
 
     private org.web3j.crypto.Credentials getCredentials(){
@@ -198,7 +247,7 @@ public class MultiSendHelperService {
             BigInteger amount;
             try {
                 amount = result.send().component3();
-                if(Objects.equals(amount, BigInteger.ZERO)){
+                if(BigInteger.ZERO.equals(amount)){
                     userIdsThatCancelled.add(userID);
                 }
             } catch (Exception ignored) {
@@ -231,7 +280,7 @@ public class MultiSendHelperService {
             BigInteger amount;
             try {
                 amount = result.send().component3();
-                if(Objects.equals(amount, BigInteger.ZERO)){
+                if(BigInteger.ZERO.equals(amount)){
                     userIdsThatCancelled.add(userID);
                 }
             } catch (Exception ignored) {

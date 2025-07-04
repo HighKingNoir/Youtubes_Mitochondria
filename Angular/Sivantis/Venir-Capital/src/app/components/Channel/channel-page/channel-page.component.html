@@ -55,40 +55,40 @@
     <div class="videos">
         <div class="header">Recently Purchased Content</div>
         <div class="videoContainer">
-            <div class="card" *ngFor="let i of videoIndices">
-                <img routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}" src="{{ChannelPurchasedVideos.content[i].thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+            <div class="card" *ngFor="let item of videoItems; let i = index; trackBy: trackByVideoId">
+                <img loading="lazy" routerLink="/Buy/{{item.content.contentId}}" src="{{item.content.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
                 <div class="card-body">
-                    <h6 routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}" class="contentType">
-                        <div *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.content[i].sentEmails == true" class="isActive">
+                    <h6 routerLink="/Buy/{{item.content.contentId}}" class="contentType">
+                        <div *ngIf="item.content.contentEnum === 'InProgress' && item.content.sentEmails == true" class="isActive">
                             <div class="activeIndicator"></div>
                         </div>
-                        {{ChannelPurchasedVideos.content[i].contentType}}
+                        {{item.content.contentType}}
                     </h6>
                     <div class="info"> 
-                    <div routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
-                        <img class="youtubeProfilePicture" src="{{ChannelPurchasedVideos.content[i].youtubeProfilePicture}}" alt="">
+                    <div routerLink="/Buy/{{item.content.contentId}}">
+                        <img  class="youtubeProfilePicture" src="{{item.content.youtubeProfilePicture}}" alt="">
                     </div>
                     
                     <div class="info-Colunm">
-                        <div class="first-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
-                            <h5 class="contentName">{{ChannelPurchasedVideos.content[i].contentName}}</h5>
+                        <div class="first-Row" routerLink="/Buy/{{item.content.contentId}}">
+                            <h5 class="contentName">{{item.content.contentName}}</h5>
                         </div>
-                        <div class="second-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
-                            <p class="youtubeUsername">{{ChannelPurchasedVideos.content[i].youtubeUsername}}</p>
+                        <div class="second-Row" routerLink="/Buy/{{item.content.contentId}}">
+                            <p class="youtubeUsername">{{item.content.youtubeUsername}}</p>
 
                         </div>
-                        <div class="third-Row" routerLink="/Buy/{{ChannelPurchasedVideos.content[i].contentId}}">
-                            <p class="releaseDate">Release: {{ChannelPurchasedVideos.content[i].releaseDate | formateDate}}</p>
+                        <div class="third-Row" routerLink="/Buy/{{item.content.contentId}}">
+                            <p class="releaseDate">Release: {{item.content.releaseDate | formateDate}}</p>
                         </div>
                     </div>
                     <div class="options" placement="bottom-end" ngbDropdown container="body">
                         <i class="fa-solid fa-ellipsis-vertical" id="dropdownBasic1" ngbDropdownToggle></i>
                         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="watchVideo(ChannelPurchasedVideos.content[i].youtubeMainVideoID!)"><i class="fa-brands fa-youtube"></i>Watch Video</button>
-                            <button class="dropdown-item" (click)="watchTrailer(ChannelPurchasedVideos.content[i].youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
-                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'Active' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="openCancelModal(ChannelPurchasedVideos.payment[i], i)"><i class="fa-solid fa-delete-left"></i>Refund</button>
-                            <button class="dropdown-item" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'InProgress' && ChannelPurchasedVideos.payment[i].status === 'Purchased' && isOwner" (click)="reportVideo(ChannelPurchasedVideos.content[i].contentId)"><i class="fa-solid fa-triangle-exclamation"></i>Report</button>
-                            <button class="dropdown-item delete" (click)="deleteVideo(ChannelPurchasedVideos.content[i])" *ngIf="ChannelPurchasedVideos.content[i].contentEnum === 'Inactive' || ChannelPurchasedVideos.payment[i].status === 'RefundedPurchase' && isOwner"><i class="fa-solid fa-trash"></i>Remove</button>
+                            <button class="dropdown-item" *ngIf="item.content.contentEnum === 'InProgress' && item.payment.status === 'Purchased' && isOwner" (click)="watchVideo(item.content.youtubeMainVideoID!)"><i class="fa-brands fa-youtube"></i>Watch Video</button>
+                            <button class="dropdown-item" (click)="watchTrailer(item.content.youtubeTrailerVideoID)"><i class="fa-solid fa-play"></i>Watch Trailer</button>
+                            <button class="dropdown-item" *ngIf="item.content.contentEnum === 'Active' && item.payment.status === 'Purchased' && isOwner" (click)="openCancelModal(item.payment, i)"><i class="fa-solid fa-delete-left"></i>Refund</button>
+                            <button class="dropdown-item" *ngIf="item.content.contentEnum === 'InProgress' && item.payment.status === 'Purchased' && isOwner" (click)="reportVideo(item.content.contentId)"><i class="fa-solid fa-triangle-exclamation"></i>Report</button>
+                            <button class="dropdown-item delete" (click)="deleteVideo(item.content)" *ngIf="item.content.contentEnum === 'Inactive' || item.payment.status === 'RefundedPurchase' && isOwner"><i class="fa-solid fa-trash"></i>Remove</button>
                         </div>
                     </div>
                     </div>

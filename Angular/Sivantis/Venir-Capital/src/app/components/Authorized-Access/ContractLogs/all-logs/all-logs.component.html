@@ -9,7 +9,7 @@
             </div>
         </div>
         <div class="logs">
-            <div *ngFor="let log of allLogs" class="latest-Logs-Info" [ngClass]="getStatusClass(log.contractTransactionReceipt.contractStatusEnum)">
+            <div *ngFor="let log of allLogs" class="latest-Logs-Info" [ngClass]="getStatusClass(log.contractTransactionReceipt.contractStatusEnum)" (click)="openContractFunctionDetails(log)">
                 <div *ngIf="log.contractEnum === 'MultiCall' || log.contractEnum === 'ClientMultiCall'; else SingleFunction">
                     <div class="layer-One">
                         <div class="contractStatusEnum">{{log.contractTransactionReceipt.contractStatusEnum}} </div>

@@ -1,16 +1,19 @@
 package Project_Noir.Athena.Service;
 
 import Project_Noir.Athena.Model.*;
-import Project_Noir.Athena.Repo.ContentRepository;
-import Project_Noir.Athena.Repo.PaymentRepository;
-import Project_Noir.Athena.Repo.SivantisContractLogsRepository;
-import Project_Noir.Athena.Repo.UserRepository;
+import Project_Noir.Athena.Repo.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import okhttp3.OkHttpClient;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.FunctionEncoder;
@@ -48,8 +51,10 @@ public class ClientSideMultiSendContractService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final MessageService messageService;
+    private final MongoTemplate mongoTemplate;
     private final CredentialsService credentialsService;
-    private final List<ClientSideMultiCallPackage> clientSideMultiCallPackageQueue = Collections.synchronizedList(new ArrayList<>());
+    private final Ec2InstanceTagService ec2InstanceTagService;
+    private final ClientSideMultiCallPackageRepository clientSideMultiCallPackageRepository;
     private final BigInteger ultraHighGasLimit = BigInteger.valueOf(1500000L);
     private final BigInteger highGasLimit = BigInteger.valueOf(750000L);
     private final BigInteger midGasLimit = BigInteger.valueOf(500000L);
@@ -93,79 +98,118 @@ public class ClientSideMultiSendContractService {
     }
 
     public void addToQueue(ClientSideMultiCallPackage clientSideMultiCallPackage){
-        clientSideMultiCallPackageQueue.add(clientSideMultiCallPackage);
+        clientSideMultiCallPackageRepository.save(clientSideMultiCallPackage);
     }
 
-    @Scheduled(fixedDelay = 10000)
-    private void executeMultiCall() {
-        if(clientSideMultiCallPackageQueue.isEmpty()){
+    @Scheduled(fixedDelayString = "${scheduler.delay}")
+    @SchedulerLock(name = "executeClientMultiCallLock", lockAtLeastFor = "PT10S", lockAtMostFor = "PT5M")
+    public void executeMultiCall() {
+        var allClientSideMultiCallPackages = clientSideMultiCallPackageRepository.findAll();
+        if(allClientSideMultiCallPackages.isEmpty()){
             return;
         }
-        var allClientSideMultiCallPackages = drainClientSideMultiCallPackageQueue();
-        Credentials credentials = getCredentials();
-        ArrayList<MultiCallResponse> multiCallResponses = new ArrayList<>();
-        var estimatedGasLimit = baseGas;
-        List<byte[]> transactions = new ArrayList<>();
-        BigInteger gasPrice = getGasPrice(web3j);
-        var transactionCount = 0;
-        for (int index = 0; index < allClientSideMultiCallPackages.size(); index++) {
-            var clientSideMultiCallPackage = allClientSideMultiCallPackages.get(index);
-            if(estimatedGasLimit.add(getGasLimit(clientSideMultiCallPackage.getContractFunctionDetails())).compareTo(GAS_LIMIT) > 0){
-                var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
-                        credentials,
-                        gasPrice,
-                        estimatedGasLimit,
-                        transactions
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            Credentials credentials = getCredentials();
+            ArrayList<MultiCallResponse> multiCallResponses = new ArrayList<>();
+            var estimatedGasLimit = baseGas;
+            List<byte[]> transactions = new ArrayList<>();
+            var transactionCount = 0;
+            for (int index = 0; index < allClientSideMultiCallPackages.size(); index++) {
+                var clientSideMultiCallPackage = allClientSideMultiCallPackages.get(index);
+                if(estimatedGasLimit.add(getGasLimit(clientSideMultiCallPackage.getContractFunctionDetails())).compareTo(GAS_LIMIT) > 0){
+                    var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
+                            credentials,
+                            getGasPrice(web3j),
+                            estimatedGasLimit,
+                            transactions
+                    );
+                    credentials = getCredentials();
+                    var multiCallResponse = MultiCallResponse.builder()
+                            .contractTransactionReceipt(contractTransactionReceipt)
+                            .transactionCount(transactionCount)
+                            .build();
+                    multiCallResponses.add(multiCallResponse);
+                    estimatedGasLimit = baseGas;
+                    transactions = new ArrayList<>();
+                    transactionCount = 0;
+                }
+                estimatedGasLimit = estimatedGasLimit.add(getGasLimit(clientSideMultiCallPackage.getContractFunctionDetails()));
+                transactions.add(clientSideMultiCallPackage.getFunctionData());
+                transactionCount++;
+                if (index == allClientSideMultiCallPackages.size() - 1){
+                    var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
+                            credentials,
+                            getGasPrice(web3j),
+                            estimatedGasLimit,
+                            transactions
+                    );
+                    var multiCallResponse = MultiCallResponse.builder()
+                            .contractTransactionReceipt(contractTransactionReceipt)
+                            .transactionCount(transactionCount)
+                            .build();
+                    multiCallResponses.add(multiCallResponse);
+                }
+            }
+            int index = 0;
+            for (MultiCallResponse multiCallResponse: multiCallResponses){
+                List<ClientSideMultiCallPackage> subList = allClientSideMultiCallPackages.subList(
+                        index,
+                        index + multiCallResponse.getTransactionCount()
                 );
-                credentials = getCredentials();
-                var multiCallResponse = MultiCallResponse.builder()
-                        .contractTransactionReceipt(contractTransactionReceipt)
-                        .transactionCount(transactionCount)
-                        .build();
-                multiCallResponses.add(multiCallResponse);
-                estimatedGasLimit = baseGas;
-                transactions = new ArrayList<>();
-                transactionCount = 0;
+                var clientMultiCallLog = createMultiCallLog(subList, multiCallResponse.getTransactionCount());
+                clientMultiCallLog.setContractTransactionReceipt(multiCallResponse.getContractTransactionReceipt());
+                if(multiCallResponse.getContractTransactionReceipt().getContractStatusEnum().equals(ContractStatusEnum.Completed)){
+                    functionChecks(subList, multiCallResponse.getContractTransactionReceipt().getTransactionHash(), clientMultiCallLog);
+                }
+                sivantisContractLogsRepository.save(clientMultiCallLog);
+                index += multiCallResponse.getTransactionCount();
             }
-            estimatedGasLimit = estimatedGasLimit.add(getGasLimit(clientSideMultiCallPackage.getContractFunctionDetails()));
-            transactions.add(clientSideMultiCallPackage.getFunctionData());
-            transactionCount++;
-            if (index == allClientSideMultiCallPackages.size() - 1){
-                var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
-                        credentials,
-                        gasPrice,
-                        estimatedGasLimit,
-                        transactions
-                );
-                var multiCallResponse = MultiCallResponse.builder()
-                        .contractTransactionReceipt(contractTransactionReceipt)
-                        .transactionCount(transactionCount)
-                        .build();
-                multiCallResponses.add(multiCallResponse);
-            }
-        }
-        int index = 0;
-        for (MultiCallResponse multiCallResponse: multiCallResponses){
-            List<ClientSideMultiCallPackage> subList = allClientSideMultiCallPackages.subList(
-                    index,
-                    index + multiCallResponse.getTransactionCount()
-            );
-            var clientMultiCallLog = createMultiCallLog(subList, multiCallResponse.getTransactionCount());
-            clientMultiCallLog.setContractTransactionReceipt(multiCallResponse.getContractTransactionReceipt());
-            if(multiCallResponse.getContractTransactionReceipt().getContractStatusEnum().equals(ContractStatusEnum.Completed)){
-                paymentCheck(subList, multiCallResponse.getContractTransactionReceipt().getTransactionHash(), clientMultiCallLog);
-            }
-            sivantisContractLogsRepository.save(clientMultiCallLog);
-            index += multiCallResponse.getTransactionCount();
+            clientSideMultiCallPackageRepository.deleteAll(allClientSideMultiCallPackages);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
         }
     }
 
-    private void paymentCheck(List<ClientSideMultiCallPackage> clientSideMultiCallPackages, String transactionHash, SivantisContractLogs clientMultiCallLog){
+    private void functionChecks(List<ClientSideMultiCallPackage> clientSideMultiCallPackages, String transactionHash, SivantisContractLogs clientMultiCallLog){
         double totalManaAmount = 0.0;
         double manaToCompany = 0.0;
+        var approvedChannelNames = new ArrayList<String>();
+        var allPayments = new ArrayList<Payment>();
+        var activeContent = new ArrayList<Content>();
+        var allPendingContent = new ArrayList<Content>();
+        var purchasedPaymentsList = new ArrayList<Payment>();
+        var purchasedContentList = new ArrayList<Content>();
+        var channelNamePurchases = new ArrayList<String>();
+        var canceledUserList = new ArrayList<Users>();
+        var canceledContentList = new ArrayList<Content>();
+        var channelNameCancellation = new ArrayList<String>();
+        var canceledManaAmounts = new ArrayList<String>();
         for (ClientSideMultiCallPackage multiCallPackage: clientSideMultiCallPackages){
             var contractFunctionDetails = multiCallPackage.getContractFunctionDetails();
             switch (multiCallPackage.getContractFunctionDetails().getContractFunctionEnum()){
+                case AddChannel -> approvedChannelNames.add(contractFunctionDetails.getChannelName());
+                case ReactivateContent, SetAuctionToActive, CreateNewAuction -> {
+                    if(contentRepository.findById(contractFunctionDetails.getContentID()).isPresent()){
+                        var content = contentRepository.findById(contractFunctionDetails.getContentID()).get();
+                        content.setContentEnum(ContentEnum.Active);
+                        content.setActiveDate(Instant.now());
+                        activeContent.add(content);
+                    }
+                }
+                case AddContentCreator -> {
+                    if(userRepository.findById(contractFunctionDetails.getUserID()).isPresent()){
+                        approveContentCreatorRequest(contractFunctionDetails.getUserID());
+                        var user = userRepository.findById(contractFunctionDetails.getUserID()).get();
+                        var pendingContent = contentRepository.findByContentIdInAndPendingCreatorApprovalTrue(user.getCreatedContent());
+                        for (Content content: pendingContent){
+                            content.setActiveDate(Instant.now());
+                            content.setPendingCreatorApproval(false);
+                            content.setContentEnum(ContentEnum.Active);
+                        }
+                        allPendingContent.addAll(pendingContent);
+                    }
+                }
                 case PayForContent, WatchNowPayLater -> {
                     var purchasedContent = paymentService.findChannelPayment(contractFunctionDetails.getChannelName(), contractFunctionDetails.getContentID());
                     purchasedContent.setTransactionHash(transactionHash);
@@ -173,8 +217,10 @@ public class ClientSideMultiSendContractService {
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
                     manaToCompany = manaToCompany + contractFunctionDetails.getManaAmount() / 10;
                     var content = contentRepository.findById(contractFunctionDetails.getContentID()).orElseThrow();
-                    messageService.purchasedPaymentChannelMessage(contractFunctionDetails.getChannelName(), purchasedContent, content);
-                    paymentRepository.save(purchasedContent);
+                    purchasedPaymentsList.add(purchasedContent);
+                    purchasedContentList.add(content);
+                    channelNamePurchases.add(contractFunctionDetails.getChannelName());
+                    allPayments.add(purchasedContent);
                 }
                 case CancelWatchNowPayLater, CancelPayment -> {
                     var Payment = paymentService.findChannelPayment(contractFunctionDetails.getChannelName(), contractFunctionDetails.getContentID());
@@ -183,14 +229,18 @@ public class ClientSideMultiSendContractService {
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
                     var content = contentRepository.findById(contractFunctionDetails.getContentID()).orElseThrow();
                     var user = userRepository.findById(Payment.getUserId()).orElseThrow();
-                    messageService.refundChannelMessage(user, Payment.getTransactionHash(), contractFunctionDetails.getChannelName(), contractFunctionDetails.getManaAmount().toString(), content);
-                    paymentRepository.save(Payment);
+                    canceledUserList.add(user);
+                    channelNameCancellation.add(contractFunctionDetails.getChannelName());
+                    canceledContentList.add(content);
+                    canceledManaAmounts.add(contractFunctionDetails.getManaAmount().toString());
+                    allPayments.add(Payment);
                 }
                 case ReturnBid -> {
                     var Payment = paymentService.findPayment(contractFunctionDetails.getUserID(), contractFunctionDetails.getContentID());
                     Payment.setTransactionHash(transactionHash);
+                    Payment.setStatus(PaymentEnum.RefundedPurchase);
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
-                    paymentRepository.save(Payment);
+                    allPayments.add(Payment);
                 }
             }
         }
@@ -200,6 +250,38 @@ public class ClientSideMultiSendContractService {
         if(manaToCompany > 0.0){
             clientMultiCallLog.setManaToCompany(manaToCompany);
         }
+        if(!approvedChannelNames.isEmpty()){
+            messageService.approvedChannelMessage(approvedChannelNames);
+        }
+        if(!allPayments.isEmpty()){
+            paymentRepository.saveAll(allPayments);
+        }
+        if(!activeContent.isEmpty()){
+            contentRepository.saveAll(activeContent);
+        }
+        if(!allPendingContent.isEmpty()){
+            contentRepository.saveAll(allPendingContent);
+        }
+        if(!channelNamePurchases.isEmpty()){
+            messageService.purchasedPaymentChannelMessage(channelNamePurchases, purchasedPaymentsList, purchasedContentList);
+        }
+        if(!canceledUserList.isEmpty()){
+            messageService.refundChannelMessage(canceledUserList, transactionHash, channelNameCancellation, canceledManaAmounts, canceledContentList);
+        }
+    }
+
+    private void approveContentCreatorRequest(String userId) {
+        Query query = new Query(Criteria.where("_id").is(userId));
+
+        Update update = new Update()
+                .set("isContentCreator", true)
+                .set("contentCreatorPending", false);
+
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Users.class
+        );
     }
 
     public boolean hasSufficientChannelBalance(String channelName, Double manaPrice, Double averageWeeklyViewers, String contentType, Integer numberOfPayments) {
@@ -220,7 +302,7 @@ public class ClientSideMultiSendContractService {
                             DefaultBlockParameterName.LATEST)
                     .send();
         } catch (IOException e) {
-            return true;
+            return false;
         }
         List<Type> result = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
         var manaNeeded = (averageWeeklyViewers * priceOfContent(contentType)) / (100 * manaPrice);
@@ -263,13 +345,7 @@ public class ClientSideMultiSendContractService {
         return polygonGasStation.multiply(BigInteger.valueOf(120)).divide(BigInteger.valueOf(100));
     }
 
-    private List<ClientSideMultiCallPackage> drainClientSideMultiCallPackageQueue() {
-        synchronized (clientSideMultiCallPackageQueue) {
-            List<ClientSideMultiCallPackage> drained = new ArrayList<>(clientSideMultiCallPackageQueue);
-            clientSideMultiCallPackageQueue.clear();
-            return drained;
-        }
-    }
+
 
     private SivantisContractLogs createMultiCallLog(List<ClientSideMultiCallPackage> clientSideMultiCallPackages, Integer transactionCount){
         var contractFunctionDetails = clientSideMultiCallPackages.stream().map(ClientSideMultiCallPackage::getContractFunctionDetails).toList();

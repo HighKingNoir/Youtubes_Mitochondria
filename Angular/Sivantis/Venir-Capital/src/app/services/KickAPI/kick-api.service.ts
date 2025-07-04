@@ -6,6 +6,7 @@ import { environment } from 'src/Environment/environment';
 import { EditChannelService } from '../EditChannel/edit-channel.service';
 import { StreamerInfo } from 'src/app/models/Channels/Channels';
 import { AlertService } from '../Alerts/alert.service';
+import { ChannelService } from '../Channel/channel.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,8 @@ export class KickApiService {
     private router: Router,
     private createChannelService: CreateChannelService,
     private editChannelService: EditChannelService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private channelService: ChannelService
   ) { }
 
   getKickChannel(accessToken: string, redirectURL: string) {
@@ -40,6 +42,20 @@ export class KickApiService {
               this.editChannelService.addStreamerInfo(streamerInfo)
               this.router.navigateByUrl(redirectURL)
             }
+            else if(redirectURL.startsWith("/Channel")){
+              const channelName = redirectURL.split("/")[2]
+              this.channelService.addStreamerInfo(channelName, streamerInfo).subscribe({
+                next: () => {
+                  this.alertService.addAlert("Streamer Info Added", "success")
+                  this.router.navigateByUrl(redirectURL)
+                },
+                error: () => {
+                  this.alertService.addAlert("Failed to Add Streamer Info", "danger")
+                  this.router.navigateByUrl(redirectURL)
+                },
+                complete: () => {}
+              });
+            }
             else{
               this.createChannelService.addStreamerInfo(streamerInfo)
               this.router.navigateByUrl('/Create/Channel')
@@ -47,7 +63,7 @@ export class KickApiService {
 
       },
       error: (error) =>{
-        if(redirectURL.startsWith("/Change")){
+        if(redirectURL.startsWith("/Change") || redirectURL.startsWith("/Channel")){
           this.alertService.addAlert(error, "danger")
           this.router.navigateByUrl(redirectURL)
         }
@@ -66,6 +82,9 @@ export class KickApiService {
   async redirectToKickAuthorization(){
     if(this.router.url.startsWith("/Change")){
       this.redirectUri = environment.FrontEndURL + "Edit/Channel/Kick"
+    }
+    else if(this.router.url.startsWith("/Channel")){
+      this.redirectUri = environment.FrontEndURL + "Add/Channel/Kick"
     }
     else {
       this.redirectUri = environment.FrontEndURL + "Create/Channel/Kick"

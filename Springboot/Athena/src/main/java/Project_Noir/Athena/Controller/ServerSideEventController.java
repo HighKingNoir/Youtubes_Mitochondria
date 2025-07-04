@@ -59,16 +59,26 @@ public class ServerSideEventController {
 
 
     @Scheduled(fixedRate = 10000)
-    public void UpdateManaPrice() throws IOException {
+    public void UpdateManaPrice()  {
         OkHttpClient client = new OkHttpClient.Builder().build();
         Request request = new Request.Builder()
                 .url("https://api.coinbase.com/v2/prices/MANA-USD/spot")
                 .method("GET", null)
                 .addHeader("Content-Type", "application/json")
                 .build();
-        Response response = client.newCall(request).execute();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (response.isSuccessful() && response.body() != null) {
-            JsonNode jsonResponse = objectMapper.readTree(response.body().string());
+            JsonNode jsonResponse = null;
+            try {
+                jsonResponse = objectMapper.readTree(response.body().string());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             String amount = jsonResponse.path("data").path("amount").asText();
             latestValue = Double.valueOf(amount);
             if ("dev".equals(environment)) {
@@ -78,8 +88,12 @@ public class ServerSideEventController {
             List<String> deadEmitters = new ArrayList<>();
             for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
                 try {
-                    entry.getValue().send(SseEmitter.event().data(latestValue));
-                } catch (IOException e) {
+                    if (entry.getValue() != null) {
+                        entry.getValue().send(SseEmitter.event().data(latestValue));
+                    } else {
+                        deadEmitters.add(entry.getKey());
+                    }
+                } catch (IllegalStateException | IOException e) {
                     deadEmitters.add(entry.getKey());
                 }
             }

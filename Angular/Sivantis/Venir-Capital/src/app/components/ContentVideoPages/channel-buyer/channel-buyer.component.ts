@@ -412,6 +412,8 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
         return this.contentService.shortFilmPrice;
       case 'Sports':
         return this.contentService.sportsPrice;
+      case 'Concerts':
+        return this.contentService.sportsPrice;
       case 'Movies':
         return this.contentService.moviePrice;
       default:

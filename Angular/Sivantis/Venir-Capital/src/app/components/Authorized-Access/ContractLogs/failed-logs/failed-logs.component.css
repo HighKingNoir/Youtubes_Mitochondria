@@ -1,3 +1,18 @@
+@keyframes fade-in-out {
+    0% {
+      opacity: 0;
+    }
+    15%{
+        opacity: 1;
+    }
+    90%{
+        opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
+
 .sub-Header{
     position: relative;
     display: flex;
@@ -14,6 +29,19 @@
 .sub-Header-Title{
     font-size: 25px;
     padding-left: 20px;
+}
+
+.alert-Container{
+    top: 80px;
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    padding-right: 10px;
+}
+
+.alert {
+    opacity: 0;
+    animation: fade-in-out 4s ease-in-out forwards;
 }
 
 .log-Categories{

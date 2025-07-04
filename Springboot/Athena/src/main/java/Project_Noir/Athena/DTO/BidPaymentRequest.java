@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class BidPaymentRequest {
     private String contentID;
     private String manaAmount;
-    private Double dollarAmount;
+    private BigDecimal dollarAmount;
     private String transactionHash;
 }

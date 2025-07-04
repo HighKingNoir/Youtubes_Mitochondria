@@ -126,7 +126,7 @@ public class GaslessFunctionCallService {
         var manaWeiAmount = gaslessFunctionCallRequest.getAmount();
         BigDecimal manaPriceDecimal = BigDecimal.valueOf(manaPrice);
         BigDecimal manaEtherAmount = Convert.fromWei(new BigDecimal(manaWeiAmount), Convert.Unit.ETHER);
-        double dollarAmount = manaEtherAmount.multiply(manaPriceDecimal).doubleValue();
+        BigDecimal dollarAmount = manaEtherAmount.multiply(manaPriceDecimal);
         var bidPaymentRequest = BidPaymentRequest.builder()
                 .transactionHash(transactionReceipt.getTransactionHash())
                 .contentID(gaslessFunctionCallRequest.getContentID())
@@ -159,7 +159,7 @@ public class GaslessFunctionCallService {
         var manaWeiAmount = gaslessFunctionCallRequest.getAmount();
         BigDecimal manaPriceDecimal = BigDecimal.valueOf(manaPrice);
         BigDecimal manaEtherAmount = Convert.fromWei(new BigDecimal(manaWeiAmount), Convert.Unit.ETHER);
-        double dollarAmount = manaEtherAmount.multiply(manaPriceDecimal).doubleValue();
+        BigDecimal dollarAmount = manaEtherAmount.multiply(manaPriceDecimal);
         var bidPaymentRequest = BidPaymentRequest.builder()
                 .transactionHash(transactionReceipt.getTransactionHash())
                 .contentID(gaslessFunctionCallRequest.getContentID())
@@ -196,9 +196,8 @@ public class GaslessFunctionCallService {
     }
 
     private GaslessFunctionCallModule loadGaslessFunctionCallModule(){
-        var gasPrice = getGasPrice(web3j);
         var credentials = getCredentials();
-        return GaslessFunctionCallModule.load(gaslessFunctionCallAddress, web3j, credentials, new StaticGasProvider(gasPrice, BigInteger.valueOf(500000L)));
+        return GaslessFunctionCallModule.load(gaslessFunctionCallAddress, web3j, credentials, new StaticGasProvider(getGasPrice(web3j), BigInteger.valueOf(500000L)));
     }
 
     private void validateDeadline(BigInteger deadline) {

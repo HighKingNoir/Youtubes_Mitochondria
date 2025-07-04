@@ -131,6 +131,7 @@
     color: white;
     align-items: center;
     padding-bottom: 10px;
+    will-change: transform;
 }
 
 .videoContainer{
@@ -151,6 +152,8 @@
     width: 100px;
     height: 100px;
     border-radius: 5px;
+    object-fit: cover; 
+    display: block;
 }
 
 .videoContainer .contentDescriptors{

@@ -60,11 +60,11 @@ public class ContentController {
         return new ResponseEntity<String>("Content Reactivated", HttpStatus.ACCEPTED);
     }
 
-   @GetMapping("/All")
-   // @dev returns all content
-    public ResponseEntity<List<Content>> getAllContent(){
-        return ResponseEntity.status(HttpStatus.OK).body(contentRepository.findAll());
-   }
+//   @GetMapping("/All")
+//   // @dev returns all content
+//    public ResponseEntity<List<Content>> getAllContent(){
+//        return ResponseEntity.status(HttpStatus.OK).body(contentRepository.findAll());
+//   }
 
     @GetMapping("/Single/{contentId}")
     public ResponseEntity<Content> getSingleContent(@PathVariable String contentId){

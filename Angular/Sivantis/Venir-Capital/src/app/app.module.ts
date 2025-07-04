@@ -95,6 +95,9 @@ import { ConcertsComponent } from './components/HomePages/concerts/concerts.comp
 import { LeaderboardComponent } from './components/Leaderboard/leaderboard/leaderboard.component';
 import { UserDetailsComponent } from './components/Leaderboard/user-details/user-details.component';
 import { TransakPopupComponent } from './components/Accessories/Popups/transak-popup/transak-popup.component';
+import { EditStreamInfoComponent } from './components/Accessories/Popups/EditStreamInfo/edit-stream-info/edit-stream-info.component';
+import { ContractFunctionDetailsComponent } from './components/Accessories/Popups/ContractFunctionDetails/contract-function-details/contract-function-details.component';
+import { AddStreamerRedirectComponent } from './components/Accessories/Redirects/AddStreamerRedirect/add-streamer-redirect/add-streamer-redirect.component';
 
 const jwtModule = JwtModule.forRoot({
     config: {
@@ -108,6 +111,9 @@ const jwtModule = JwtModule.forRoot({
 
 @NgModule({ declarations: [
         AppComponent,
+        ContractFunctionDetailsComponent,
+        AddStreamerRedirectComponent,
+        EditStreamInfoComponent,
         LoginAccountComponent,
         HomeComponent,
         ChannelSidebarComponent,

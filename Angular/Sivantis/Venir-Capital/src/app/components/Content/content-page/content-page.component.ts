@@ -175,8 +175,8 @@ export class ContentPageComponent implements OnInit{
     if(video.contentEnum != "Inactive"){
       this.alertService.addAlert("To Reactive, this content must be Inactive", 'danger')
     }
-    else if(video.contentType == "Sports"){
-      this.alertService.addAlert("Cannot reactive a video set as Sports", 'danger')
+    else if(video.contentType == "Sports" || video.contentType == "Concerts" ){
+      this.alertService.addAlert("Cannot reactive a video set as Sports or Concerts", 'danger')
     }
     else{
       const videoConfirmation:VideoConfirmation = {
@@ -204,7 +204,7 @@ export class ContentPageComponent implements OnInit{
                   (v) => v.contentId === video.contentId
                 );
                 if (indexToReactivate !== -1) {
-                  this.UserCreatedVideos[indexToReactivate].contentEnum = "Active"
+                  this.UserCreatedVideos[indexToReactivate].contentEnum = "PendingConfirmation"
                   this.UserCreatedVideos[indexToReactivate].releaseDate = [newReleaseDate.year, newReleaseDate.month, newReleaseDate.day]
                   this.UserCreatedVideos[indexToReactivate].hype = 0
                 }
@@ -283,6 +283,10 @@ getStatusClass(status: string, isComplete: boolean) {
       return 'status-yellow';
     case 'InProgress':
       return 'status-green'
+    case 'PendingConfirmation':
+      return 'status-purple'
+    case 'PendingReactivation':
+      return 'status-purple'
     default:
       return 'status-grey';
   }
@@ -297,9 +301,15 @@ getStatus(status: string, isComplete: boolean) {
       return 'In Development';
     case 'InProgress':
       return 'Active'
+    case 'PendingConfirmation':
+      return 'Awaiting Blockchain Confirmation'
     default:
       return 'Inactive';
   }
+}
+
+trackByVideoId(index: number, video: CreatedContentDetails) {
+  return video.contentId;
 }
 
   importYoutubeVideo(){

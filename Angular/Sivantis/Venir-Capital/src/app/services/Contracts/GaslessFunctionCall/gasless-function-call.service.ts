@@ -11,7 +11,8 @@ import { ganache } from '../ganache';
 import { signTypedData } from '@wagmi/core'
 import { config } from '../config';
 
-const chainID = environment.production ? 137 : 1337
+type SupportedChainID = 137 | 1337;
+const chainID: SupportedChainID = environment.production ? 137 : 1337;
 const chain = environment.production ? polygon : ganache
 
 @Injectable({

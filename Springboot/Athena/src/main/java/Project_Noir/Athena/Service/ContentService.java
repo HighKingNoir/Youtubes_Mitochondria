@@ -6,19 +6,25 @@ import Project_Noir.Athena.Exception.SivantisException;
 import Project_Noir.Athena.Model.*;
 import Project_Noir.Athena.Repo.*;
 import com.auth0.jwt.JWT;
+import com.mongodb.DuplicateKeyException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.exceptions.TransactionException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,6 +48,7 @@ public class ContentService {
     private final ContractServiceInterface contractServiceInterface;
     private final JwtService jwtService;
     private final MongoTemplate mongoTemplate;
+    private final Ec2InstanceTagService ec2InstanceTagService;
     private final ChannelRepository channelRepository;
     private final MessageRepository messageRepository;
     private final MessageService messageService;
@@ -62,10 +69,12 @@ public class ContentService {
         if(User.getPersonalWallet() == null){
             throw new SivantisException("Must have a personal wallet on file");
         }
-        if(contentRepository.findByYoutubeMainVideoID(contentRequest.getYoutubeMainVideoID()).isPresent()){
-            throw new SivantisException("A user published a video with this youtube ID already");
-        }
         var Content = mapContentRequest(contentRequest, User.getUserId(),User.getIsViolator());
+        try {
+            contentRepository.save(Content); // save will fail if the ID already exists
+        } catch (DuplicateKeyException e) {
+            throw new SivantisException("A user published a video with this YouTube ID already");
+        }
         if(Content.getContentType().equals("Short Film")){
             Content.setDuration(isGreaterThanTenMinutes(contentRequest.getDuration()));
         }
@@ -77,17 +86,31 @@ public class ContentService {
                 throw new SivantisException("Selected video must be a upcoming livestream");
             }
         }
+        Content.setContentEnum(ContentEnum.PendingConfirmation);
         if(isAuction(Content.getContentType())){
             contractServiceInterface.createNewAuction(Content.getContentId(), Content.getNumbBidders(), Content.getStartingCost(), User.getPersonalWallet());
             if(contentRequest.getLiveBroadcastContent().equals("none")){
                 Content.setDuration(isGreaterThanTenMinutes(contentRequest.getDuration()));
             }
         }
-        else if(!User.isContentCreator()) {
-            contractServiceInterface.addContentCreator(User.getUserId(), User.getPersonalWallet(), User.getRank());
-            User.setContentCreator(true);
+        else {
+            if (isNotYetCreatorOrPending(User)) {
+                // Mark content as pending until on-chain addContentCreator finishes
+                Content.setPendingCreatorApproval(true);
+
+                // Only queue blockchain tx once
+                if (isNotContentCreator(User.getUserId())) {
+                    contractServiceInterface.addContentCreator(User.getUserId(), User.getPersonalWallet(), User.getRank());
+                }
+            } else if (!User.isContentCreator()) {
+                // User is pending — still mark content as PendingConfirmation
+                Content.setPendingCreatorApproval(true);
+            } else {
+                // User is already a content creator
+                Content.setContentEnum(ContentEnum.Active);
+                Content.setActiveDate(Instant.now());
+            }
         }
-        Content.setContentEnum(ContentEnum.Active);
         Content.setIsComplete(true);
         User.setVideosPosted(User.getVideosPosted() + 1);
         User.getCreatedContent().add(Content.getContentId());
@@ -97,9 +120,6 @@ public class ContentService {
     }
 
     public void completeVideo(CompleteVideoRequest completeVideoRequest, String JWT){
-        if(contentRepository.findByYoutubeMainVideoID(completeVideoRequest.getYoutubeMainVideoID()).isPresent()){
-            throw new SivantisException("A user published a video with this youtube ID already");
-        }
         if(!completeVideoRequest.getPrivacyStatus().equals("private")){
             throw new SivantisException("Main Video must have a privacy status of 'private'");
         }
@@ -121,8 +141,12 @@ public class ContentService {
         user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 1);
         content.setYoutubeMainVideoID((completeVideoRequest.getYoutubeMainVideoID()));
         content.setIsComplete(true);
+        try {
+            contentRepository.save(content); // save will fail if the ID already exists
+        } catch (DuplicateKeyException e) {
+            throw new SivantisException("A user published a video with this YouTube ID already");
+        }
         userRepository.save(user);
-        contentRepository.save(content);
     }
 
 
@@ -146,14 +170,28 @@ public class ContentService {
             throw new SivantisException("Selected video cannot be a livestream");
         }
         var Content = mapContentRequest(contentRequest,User.getUserId(), false);
+        Content.setContentEnum(ContentEnum.PendingConfirmation);
         if(isAuction(Content.getContentType())){
             contractServiceInterface.createNewAuction(Content.getContentId(), Content.getNumbBidders(), Content.getStartingCost(), User.getPersonalWallet());
         }
-        else if(!User.isContentCreator()) {
-            contractServiceInterface.addContentCreator(User.getUserId(), User.getPersonalWallet(), User.getRank());
-            User.setContentCreator(true);
+        else {
+            if (isNotYetCreatorOrPending(User)) {
+                // Mark content as pending until on-chain addContentCreator finishes
+                Content.setPendingCreatorApproval(true);
+
+                // Only queue blockchain tx once
+                if (isNotContentCreator(User.getUserId())) {
+                    contractServiceInterface.addContentCreator(User.getUserId(), User.getPersonalWallet(), User.getRank());
+                }
+            } else if (!User.isContentCreator()) {
+                // User is pending — still mark content as PendingConfirmation
+                Content.setPendingCreatorApproval(true);
+            } else {
+                // User is already a content creator
+                Content.setContentEnum(ContentEnum.Active);
+                Content.setActiveDate(Instant.now());
+            }
         }
-        Content.setContentEnum(ContentEnum.Active);
         Content.setIsComplete(false);
         User.setVideosPosted(User.getVideosPosted() + 1);
         User.getCreatedContent().add(Content.getContentId());
@@ -203,7 +241,8 @@ public class ContentService {
         if(!content.getCreatorID().equals(userID)){
             throw new SivantisException("You are not the owner of this video");
         }
-        if(!content.getContentEnum().equals(ContentEnum.Inactive)){
+        var updatedContent = tryTransitionToPendingConfirmation(content.getContentId());
+        if (updatedContent == null) {
             throw new SivantisException("Content must be Inactive to reactivate");
         }
         if(!isAtLeast3DaysFromToday(reactivateContentRequest.getReleaseDate())){
@@ -212,17 +251,20 @@ public class ContentService {
         if(content.getContentType().equals("Sports") || content.getContentType().equals("Concerts")){
             throw new SivantisException("Cannot reactivate video type of Sport OR Concert");
         }
-        if(isAuction(content.getContentType())){
+        content.setContentEnum(ContentEnum.PendingConfirmation);
+        if(content.getListOfBuyerIds().isEmpty()){
+            content.setContentEnum(ContentEnum.Active);
+            content.setActiveDate(Instant.now());
+        }
+        else if(isAuction(content.getContentType())){
             contractServiceInterface.reactivateAuction(content);
         }
         else {
             contractServiceInterface.reactivateContent(content);
         }
         var user = userRepository.findById(userID).orElseThrow();
-        content.setContentEnum(ContentEnum.Active);
         content.setListOfBuyerIds(new HashMap<>());
-        content.setHype(0.0);
-        content.setActiveDate(Instant.now());
+        content.setHype(BigDecimal.ZERO);
         content.setSentEmails(false);
         content.setContentReports(new ArrayList<>());
         if(user.getIsViolator()){
@@ -241,55 +283,65 @@ public class ContentService {
         List<Content> releaseEmailsContent = new ArrayList<>();
         List<Content> failedToSendEmailsContent = new ArrayList<>();
         LocalDate currentDate = LocalDate.now();
-
-        for(Content content: ActiveContent) {
-            var releaseDate = content.getReleaseDate();
-            if (content.getIsComplete()) {
-                if (currentDate.isEqual(releaseDate.minusDays(1))) {
-                    releaseEmailsContent.add(content);
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            for(Content content: ActiveContent) {
+                var releaseDate = content.getReleaseDate();
+                if (content.getIsComplete()) {
+                    if (currentDate.isEqual(releaseDate.minusDays(1))) {
+                        releaseEmailsContent.add(content);
+                    }
+                    else if (currentDate.isEqual(releaseDate.plusDays(1)) &&  !content.getSentEmails()) {
+                        failedToSendEmailsContent.add(content);
+                    }
+                    else if (currentDate.isEqual(releaseDate.plusDays(2))) {
+                        successfulVideoContent.add(content);
+                    }
                 }
-                else if (currentDate.isEqual(releaseDate.plusDays(1)) &&  !content.getSentEmails()) {
-                    failedToSendEmailsContent.add(content);
-                }
-                else if (currentDate.isEqual(releaseDate.plusDays(2))) {
-                    successfulVideoContent.add(content);
+                else {
+                    if (currentDate.isEqual(releaseDate.minusDays(4))) {
+                        messageService.warningMessage(content);
+                    }
+                    if (currentDate.isEqual(releaseDate.minusDays(2))) {
+                        returnAllManaContent.add(content);
+                    }
                 }
             }
-            else {
-                if (currentDate.isEqual(releaseDate.minusDays(4))) {
-                    messageService.warningMessage(content);
+            if(!returnAllManaContent.isEmpty()){
+                List<Content> allContentNeedingReturn = new ArrayList<>(returnAllManaContent);
+                if(!failedToSendEmailsContent.isEmpty()){
+                    allContentNeedingReturn.addAll(failedToSendEmailsContent);
                 }
-                if (currentDate.isEqual(releaseDate.minusDays(2))) {
-                   returnAllManaContent.add(content);
+                serverSideMultiSendContractService.returnAllManaMultiCall(allContentNeedingReturn);
+                for(Content content: returnAllManaContent){
+                    messageService.failedVideoMessage(content);
                 }
             }
-        }
-        if(!returnAllManaContent.isEmpty()){
-            List<Content> allContentNeedingReturn = new ArrayList<>(returnAllManaContent);
+            if(!successfulVideoContent.isEmpty()){
+                serverSideMultiSendContractService.successfulVideoMultiCall(successfulVideoContent);
+            }
+            if(!releaseEmailsContent.isEmpty()){
+                serverSideMultiSendContractService.releaseEmailsMultiCall(releaseEmailsContent);
+            }
             if(!failedToSendEmailsContent.isEmpty()){
-                allContentNeedingReturn.addAll(failedToSendEmailsContent);
+                messageService.failedToSendEmailsMessage(failedToSendEmailsContent);
             }
-            serverSideMultiSendContractService.returnAllManaMultiCall(allContentNeedingReturn);
-            for(Content content: returnAllManaContent){
-                messageService.failedVideoMessage(content);
-            }
-        }
-        if(!successfulVideoContent.isEmpty()){
-            serverSideMultiSendContractService.successfulVideoMultiCall(successfulVideoContent);
-        }
-        if(!releaseEmailsContent.isEmpty()){
-            serverSideMultiSendContractService.releaseEmailsMultiCall(releaseEmailsContent);
-        }
-        if(!failedToSendEmailsContent.isEmpty()){
-            messageService.failedToSendEmailsMessage(failedToSendEmailsContent);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
         }
     }
 
     @Scheduled(cron = "0 0 5,11,17,23 * * *", zone = "America/New_York")
     @SchedulerLock(name = "watchNowPayLaterPayments", lockAtMostFor = "PT2M", lockAtLeastFor = "PT30S")
     public void watchNowPayLaterPayments() {
-        var watchNowPayLaterPayments = watchNowPayLaterRepository.findAllByWatchNowPayLaterEnumAndNextPaymentDateBefore(WatchNowPayLaterEnum.Unpaid, Instant.now());
-        serverSideMultiSendContractService.watchNowPayLaterPaymentsMultiCall(watchNowPayLaterPayments);
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            var watchNowPayLaterPayments = watchNowPayLaterRepository.findAllByWatchNowPayLaterEnumAndNextPaymentDateBefore(WatchNowPayLaterEnum.Unpaid, Instant.now());
+            serverSideMultiSendContractService.watchNowPayLaterPaymentsMultiCall(watchNowPayLaterPayments);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
+        }
+
     }
 
     public void sentVideos(SentVideoRequest sentVideoRequest, String JWT){
@@ -399,13 +451,14 @@ public class ContentService {
                 .releaseDate(convertToLocalDate(contentRequest.getReleaseDate()))
                 .creatorID(userID)
                 .listOfBuyerIds(new HashMap<>())
-                .hype(0.0)
+                .hype(BigDecimal.ZERO)
                 .googleSubject(contentRequest.getGoogleSubject())
+                .pendingCreatorApproval(false)
                 .youtubeUsername(contentRequest.getYoutubeUsername())
                 .youtubeProfilePicture(downloadImageAsDataUri(contentRequest.getYoutubeProfilePicture()))
                 .isViolator(isViolator)
                 .sentEmails(false)
-                .activeDate(Instant.now())
+                .activeDate(null)
                 .contentReports(new ArrayList<>())
                 .build();
     }
@@ -512,18 +565,18 @@ public class ContentService {
 
 
     public Double getAllUserActiveHype(String userID){
-        var contentHype = 0.0;
+        BigDecimal contentHype = BigDecimal.ZERO;
         var user = userRepository.findById(userID).orElseThrow();
         if(!user.getCreatedContent().isEmpty()){
             var activeContentHype =  contentRepository.findAllById(user.getCreatedContent()).stream()
                     .filter(content -> !content.getContentEnum().equals(ContentEnum.Inactive))
                     .map(Content::getHype)
                     .toList();
-            for (Double hype : activeContentHype) {
-                contentHype += hype;
+            for (BigDecimal hype : activeContentHype) {
+                contentHype = contentHype.add(hype);
             }
         }
-        return contentHype;
+        return contentHype.doubleValue();
     }
 
 
@@ -611,6 +664,45 @@ public class ContentService {
         }
     }
 
+    private boolean isNotYetCreatorOrPending(Users user) {
+        return !user.isContentCreator() && !user.isContentCreatorPending();
+    }
+
+    private boolean isNotContentCreator(String userId) {
+        Query query = new Query(Criteria
+                .where("_id").is(userId)
+                .and("isContentCreator").is(false)
+                .and("contentCreatorPending").is(false));
+
+        Update update = new Update()
+                .set("contentCreatorPending", true);
+
+        Users updatedUser = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Users.class
+        );
+
+        return updatedUser != null;
+    }
+
+    private Content tryTransitionToPendingConfirmation(String contentId) {
+        Query query = new Query(Criteria
+                .where("_id").is(contentId)
+                .and("contentEnum").is(ContentEnum.Inactive.name())); // stored as string
+
+        Update update = new Update()
+                .set("contentEnum", ContentEnum.PendingConfirmation.name());
+
+        return mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Content.class
+        );
+    }
+
     private String encodeBytesToBase64(byte[] bytes) {
         return Base64.getEncoder().encodeToString(bytes);
     }
@@ -669,6 +761,8 @@ public class ContentService {
             case 8, 9, 10 -> user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 3);
         }
     }
+
+
 
     private int rankValues(Users user){
         switch (user.getRank() + 1) {

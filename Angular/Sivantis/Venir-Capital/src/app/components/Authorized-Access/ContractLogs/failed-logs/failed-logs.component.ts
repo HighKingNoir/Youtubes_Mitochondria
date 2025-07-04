@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContractFunctionDetailsComponent } from 'src/app/components/Accessories/Popups/ContractFunctionDetails/contract-function-details/contract-function-details.component';
 import { ContractLogs } from 'src/app/models/ContractLogs/contractlogs';
+import { AlertService } from 'src/app/services/Alerts/alert.service';
 import { ContractLogsService } from 'src/app/services/Contracts/Logs/contract-logs.service';
 
 @Component({
@@ -18,6 +19,7 @@ export class FailedLogsComponent implements OnInit{
   constructor(
     private contractLogsService: ContractLogsService,
     private modalService: NgbModal, 
+    public alertService: AlertService
   ) { }
 
   ngOnInit(): void {
@@ -32,6 +34,16 @@ export class FailedLogsComponent implements OnInit{
   openContractFunctionDetails(failedLog: ContractLogs){
       const modalRef = this.modalService.open(ContractFunctionDetailsComponent, { size: 'md', scrollable: true, centered: true , animation: false, })
       modalRef.componentInstance.failedLog = failedLog
+      modalRef.result.then((result) => {
+      if(result === "successful"){
+        const indexToRemove = this.failedLogs.findIndex(log => log.logId === failedLog.logId);
+    
+        if (indexToRemove !== -1) {
+          this.failedLogs.splice(indexToRemove, 1); // Remove 1 item at the specified index
+        }
+      
+      }
+    })
   }
 
   loadLatestLogs() {

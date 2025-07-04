@@ -144,6 +144,8 @@ export class UpcomingReleasesComponent implements OnInit{
         return (this.contentService.shortFilmPrice * channelAWV).toFixed(2);
       case 'Sports':
         return (this.contentService.sportsPrice * channelAWV).toFixed(2);
+      case 'Concerts':
+        return (this.contentService.sportsPrice * channelAWV).toFixed(2);
       case 'Movies':
         return (this.contentService.moviePrice * channelAWV).toFixed(2);
       default:
@@ -163,6 +165,10 @@ export class UpcomingReleasesComponent implements OnInit{
       return "Auction";
     }
     return "Buy"
+  }
+
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
   }
 
   getNextVideos(){

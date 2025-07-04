@@ -82,6 +82,9 @@ export class MoviesComponent implements OnInit{
     return false;
   }
   
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
+  }
 
   getCost():string {
     const channelAWV = this.channelService.getChannelAWV();

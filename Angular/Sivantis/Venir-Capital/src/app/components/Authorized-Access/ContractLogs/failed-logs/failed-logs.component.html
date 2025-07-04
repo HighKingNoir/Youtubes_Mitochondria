@@ -1,5 +1,11 @@
 <body>
     <app-header></app-header>
+    <div class="alert-Container">
+        <ngb-alert
+        *ngFor="let alert of alertService.alerts" class="alert" [type]="alert.type" [dismissible]="false" >
+        {{ alert.message }}
+      </ngb-alert>
+    </div>
     <app-authorized-access-sidebar></app-authorized-access-sidebar>
         <div class="sub-Header">
             <div class="sub-Header-Title">Failed Logs</div>

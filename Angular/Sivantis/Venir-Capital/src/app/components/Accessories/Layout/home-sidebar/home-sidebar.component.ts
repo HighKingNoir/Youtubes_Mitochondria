@@ -113,7 +113,8 @@ export class HomeSidebarComponent implements OnInit{
     || this.router.isActive('/Innovations', matchOptions)
     || this.router.isActive('/ShortFilms', matchOptions)
     || this.router.isActive('/Movies', matchOptions)
-    || this.router.isActive('/Sports', matchOptions);
+    || this.router.isActive('/Sports', matchOptions)
+    || this.router.isActive('/Concerts', matchOptions);
   }
 
   isActiveChannelRoute(): boolean {

@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { ConnectWalletService } from '../../Mana/ConnectPersonalWallet/connect-wallet.service';
 import { warchestServiceContract } from './warchestServiceContract';
-import { readContract, writeContract, getGasPrice, simulateContract, waitForTransactionReceipt } from '@wagmi/core'
+import { readContract, writeContract, simulateContract, getGasPrice, waitForTransactionReceipt, getWalletClient } from '@wagmi/core'
 import { BaseError, formatEther, parseGwei, parseEther } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
 import { environment } from 'src/Environment/environment';
 
-const chainID = environment.production ? 137 : 1337
+
+type SupportedChainID = 137 | 1337;
+const chainID: SupportedChainID = environment.production ? 137 : 1337;
+
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +37,10 @@ export class WarchestService {
   }
 
   async callUserWithdraw(_userID: string, dollarAmount: number): Promise<string | undefined> {
+    const walletClient = await getWalletClient(config);
+    if (!walletClient) {
+      throw new Error("Wallet not connected");
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -52,6 +59,8 @@ export class WarchestService {
           functionName: 'userWithdraw',
           gasPrice: increasedGasPrice,
           args: [_userID, parseEther(dollarAmount.toString())],
+          chainId: chainID,
+
         };
         simulateContract(config, request).then(() => {
           writeContract(config, request).then(transactionHash => {

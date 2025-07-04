@@ -5,8 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -55,7 +57,7 @@ public class Content {
     private String thumbnail;
 
     //The amount of hype this content has generated
-    private Double hype;
+    private BigDecimal hype;
 
     //Distinguishes whether the content is an Innovation, Invention, Short Film, Sports, or Movie
     private String contentType;
@@ -70,6 +72,7 @@ public class Content {
     private Duration duration;
 
     //The main video ID
+    @Indexed(unique = true)
     private String youtubeMainVideoID;
 
     //The username of the user's YouTube channel
@@ -88,6 +91,8 @@ public class Content {
     private Instant activeDate;
 
     private ArrayList<ContentReports> contentReports;
+
+    private boolean pendingCreatorApproval;
 
     private Double reportRate;
 

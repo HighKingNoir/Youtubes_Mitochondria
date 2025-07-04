@@ -6,6 +6,7 @@ import { StreamerInfo } from 'src/app/models/Channels/Channels';
 import { CreateChannelService } from '../CreateChannel/create-channel.service';
 import { EditChannelService } from '../EditChannel/edit-channel.service';
 import { AlertService } from '../Alerts/alert.service';
+import { ChannelService } from '../Channel/channel.service';
 
 
 
@@ -21,7 +22,8 @@ export class TwitchApiService {
     private router: Router,
     private createChannelService: CreateChannelService,
     private editChannelService: EditChannelService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private channelService: ChannelService
   ) {}
 
   getTwitchChannel(accessToken: string,broadcaster_id: string, redirectURL:string) {
@@ -45,13 +47,27 @@ export class TwitchApiService {
           this.editChannelService.addStreamerInfo(streamerInfo)
           this.router.navigateByUrl(redirectURL)
         }
+        else if(redirectURL.startsWith("/Channel")){
+          const channelName = redirectURL.split("/")[2]
+          this.channelService.addStreamerInfo(channelName, streamerInfo).subscribe({
+            next: () => {
+                  this.alertService.addAlert("Streamer Info Added", "success")
+                  this.router.navigateByUrl(redirectURL)
+                },
+            error: () => {
+              this.alertService.addAlert("Failed to Add Streamer Info", "danger")
+              this.router.navigateByUrl(redirectURL)
+            },
+            complete: () => {}
+          });
+        }
         else{
           this.createChannelService.addStreamerInfo(streamerInfo)
           this.router.navigateByUrl('/Create/Channel')
         }
       },
       error: (error) =>{
-        if(redirectURL.startsWith("/Change")){
+        if(redirectURL.startsWith("/Change") || redirectURL.startsWith("/Channel")){
           this.alertService.addAlert(error, "danger")
           this.router.navigateByUrl(redirectURL)
         }
@@ -72,6 +88,9 @@ export class TwitchApiService {
   redirectToTwitchAuthorization() {
     if(this.router.url.startsWith("/Change")){
       this.redirectUri = "Edit/Channel/Twitch"
+    }
+    else if(this.router.url.startsWith("/Channel")){
+      this.redirectUri = "Add/Channel/Twitch"
     }
     else {
       this.redirectUri = "Create/Channel/Twitch"

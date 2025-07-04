@@ -153,6 +153,8 @@ export class HomeComponent implements OnInit{
         return (this.contentService.shortFilmPrice * channelAWV).toFixed(2);
       case 'Sports':
         return (this.contentService.sportsPrice * channelAWV).toFixed(2);
+      case 'Concerts':
+        return (this.contentService.sportsPrice * channelAWV).toFixed(2);
       case 'Movies':
         return (this.contentService.moviePrice * channelAWV).toFixed(2);
       default:
@@ -160,7 +162,9 @@ export class HomeComponent implements OnInit{
     }
   }
 
-
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
+  }
   
   isSingleBuyer(contentType:string): boolean{
     if(contentType == "Invention" || contentType == "Innovation"){

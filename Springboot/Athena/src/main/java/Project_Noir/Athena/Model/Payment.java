@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Data
@@ -32,7 +33,7 @@ public class Payment {
     private String manaAmount;
 
     //The dollar equivalent to the amount of mana sent
-    private Double dollarAmount;
+    private BigDecimal dollarAmount;
 
     //The date at which the refund was submitted
     private Instant refundDate;

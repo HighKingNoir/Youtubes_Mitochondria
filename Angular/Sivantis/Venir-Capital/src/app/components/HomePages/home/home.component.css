@@ -80,6 +80,7 @@
     background-color: transparent;
     color: rgb(200, 200, 200);
     border: none;
+    will-change: transform;
 }
 .card:hover {
     color: rgb(241, 241, 241);
@@ -93,6 +94,8 @@
     border-radius: 15px;
     height: 150px;
     margin-bottom: 2px;
+    object-fit: cover;
+    display: block;
 }
 
 .contentType{

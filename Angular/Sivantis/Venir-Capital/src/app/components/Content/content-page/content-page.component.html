@@ -23,7 +23,7 @@
                 *ngIf="UserCreatedVideos?.length !== 0; then displayVideos; else noVideos">
             </ng-container>
                 <ng-template #displayVideos>
-                        <div class="displayVideos" *ngFor="let video of UserCreatedVideos; let i = index">
+                        <div class="displayVideos" *ngFor="let video of UserCreatedVideos; let i = index; trackBy: trackByVideoId">
                             <div class="circle-container" >
                                 <div class="circle" autoClose="false"  placement="bottom" [closeDelay]="50" [openDelay]="100" [ngbTooltip]="getStatus(video.contentEnum, video.isComplete)" 
                                  [ngClass]="getStatusClass(video.contentEnum, video.isComplete)"></div>
@@ -31,7 +31,7 @@
                             <div class="videoContainer">
                                 <div class="videoInfo">
                                     <div class="contentImg">
-                                        <img src="{{video.thumbnail}}" alt="">
+                                        <img src="{{video.thumbnail}}" loading="lazy" alt="">
                                     </div>
                                     <div class="contentDescriptors">
                                         <div class="title">{{video.contentName}}</div>

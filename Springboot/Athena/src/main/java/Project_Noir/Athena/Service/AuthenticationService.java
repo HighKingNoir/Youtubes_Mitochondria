@@ -90,6 +90,7 @@ public class AuthenticationService {
                         .totalHype(0.0)
                         .rank(1)
                 //UserDetails not saved to the client
+                        .contentCreatorPending(false)
                         .createdContent(new ArrayList<>())
                         .purchasedContent(new HashMap<>())
                         .password(passwordEncoder.encode(request.getPassword()))
@@ -419,6 +420,7 @@ public class AuthenticationService {
                 //UserDetails not sent to the client
                 .createdContent(new ArrayList<>())
                 .purchasedContent(new HashMap<>())
+                .contentCreatorPending(false)
                 .password(null)
                 .allowedDevelopingVideos(0)
                 .role(Role.USER)

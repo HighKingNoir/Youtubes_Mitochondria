@@ -24,31 +24,31 @@ import java.util.concurrent.ExecutionException;
 public class GaslessFunctionCallController {
     private final GaslessFunctionCallService gaslessFunctionCallService;
 
-    @PostMapping("/Fund")
-    // @dev Generates a new content entity that is finished
-    public ResponseEntity<String> fundChannel(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
-        gaslessFunctionCallService.gaslessFundChannel(gaslessFunctionCallRequest, jwt);
-        return ResponseEntity.status(HttpStatus.OK).body("Channel successfully funded");
-    }
-
-    @PostMapping("/Place")
-    // @dev Generates a new content entity that is finished
-    public ResponseEntity<String> placeBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
-        gaslessFunctionCallService.gaslessPlaceBid(gaslessFunctionCallRequest, jwt);
-        return new ResponseEntity<String>("Payment Successful", HttpStatus.OK);
-    }
-
-    @PostMapping("/Raise")
-    // @dev Generates a new content entity that is finished
-    public ResponseEntity<String> raiseBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
-        gaslessFunctionCallService.gaslessRaiseBid(gaslessFunctionCallRequest, jwt);
-        return new ResponseEntity<String>("Updated Payment Successful", HttpStatus.OK);
-    }
-
-    @PostMapping("/Cancel")
-    // @dev Generates a new content entity that is finished
-    public ResponseEntity<String> cancelBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
-        gaslessFunctionCallService.gaslessCancelBid(gaslessFunctionCallRequest, jwt);
-        return new ResponseEntity<String>("Updated Payment Successful", HttpStatus.OK);
-    }
+//    @PostMapping("/Fund")
+//    // @dev Generates a new content entity that is finished
+//    public ResponseEntity<String> fundChannel(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
+//        gaslessFunctionCallService.gaslessFundChannel(gaslessFunctionCallRequest, jwt);
+//        return ResponseEntity.status(HttpStatus.OK).body("Channel successfully funded");
+//    }
+//
+//    @PostMapping("/Place")
+//    // @dev Generates a new content entity that is finished
+//    public ResponseEntity<String> placeBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
+//        gaslessFunctionCallService.gaslessPlaceBid(gaslessFunctionCallRequest, jwt);
+//        return new ResponseEntity<String>("Payment Successful", HttpStatus.OK);
+//    }
+//
+//    @PostMapping("/Raise")
+//    // @dev Generates a new content entity that is finished
+//    public ResponseEntity<String> raiseBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
+//        gaslessFunctionCallService.gaslessRaiseBid(gaslessFunctionCallRequest, jwt);
+//        return new ResponseEntity<String>("Updated Payment Successful", HttpStatus.OK);
+//    }
+//
+//    @PostMapping("/Cancel")
+//    // @dev Generates a new content entity that is finished
+//    public ResponseEntity<String> cancelBid(@RequestBody GaslessFunctionCallRequest gaslessFunctionCallRequest, @RequestHeader("Authorization") String jwt) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
+//        gaslessFunctionCallService.gaslessCancelBid(gaslessFunctionCallRequest, jwt);
+//        return new ResponseEntity<String>("Cancel Payment Successful", HttpStatus.OK);
+//    }
 }

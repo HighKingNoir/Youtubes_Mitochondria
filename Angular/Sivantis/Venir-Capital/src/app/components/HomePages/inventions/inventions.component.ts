@@ -71,6 +71,10 @@ export class InventionsComponent implements OnInit{
     window.open(`https://www.youtube.com/watch?v=${trailerId}`, '_blank');
   }
 
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
+  }
+
   togglePayLater(contentId: string){
     if(!this.isLoggedIn){
       this.alertService.addAlert('You must be logged in to Add to Pay Later.', "danger")

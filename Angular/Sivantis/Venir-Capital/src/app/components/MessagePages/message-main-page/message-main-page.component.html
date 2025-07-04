@@ -388,15 +388,15 @@
                 <div class="header">User Withdraw</div>
                 <div class="info">
                     <div class="instructions">
-                        You have successfully withdrawn mana.
-                        Remember Sivantis a withdrawal fee of all user withdraws.
-                        You can view the withdraw with this transaction hash:
+                        You have successfully withdrew Mana.
+                        Please note that Sivantis applies a withdrawal fee to all user withdrawals
+                        You can view the details of your withdrawal using the following transaction hash:
                     </div>
                     <div class="instructions">
                         <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
                     </div>
                     <div class="instructions">
-                        You recieved {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
+                        You have received {{manaAmount | numberFormat}} Mana (${{dollarAmount | numberFormat}})
                     </div>
                 </div>
             </ng-container>

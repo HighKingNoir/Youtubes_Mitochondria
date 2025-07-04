@@ -4,11 +4,10 @@ import { writeContract, simulateContract, waitForTransactionReceipt, getGasPrice
 import { BaseError, parseEther, parseGwei } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
-import { polygon } from '@wagmi/core/chains';
-import { ganache } from '../ganache';
 import { environment } from 'src/Environment/environment';
 
-const chainID = environment.production ? 137 : 1337
+type SupportedChainID = 137 | 1337;
+const chainID: SupportedChainID = environment.production ? 137 : 1337;
 
 @Injectable({
   providedIn: 'root'
@@ -39,6 +38,7 @@ export class BidService {
           functionName: 'placeBid',
           args: [_contentID, _userID, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -96,6 +96,7 @@ export class BidService {
           functionName: 'raiseBid',
           args: [_contentID, _userID, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {
@@ -150,6 +151,7 @@ export class BidService {
           functionName: 'cancelBid',
           args: [_contentID, _userID],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {

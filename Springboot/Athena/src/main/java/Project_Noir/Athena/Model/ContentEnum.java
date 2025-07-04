@@ -4,4 +4,5 @@ public enum ContentEnum {
     Active,
     InProgress,
     Inactive,
+    PendingConfirmation
 }

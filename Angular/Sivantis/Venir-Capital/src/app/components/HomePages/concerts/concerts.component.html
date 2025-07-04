@@ -19,8 +19,8 @@
             <button class="mainButton active" routerLink="">Concerts</button>
     </div>
     <div class="videos">
-        <div class="card" *ngFor="let video of Content">
-            <img routerLink="/Buy/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
+        <div class="card" *ngFor="let video of Content; trackBy: trackByVideoId">
+            <img loading="lazy" routerLink="/Buy/{{video.contentId}}" src="{{video.thumbnail}}" class="card-img-top contentThumbnail" alt="...">
             <div class="card-body">
               <h6 routerLink="/Buy/{{video.contentId}}" class="contentType">{{video.contentType}}</h6>
               <div class="info"> 

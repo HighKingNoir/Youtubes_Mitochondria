@@ -8,7 +8,6 @@ import Project_Noir.Athena.Model.AuthenticationResponse;
 import Project_Noir.Athena.Repo.UserRepository;
 import Project_Noir.Athena.Service.AuthenticationService;
 import Project_Noir.Athena.Service.JwtService;
-import Project_Noir.Athena.Test;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,15 +22,6 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final UserRepository userRepository;
     private final JwtService jwtService;
-
-    private final Test test;
-    @GetMapping("/Test")
-    // @dev Generates a new user entity
-    public ResponseEntity<Boolean> test(){
-        test.test();
-        return new ResponseEntity<>(true,HttpStatus.OK);
-    }
-
 
     @GetMapping("/Exist/Username/{username}")
     // @dev Generates a new user entity

@@ -1,10 +1,10 @@
 <div class="modal-body">
-    <div *ngIf="connectedWallet && connectedWallet == personalWallet; else ConnectWallet" class="body-Container">
+    <div *ngIf="connectedWallet && personalWallet && connectedWallet.toLowerCase() == personalWallet.toLowerCase(); else ConnectWallet" class="body-Container">
         <div class="userWithdrawContainer">
             <div class="warchest">
                 <div class="warchestbalance">WarChest balance</div>
                 <div class="userbalance">
-                    <div>${{userbalance | number :'1.2-2' }}</div>
+                    <div>${{userbalance}}</div>
                     <button class="icon" (click)="getbalance()"><i class="fa-solid fa-rotate"></i></button>
                 </div>
             </div>
@@ -26,7 +26,7 @@
               <span class="note-part">Total</span>
             </div>
             <div class="note-layer">
-              <span class="note-part">{{ dollarForm.get('dollarAmount')?.value }}</span>
+              <span class="note-part">{{ dollarForm.get('dollarAmount')?.value | number: '1.2-2' }}</span>
               <span class="note-center">-</span>
               <span class="note-part">{{ totalWithdrawn | number: '1.2-2' }}</span>
             </div>

@@ -31,11 +31,11 @@ public class UserController {
     private final JwtService jwtService;
     private final ChannelRepository channelRepository;
 
-    // @dev Returns all users in the database
-    @GetMapping("/All")
-    public ResponseEntity<List<Users>> getAllUsers(){
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
-    }
+//    // @dev Returns all users in the database
+//    @GetMapping("/All")
+//    public ResponseEntity<List<Users>> getAllUsers(){
+//        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
+//    }
 
     // @dev Gets the user info from the JWT token
     @GetMapping("/User/{token}")

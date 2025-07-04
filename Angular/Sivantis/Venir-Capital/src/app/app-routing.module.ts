@@ -44,6 +44,7 @@ import { SportsComponent } from './components/HomePages/sports/sports.component'
 import { ConcertsComponent } from './components/HomePages/concerts/concerts.component';
 import { LeaderboardComponent } from './components/Leaderboard/leaderboard/leaderboard.component';
 import { UserDetailsComponent } from './components/Leaderboard/user-details/user-details.component';
+import { AddStreamerRedirectComponent } from './components/Accessories/Redirects/AddStreamerRedirect/add-streamer-redirect/add-streamer-redirect.component';
 
 
 
@@ -87,6 +88,7 @@ const routes: Routes = [
 
   //Redirects
   {path:'Edit/Channel/:platform', component: EditStreamerRedirectComponent },
+  {path:'Add/Channel/:platform', component: AddStreamerRedirectComponent },
   {path:'Create/Channel/:platform', component: StreamerRedirectComponent},
   {path:'Login/Google', component: GoogleLoginRedirectComponent},
   {path: 'external-redirect', component: ExternalRedirectComponent},

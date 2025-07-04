@@ -2,3 +2,31 @@
     background-color: #3f3f3f;
     color: white;
 }
+
+.modal-body{
+    display: flex;
+    flex-direction: column;
+}
+
+.contractEnum{
+    font-size: 20px;
+    color: gold;
+    text-align: center;
+    padding-bottom: 10px;
+}
+
+.function{
+    display: flex;
+    flex-direction: row;
+    text-align: start;
+}
+
+.revertReason{
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.modal-footer{
+    display: flex;
+    justify-content:space-between;
+}

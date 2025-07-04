@@ -7,6 +7,10 @@ import Project_Noir.Athena.Repo.WatchNowPayLaterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.datatypes.*;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -29,8 +33,7 @@ public class ContractServiceInterface {
     private final ContentRepository contentRepository;
     private final ChannelRepository channelRepository;
     private final PaymentService paymentService;
-
-
+    private final MongoTemplate mongoTemplate;
 
     //BidService
     // @dev Creates a new auction struct in the bid Service contract
@@ -50,6 +53,7 @@ public class ContractServiceInterface {
                 .contentID(contentID)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -72,6 +76,7 @@ public class ContractServiceInterface {
                 .manaAmount(Double.parseDouble(manaAmount))
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -101,6 +106,7 @@ public class ContractServiceInterface {
                 .contentID(content.getContentId())
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -122,6 +128,7 @@ public class ContractServiceInterface {
                 .channelName(channelName)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -155,6 +162,7 @@ public class ContractServiceInterface {
                 .manaAmount(totalManaAmount)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -195,6 +203,7 @@ public class ContractServiceInterface {
                 .manaAmount(totalManaAmount)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -214,8 +223,17 @@ public class ContractServiceInterface {
                 .nextPaymentDate(Instant.now().plus(7, ChronoUnit.DAYS))
                 .build() ;
         watchNowPayLaterRepository.save(watchNowPlayLater);
-        channel.getWatchNowPayLaterIDs().add(watchNowPlayLater.getWatchNowPlayLaterId());
-        channelRepository.save(channel);
+        addWatchNowPlayLaterIdToChannel(channel.getChannelId(), watchNowPlayLater.getWatchNowPlayLaterId());
+    }
+
+    private void addWatchNowPlayLaterIdToChannel(String channelId, String watchNowPlayLaterId) {
+        Query query = new Query(Criteria.where("_id").is(channelId));
+        Update update = new Update().push("watchNowPayLaterIDs", watchNowPlayLaterId);
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Channels.class
+        );
     }
 
     public void updateAverageWeeklyViewers(String channelName, Double newAverageWeeklyViewers)  {
@@ -232,6 +250,7 @@ public class ContractServiceInterface {
                 .channelName(channelName)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -256,6 +275,7 @@ public class ContractServiceInterface {
                 .userID(creatorID)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -280,6 +300,7 @@ public class ContractServiceInterface {
                 .channelName(channelName)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -306,17 +327,25 @@ public class ContractServiceInterface {
                 .channelName(channelName)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
         clientSideMultiSendContractService.addToQueue(clientSideMultiCallPackage);
         paymentService.pendingRefundChannelPurchasedContent(channelName, contentID);
-        var channel = channelRepository.findByChannelName(channelName).orElseThrow();
-        channel.getWatchNowPayLaterIDs().remove(watchNowPayLater.getWatchNowPlayLaterId());
-        channelRepository.save(channel);
+        removeWatchNowPlayLaterIdToChannel(channelName, watchNowPayLater.getWatchNowPlayLaterId());
         watchNowPayLaterRepository.delete(watchNowPayLater);
     }
 
+    private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
+        Query query = new Query(Criteria.where("channelName").is(channelName));
+        Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Channels.class
+        );
+    }
 
     public void reactivateContent(Content content) {
         if(content.getListOfBuyerIds().isEmpty()){
@@ -339,6 +368,7 @@ public class ContractServiceInterface {
                 .contentID(content.getContentId())
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();
@@ -359,6 +389,7 @@ public class ContractServiceInterface {
                 .userID(creatorID)
                 .build();
         var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
+                .packageId(ObjectId.get().toHexString())
                 .contractFunctionDetails(contractFunctionDetails)
                 .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
                 .build();

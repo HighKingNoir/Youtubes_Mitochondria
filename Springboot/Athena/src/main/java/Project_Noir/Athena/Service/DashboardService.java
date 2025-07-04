@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -148,21 +149,21 @@ public class DashboardService {
         List<String> contentIds = user.getCreatedContent();
         // Get payments for each content with status PendingPurchase or Purchased, grouped by month
         Instant currentDate = Instant.now();
-        Instant monthAgo = currentDate.minus(31, ChronoUnit.DAYS);
-        Instant twoMonthsAgo = currentDate.minus(62, ChronoUnit.DAYS);
+        Instant weekAgo = currentDate.minus(7, ChronoUnit.DAYS);
+        Instant twoWeeksAgo = currentDate.minus(14, ChronoUnit.DAYS);
 
         var listOfJsonStringThisMonth = paymentRepository.findManaToCreatorForContentAndStatusInDateRange(
                 contentIds,
                 Arrays.asList(PaymentEnum.PendingPurchase, PaymentEnum.Purchased),
-                monthAgo,
+                weekAgo,
                 currentDate
         );
 
         var listOfJsonStringLastMonth = paymentRepository.findManaToCreatorForContentAndStatusInDateRange(
                 contentIds,
                 Arrays.asList(PaymentEnum.PendingPurchase, PaymentEnum.Purchased),
-                twoMonthsAgo,
-                monthAgo
+                twoWeeksAgo,
+                weekAgo
         );
 
         List<Double> manaAmountsThisMonth = new ArrayList<>();
@@ -196,28 +197,33 @@ public class DashboardService {
     public ArrayList<Object> getHypeChange(String userId) {
         var array = new ArrayList<>();
         var currentDate = LocalDate.now();
-        var monthAgo = currentDate.minusMonths(1);
-        var twoMonthAgo = currentDate.minusMonths(2);
+        var weekAgo = currentDate.minusDays(7);
+        var twoWeeksAgo = currentDate.minusDays(14);
         Calendar latestPossibleDate = Calendar.getInstance();
         latestPossibleDate.setTime(new Date(Long.MAX_VALUE));
         var user = userRepository.findById(userId).orElseThrow();
         List<String> contentIds = user.getCreatedContent();
         var hypeValuesAfterToday = contentRepository.findByReleaseDateAfterAndContentIdIn(
-                monthAgo,
+                weekAgo,
                 contentIds
         );
 
         var hypeValuesWithinMonth = contentRepository.findByReleaseDateBetweenAndContentIdIn(
-                twoMonthAgo,
-                monthAgo,
+                twoWeeksAgo,
+                weekAgo,
                 contentIds
         );
 
-        var totalHypeAfterToday = hypeValuesAfterToday.stream().map(Content::getHype).mapToDouble(Double::doubleValue).sum();
-        var totalHypeWithinMonth = hypeValuesWithinMonth.stream().map(Content::getHype).mapToDouble(Double::doubleValue).sum();
+        BigDecimal totalHypeAfterToday = hypeValuesAfterToday.stream()
+                .map(Content::getHype)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalHypeWithinMonth = hypeValuesWithinMonth.stream()
+                .map(Content::getHype)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         double percentageChange = 0.0;
-        if (totalHypeWithinMonth != 0) {
-            percentageChange = ((totalHypeAfterToday - totalHypeWithinMonth) / totalHypeWithinMonth) * 100;
+        if (totalHypeWithinMonth.doubleValue() != 0) {
+            percentageChange = ((totalHypeAfterToday.doubleValue() - totalHypeWithinMonth.doubleValue()) / totalHypeWithinMonth.doubleValue()) * 100;
         }
 
         array.add(totalHypeAfterToday);
@@ -228,16 +234,16 @@ public class DashboardService {
     public ArrayList<Object> getVideoChange(String userId) {
         var array = new ArrayList<>();
         var currentDate = LocalDate.now();
-        var monthAgo = currentDate.minusMonths(1);
-        var twoMonthAgo = currentDate.minusMonths(2);
+        var weekAgo = currentDate.minusDays(7);
+        var twoWeeksAgo = currentDate.minusDays(14);
         var user = userRepository.findById(userId).orElseThrow();
         var contentIds = user.getCreatedContent();
         var countAfterToday = contentRepository.countByReleaseDateAfterAndContentIdIn(
-                monthAgo,
+                weekAgo,
                 contentIds);
         var countWithinLastMonth = contentRepository.countByReleaseDateBetweenAndContentIdIn(
-                twoMonthAgo,
-                monthAgo,
+                twoWeeksAgo,
+                weekAgo,
                 contentIds);
         if(countWithinLastMonth == null){
             countWithinLastMonth = 0L;
@@ -266,10 +272,9 @@ public class DashboardService {
     public List<Content> getTop5Videos(String userId) {
         Users user = userRepository.findById(userId).orElseThrow();
         return contentRepository.findAllById(user.getCreatedContent()).stream()
-                .sorted((c1, c2) -> Double.compare(c2.getHype(), c1.getHype()))
+                .sorted((c1, c2) -> c2.getHype().compareTo(c1.getHype()))
                 .limit(5)
                 .collect(Collectors.toList());
-
     }
 
     public List<Content> getUpcomingVideos(String userId) {

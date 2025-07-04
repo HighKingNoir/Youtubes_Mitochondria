@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/Auth/**", "/").permitAll()
+                        .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/Content/All/Active", "/Content/All/Active/**", "/Content/All/User", "/Content/Single/**", "/Content/Search/Videos", "/Content/sortBuyers/**", "/Content/Channel/Purchased/**").permitAll()
                         .requestMatchers("/Channel/Active/Random", "/Channel/Search/Channels", "/Channel/Single/**").permitAll()
                         .requestMatchers("/Users/Leaderboard", "/Users/Leaderboard/**").permitAll()

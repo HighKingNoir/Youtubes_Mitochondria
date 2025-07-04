@@ -7,6 +7,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.checkerframework.checker.units.qual.C;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Utf8String;
@@ -25,6 +30,7 @@ public class ServerSideMultiSendContractService {
     private final WatchNowPayLaterRepository watchNowPayLaterRepository;
     private final ContentRepository contentRepository;
     private final ChannelRepository channelRepository;
+    private final MongoTemplate mongoTemplate;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final MessageService messageService;
@@ -100,7 +106,6 @@ public class ServerSideMultiSendContractService {
                         else{
                             watchNowPayLater.setNextPaymentDate(Instant.now().plus(7, ChronoUnit.DAYS));
                         }
-
                         watchNowPayLaterList.add(watchNowPayLater);
                     }
                 }
@@ -117,6 +122,7 @@ public class ServerSideMultiSendContractService {
             List<byte[]> sendManaCalls = new java.util.ArrayList<>(List.of());
             List<byte[]> increaseCreatorRankCalls = new java.util.ArrayList<>(List.of());
             double totalEarnings = 0;
+            messageService.successfulVideoMessage(successfulVideoContent);
             for(Content content : successfulVideoContent){
                 if(isAuction(content.getContentType()) && !content.getListOfBuyerIds().isEmpty()){
                     var buyers = convertToDoubleMapAndSort(content.getListOfBuyerIds()).entrySet().stream().toList();
@@ -139,24 +145,26 @@ public class ServerSideMultiSendContractService {
                             .build();
                     sendManaFunctionDetailsList.add(sendManaFunctionDetails);
                 }
-                if(userRepository.findById(content.getCreatorID()).isPresent()) {
-                    var user = userRepository.findById(content.getCreatorID()).get();
-                    if (user.getRank() < 11 && user.getTotalHype() >= rankValues(user)) {
-                        if (user.isContentCreator()) {
-                            increaseCreatorRankCalls.add(buildCall("increaseCreatorRank", List.of(new Utf8String(user.getUserId()))));
-                            var increaseCreatorRankFunctionDetails = ContractFunctionDetails.builder()
-                                    .contentID(user.getUserId())
-                                    .contractFunctionEnum(ContractFunctionEnum.IncreaseCreatorRank)
-                                    .build();
-                            increaseCreatorRankFunctionDetailsList.add(increaseCreatorRankFunctionDetails);
-                        }
-                        user.setRank(user.getRank() + 1);
-                        addSivantisTokens(user);
-                        messageService.rankUpMessage(user);
+            }
+            var users = userRepository.findAllById(successfulVideoContent.stream().map(Content::getCreatorID).toList());
+            for (Users user: users){
+                while (user.getRank() < 11 && user.getTotalHype() >= rankValues(user)) {
+                    if (user.isContentCreator()) {
+                        increaseCreatorRankCalls.add(buildCall("increaseCreatorRank", List.of(new Utf8String(user.getUserId()))));
+
+                        var increaseCreatorRankFunctionDetails = ContractFunctionDetails.builder()
+                                .contentID(user.getUserId())
+                                .contractFunctionEnum(ContractFunctionEnum.IncreaseCreatorRank)
+                                .build();
+
+                        increaseCreatorRankFunctionDetailsList.add(increaseCreatorRankFunctionDetails);
                     }
+                    user = increaseUserRank(user.getUserId());
+                    addSivantisTokens(user);
+                    messageService.rankUpMessage(user);
                 }
             }
-            messageService.successfulVideoMessage(successfulVideoContent);
+
             if(!sendManaCalls.isEmpty()){
                 var sendManaMultiCallTransactionResponse = sendMultiCallTransaction(sendManaCalls, ContractFunctionEnum.SendMana);
                 int sendManaMultiCallIndex = 0;
@@ -239,24 +247,26 @@ public class ServerSideMultiSendContractService {
                     }
                 }
             }
-            else if(!buyers.isEmpty()){
-                var userIdsThatCancelled = multiSendHelperService.getUsersThatCancelledBid(content);
-                for (String userID: userIdsThatCancelled){
-                    content.getListOfBuyerIds().remove(userID);
-                }
-                if(!userIdsThatCancelled.isEmpty()){
-                    contentRepository.save(content);
-                }
-                for (Map.Entry<String, String> buyer : content.getListOfBuyerIds().entrySet()) {
-                    var userID = buyer.getKey();
-                    returnBidCalls.add(buildCall("returnBid", Arrays.asList(new Utf8String(contentId), new Utf8String(userID))));
-                    var returnBidFunctionDetails = ContractFunctionDetails.builder()
-                            .contentID(contentId)
-                            .userID(userID)
-                            .manaAmount(Double.valueOf(buyer.getValue()))
-                            .contractFunctionEnum(ContractFunctionEnum.ReturnBid)
-                            .build();
-                    returnBidFunctionDetailsList.add(returnBidFunctionDetails);
+            else{
+                if(!buyers.isEmpty()){
+                    var userIdsThatCancelled = multiSendHelperService.getUsersThatCancelledBid(content);
+                    for (String userID: userIdsThatCancelled){
+                        content.getListOfBuyerIds().remove(userID);
+                    }
+                    if(!userIdsThatCancelled.isEmpty()){
+                        contentRepository.save(content);
+                    }
+                    for (Map.Entry<String, String> buyer : content.getListOfBuyerIds().entrySet()) {
+                        var userID = buyer.getKey();
+                        returnBidCalls.add(buildCall("returnBid", Arrays.asList(new Utf8String(contentId), new Utf8String(userID))));
+                        var returnBidFunctionDetails = ContractFunctionDetails.builder()
+                                .contentID(contentId)
+                                .userID(userID)
+                                .manaAmount(Double.valueOf(buyer.getValue()))
+                                .contractFunctionEnum(ContractFunctionEnum.ReturnBid)
+                                .build();
+                        returnBidFunctionDetailsList.add(returnBidFunctionDetails);
+                    }
                 }
                 setAuctionToInactiveCalls.add(buildCall("setAuctionToInactive", List.of(new Utf8String(contentId))));
                 var setAuctionToInactiveFunctionDetails = ContractFunctionDetails.builder()
@@ -295,15 +305,8 @@ public class ServerSideMultiSendContractService {
                         paymentService.failedRefundChannelPurchasedContent(Channels, Content);
                     }
                 } else {
-                    if(hasDuplicates(channelNames) || hasDuplicates(contentIds)){
-                        for (int i = 0; i < channelNames.size(); i++) {
-                            paymentService.refundChannelPurchasedContent(channelNames.get(i), contentIds.get(i), sendRefundPaymentTransactionReceipt.getTransactionHash());
-                        }
-                    }
-                    else {
-                        var Channels = channelRepository.findByChannelNameIn(channelNames);
-                        var Content = contentRepository.findByContentIdIn(contentIds);
-                        paymentService.refundChannelPurchasedContent(Channels, Content, sendRefundPaymentTransactionReceipt.getTransactionHash());
+                    for (int i = 0; i < channelNames.size(); i++) {
+                        paymentService.refundChannelPurchasedContent(channelNames.get(i), contentIds.get(i), sendRefundPaymentTransactionReceipt.getTransactionHash());
                     }
                 }
                 sendRefundPaymentMultiCallIndex += multiCallResponse.getTransactionCount();
@@ -338,51 +341,38 @@ public class ServerSideMultiSendContractService {
                     }
                 }
                 else{
-                    if(hasDuplicates(channelNames) || hasDuplicates(contentIds)){
-                        List<WatchNowPayLater> watchNowPayLaterList = new ArrayList<>();
-                        for (int i = 0; i < channelNames.size(); i++) {
-                            var channelName = channelNames.get(i);
-                            var contentID = contentIds.get(i);
-                            if(channelRepository.findByChannelName(channelName).isPresent()){
-                                var channel = channelRepository.findByChannelName(channelName).get();
-                                paymentService.refundChannelPurchasedContent(channelNames.get(i), contentIds.get(i), watchNowPayLaterRefundPaymentTransactionReceipt.getTransactionHash());
-                                if (watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).isPresent()) {
-                                    var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).get();
-                                    channel.getWatchNowPayLaterIDs().remove(watchNowPayLater.getWatchNowPlayLaterId());
-                                    watchNowPayLaterList.add(watchNowPayLater);
-                                    channelRepository.save(channel);
-                                }
-                            }
-                        }
-                        watchNowPayLaterRepository.deleteAll(watchNowPayLaterList);
-                    }
-                    else {
-                        var Channels = channelRepository.findByChannelNameIn(channelNames);
-                        var Content = contentRepository.findByContentIdIn(contentIds);
-                        paymentService.refundChannelPurchasedContent(Channels, Content, watchNowPayLaterRefundPaymentTransactionReceipt.getTransactionHash());
-                        List<WatchNowPayLater> watchNowPayLaterList = new ArrayList<>();
-                        for (int i = 0; i < Channels.size(); i++) {
-                            var channelName = Channels.get(i).getChannelName();
-                            var contentID = Content.get(i).getContentId();
+                    List<WatchNowPayLater> watchNowPayLaterList = new ArrayList<>();
+                    for (int i = 0; i < channelNames.size(); i++) {
+                        var channelName = channelNames.get(i);
+                        var contentID = contentIds.get(i);
+                        if(channelRepository.findByChannelName(channelName).isPresent()){
+                            var channel = channelRepository.findByChannelName(channelName).get();
+                            paymentService.refundChannelPurchasedContent(channelNames.get(i), contentIds.get(i), watchNowPayLaterRefundPaymentTransactionReceipt.getTransactionHash());
                             if (watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).isPresent()) {
                                 var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).get();
-                                Channels.get(i).getWatchNowPayLaterIDs().remove(watchNowPayLater.getWatchNowPlayLaterId());
+                                removeWatchNowPlayLaterIdToChannel(channelName, watchNowPayLater.getWatchNowPlayLaterId());
                                 watchNowPayLaterList.add(watchNowPayLater);
                             }
                         }
-                        channelRepository.saveAll(Channels);
-                        watchNowPayLaterRepository.deleteAll(watchNowPayLaterList);
                     }
+                    watchNowPayLaterRepository.deleteAll(watchNowPayLaterList);
                 }
                 watchNowPayLaterRefundPaymentMultiCallIndex += multiCallResponse.getTransactionCount();
             }
         }
     }
 
+    private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
+        Query query = new Query(Criteria.where("channelName").is(channelName));
+        Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Channels.class
+        );
+    }
+
     public void releaseEmailsMultiCall(List<Content> releaseEmailsContent){
-        if(releaseEmailsContent.isEmpty()){
-            return;
-        }
         List<byte[]> returnBidCalls = new java.util.ArrayList<>(List.of());
         List<byte[]> setAuctionToInactiveCalls = new java.util.ArrayList<>(List.of());
         var returnBidFunctionDetailsList = new ArrayList<ContractFunctionDetails>();
@@ -411,20 +401,18 @@ public class ServerSideMultiSendContractService {
                                     .build();
                             returnBidFunctionDetailsList.add(returnBidFunctionDetails);
                         }
-                        setAuctionToInactiveCalls.add(buildCall("setAuctionToInactive", List.of(new Utf8String(contentId))));
-                        var setAuctionToInactiveFunctionDetails = ContractFunctionDetails.builder()
-                                .contentID(contentId)
-                                .contractFunctionEnum(ContractFunctionEnum.SetAuctionToInactive)
-                                .build();
-                        setAuctionToInactiveFunctionDetailsList.add(setAuctionToInactiveFunctionDetails);
                     }
+                    setAuctionToInactiveCalls.add(buildCall("setAuctionToInactive", List.of(new Utf8String(contentId))));
+                    var setAuctionToInactiveFunctionDetails = ContractFunctionDetails.builder()
+                            .contentID(contentId)
+                            .contractFunctionEnum(ContractFunctionEnum.SetAuctionToInactive)
+                            .build();
+                    setAuctionToInactiveFunctionDetailsList.add(setAuctionToInactiveFunctionDetails);
                 }
             }
-            if(userRepository.findById(content.getCreatorID()).isPresent()){
-                var user = userRepository.findById(content.getCreatorID()).get();
-                messageService.youtubeEmailsMessage(user, content);
-            }
         }
+        var users = userRepository.findAllById(releaseEmailsContent.stream().map(Content::getCreatorID).toList());
+        messageService.youtubeEmailsMessage(users, releaseEmailsContent);
         returnBidsAndInactiveAuction(returnBidCalls, setAuctionToInactiveCalls, returnBidFunctionDetailsList, setAuctionToInactiveFunctionDetailsList);
 
     }
@@ -464,14 +452,8 @@ public class ServerSideMultiSendContractService {
                         paymentService.failedRefundPurchasedContent(Users, Content);
                     }
                 } else {
-                    if(hasDuplicates(userIDs) || hasDuplicates(contentIds)){
-                        for (int i = 0; i < userIDs.size(); i++) {
-                            paymentService.refundPurchasedContent(userIDs.get(i), contentIds.get(i), returnBidTransactionReceipt.getTransactionHash());
-                        }
-                    }else {
-                        var Users = userRepository.findAllById(userIDs);
-                        var Content = contentRepository.findByContentIdIn(contentIds);
-                        paymentService.refundPurchasedContent(Users, Content, returnBidTransactionReceipt.getTransactionHash());
+                    for (int i = 0; i < userIDs.size(); i++) {
+                        paymentService.refundPurchasedContent(userIDs.get(i), contentIds.get(i), returnBidTransactionReceipt.getTransactionHash());
                     }
                 }
                 returnBidMultiCallIndex += multiCallResponse.getTransactionCount();
@@ -543,6 +525,17 @@ public class ServerSideMultiSendContractService {
         return contentType.equals("Invention") || contentType.equals("Innovation");
     }
 
+    private Users increaseUserRank(String userId){
+        Query query = new Query(Criteria.where("_id").is(userId));
+        Update update = new Update().inc("rank", 1);
+        return mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Users.class
+        );
+    }
+
     public boolean hasDuplicates(List<String> list) {
         Set<String> seen = new HashSet<>();
         for (String item : list) {
@@ -588,9 +581,19 @@ public class ServerSideMultiSendContractService {
 
     private void addSivantisTokens(Users user){
         switch (user.getRank()) {
-            case 2, 3, 4 -> user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 1);
-            case 5, 6, 7 -> user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 2);
-            case 8, 9, 10 -> user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 3);
+            case 2, 3, 4 -> increaseDevelopingVideosAllowance(user.getUserId(), 1);
+            case 5, 6, 7 -> increaseDevelopingVideosAllowance(user.getUserId(), 2);
+            case 8, 9, 10 -> increaseDevelopingVideosAllowance(user.getUserId(), 3);
         }
+    }
+
+    private void increaseDevelopingVideosAllowance(String userId, int Amount){
+        Query query = new Query(Criteria.where("_id").is(userId));
+        Update update = new Update().inc("allowedDevelopingVideos", Amount);
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Users.class
+        );
     }
 }

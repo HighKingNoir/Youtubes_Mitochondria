@@ -11,6 +11,10 @@ import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.DynamicArray;
@@ -18,11 +22,17 @@ import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.abi.datatypes.generated.Uint8;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
+import org.web3j.utils.Numeric;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -46,12 +56,14 @@ public class ResolveSmartContractFunctionCallService {
     private final ContentRepository contentRepository;
     private final ChannelRepository channelRepository;
     private final PaymentService paymentService;
+    private final NonceService nonceService;
     private final CredentialsService credentialsService;
+    private final Ec2InstanceTagService ec2InstanceTagService;
     private final BigInteger ultraHighGasLimit = BigInteger.valueOf(1500000L);
     private final BigInteger highGasLimit = BigInteger.valueOf(750000L);
     private final BigInteger midGasLimit = BigInteger.valueOf(500000L);
     private final BigInteger lowGasLimit = BigInteger.valueOf(250000L);
-
+    private final MongoTemplate mongoTemplate;
 
 
     @Value("${contract.bid.address}")
@@ -106,20 +118,28 @@ public class ResolveSmartContractFunctionCallService {
         if(!log.getContractEnum().equals(ContractEnum.MultiCall) && !log.getContractEnum().equals(ContractEnum.ClientMultiCall)){
             throw new SivantisException("Invalid Contract Enum");
         }
+        if(!log.getContractTransactionReceipt().getContractStatusEnum().equals(ContractStatusEnum.Error)){
+            throw new SivantisException("Log must have an error");
+        }
         if(log.getContractEnum().equals(ContractEnum.ClientMultiCall)){
             resolveClientMultiCall(log);
             return;
         }
-        switch (log.getContractFunctionDetails().get(0).getContractFunctionEnum()){
-            case SendMana -> resolveSendManaMultiCall(log);
-            case ReturnBid -> resolveReturnBidMultiCall(log);
-            case SendWeeklyMana -> resolveSendWeeklyManaMultiCall(log);
-            case SetAuctionToInactive -> resolveSetAuctionToInactiveMultiCall(log);
-            case SendRefundPayment -> resolveSendRefundPaymentMultiCall(log);
-            case SendWatchNowPayLaterRefundPayment -> resolveSendWatchNowPayLaterRefundPaymentMultiCall(log);
-            case WatchNowPayLaterPayment -> resolveWatchNowPayLaterPaymentMultiCall(log);
-            case IncreaseCreatorRank -> resolveIncreaseCreatorRankMultiCall(log);
-            default -> throw new SivantisException("Invalid Contract Function Enum");
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            switch (log.getContractFunctionDetails().get(0).getContractFunctionEnum()){
+                case SendMana -> resolveSendManaMultiCall(log);
+                case ReturnBid -> resolveReturnBidMultiCall(log);
+                case SendWeeklyMana -> resolveSendWeeklyManaMultiCall(log);
+                case SetAuctionToInactive -> resolveSetAuctionToInactiveMultiCall(log);
+                case SendRefundPayment -> resolveSendRefundPaymentMultiCall(log);
+                case SendWatchNowPayLaterRefundPayment -> resolveSendWatchNowPayLaterRefundPaymentMultiCall(log);
+                case WatchNowPayLaterPayment -> resolveWatchNowPayLaterPaymentMultiCall(log);
+                case IncreaseCreatorRank -> resolveIncreaseCreatorRankMultiCall(log);
+                default -> throw new SivantisException("Invalid Contract Function Enum");
+            }
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
         }
     }
 
@@ -128,47 +148,56 @@ public class ResolveSmartContractFunctionCallService {
         if(!multiCallLog.getContractEnum().equals(ContractEnum.MultiCall) && !multiCallLog.getContractEnum().equals(ContractEnum.ClientMultiCall)){
             throw new SivantisException("Invalid Contract Enum");
         }
-        for (ContractFunctionDetails contractFunctionDetails: multiCallLog.getContractFunctionDetails()){
-            switch (contractFunctionDetails.getContractFunctionEnum()){
-                case AddContentCreator, CancelPayment, SendRefundPayment, UpdatePersonalWallet, IncreaseCreatorRank, SendWeeklyMana, CancelWatchNowPayLater, ReactivateContent, SendWatchNowPayLaterRefundPayment -> {
-                    var warChestLog = createWarChestServiceLogs(contractFunctionDetails);
-                    try {
-                        resolveFunction(warChestLog);
-                    }catch (SivantisException ignored){
-                        var contractTransactionReceipt = ContractTransactionReceipt.builder()
-                                .contractStatusEnum(ContractStatusEnum.Error)
-                                .build();
-                        warChestLog.setContractTransactionReceipt(contractTransactionReceipt);
-                        sivantisContractLogsRepository.save(warChestLog);
+        if(!multiCallLog.getContractTransactionReceipt().getContractStatusEnum().equals(ContractStatusEnum.Error)){
+            throw new SivantisException("Log must have an error");
+        }
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            for (ContractFunctionDetails contractFunctionDetails: multiCallLog.getContractFunctionDetails()){
+                switch (contractFunctionDetails.getContractFunctionEnum()){
+                    case AddContentCreator, CancelPayment, SendRefundPayment, UpdatePersonalWallet, IncreaseCreatorRank, SendWeeklyMana, CancelWatchNowPayLater, ReactivateContent, SendWatchNowPayLaterRefundPayment -> {
+                        var warChestLog = createWarChestServiceLogs(contractFunctionDetails);
+                        try {
+                            resolveFunction(warChestLog);
+                        }catch (SivantisException ignored){
+                            var contractTransactionReceipt = ContractTransactionReceipt.builder()
+                                    .contractStatusEnum(ContractStatusEnum.Error)
+                                    .build();
+                            warChestLog.setContractTransactionReceipt(contractTransactionReceipt);
+                            sivantisContractLogsRepository.save(warChestLog);
+                        }
                     }
-                }
-                case CreateNewAuction, ReturnBid, SetAuctionToInactive, SendMana, SetAuctionToActive -> {
-                    var bidLog = createBidServiceLogs(contractFunctionDetails);
-                    try {
-                        resolveFunction(bidLog);
-                    }catch (SivantisException ignored){
-                        var contractTransactionReceipt = ContractTransactionReceipt.builder()
-                                .contractStatusEnum(ContractStatusEnum.Error)
-                                .build();
-                        bidLog.setContractTransactionReceipt(contractTransactionReceipt);
-                        sivantisContractLogsRepository.save(bidLog);
+                    case CreateNewAuction, ReturnBid, SetAuctionToInactive, SendMana, SetAuctionToActive -> {
+                        var bidLog = createBidServiceLogs(contractFunctionDetails);
+                        try {
+                            resolveFunction(bidLog);
+                        }catch (SivantisException ignored){
+                            var contractTransactionReceipt = ContractTransactionReceipt.builder()
+                                    .contractStatusEnum(ContractStatusEnum.Error)
+                                    .build();
+                            bidLog.setContractTransactionReceipt(contractTransactionReceipt);
+                            sivantisContractLogsRepository.save(bidLog);
+                        }
                     }
-                }
-                case AddChannel, PayForContent, UpdateAverageWeeklyViewers, WatchNowPayLater, WatchNowPayLaterPayment -> {
-                    var channelLog = createChannelServiceLogs(contractFunctionDetails);
-                    try {
-                        resolveFunction(channelLog);
-                    }catch (SivantisException ignored){
-                        var contractTransactionReceipt = ContractTransactionReceipt.builder()
-                                .contractStatusEnum(ContractStatusEnum.Error)
-                                .build();
-                        channelLog.setContractTransactionReceipt(contractTransactionReceipt);
-                        sivantisContractLogsRepository.save(channelLog);
+                    case AddChannel, PayForContent, UpdateAverageWeeklyViewers, WatchNowPayLater, WatchNowPayLaterPayment -> {
+                        var channelLog = createChannelServiceLogs(contractFunctionDetails);
+                        try {
+                            resolveFunction(channelLog);
+                        }catch (SivantisException ignored){
+                            var contractTransactionReceipt = ContractTransactionReceipt.builder()
+                                    .contractStatusEnum(ContractStatusEnum.Error)
+                                    .build();
+                            channelLog.setContractTransactionReceipt(contractTransactionReceipt);
+                            sivantisContractLogsRepository.save(channelLog);
+                        }
                     }
                 }
             }
+            sivantisContractLogsRepository.delete(multiCallLog);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
         }
-        sivantisContractLogsRepository.delete(multiCallLog);
+
     }
 
     //Resolve Logs
@@ -177,7 +206,21 @@ public class ResolveSmartContractFunctionCallService {
         if(log.getContractEnum().equals(ContractEnum.MultiCall) || log.getContractEnum().equals(ContractEnum.ClientMultiCall)){
             throw new SivantisException("Invalid Contract Enum");
         }
-        resolveFunction(log);
+        if(!log.getContractTransactionReceipt().getContractStatusEnum().equals(ContractStatusEnum.Error)){
+            throw new SivantisException("Log must have an error");
+        }
+        ec2InstanceTagService.markTransactionInProgress();
+        try {
+            resolveFunction(log);
+        } finally {
+            ec2InstanceTagService.clearTransactionTag();
+        }
+    }
+
+    public void resolveOnChain(String logID) {
+        var log = sivantisContractLogsRepository.findById(logID).orElseThrow();
+        log.getContractTransactionReceipt().setContractStatusEnum(ContractStatusEnum.Completed);
+        sivantisContractLogsRepository.save(log);
     }
 
     private void resolveFunction(SivantisContractLogs log){
@@ -210,8 +253,11 @@ public class ResolveSmartContractFunctionCallService {
         var creatorID = functionDetails.getUserID();
         var contentID = functionDetails.getContentID();
         var channelName = functionDetails.getChannelName();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.CancelWatchNowPayLater, 0).sendWatchNowPayLaterRefundPayment(creatorID, contentID, channelName);
-        var sendWatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.CancelWatchNowPayLater, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.CancelWatchNowPayLater, credentials, gasPrice, gasLimit).sendWatchNowPayLaterRefundPayment(creatorID, contentID, channelName);
+        var sendWatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(sendWatchNowPayLaterRefundPaymentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -231,12 +277,18 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveReactivateContent(SivantisContractLogs log) {
         var content = contentRepository.findById(log.getContractFunctionDetails().get(0).getContentID()).orElseThrow();
         var channelNames = content.getListOfBuyerIds().keySet().stream().toList();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.ReactivateContent, channelNames.size()).reactivateContent(content.getContentId(), channelNames);
-        var reactivateContentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.ReactivateContent, channelNames.size());
+        var functionCall = loadInterfaceService(ContractFunctionEnum.ReactivateContent, credentials, gasPrice, gasLimit).reactivateContent(content.getContentId(), channelNames);
+        var reactivateContentTransactionReceipt = executeFunctionCall(functionCall,credentials, gasPrice, gasLimit);
         if(reactivateContentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         log.setContractTransactionReceipt(reactivateContentTransactionReceipt);
+        content.setContentEnum(ContentEnum.Active);
+        content.setActiveDate(Instant.now());
+        contentRepository.save(content);
         sivantisContractLogsRepository.save(log);
     }
 
@@ -248,8 +300,11 @@ public class ResolveSmartContractFunctionCallService {
         var contentType = contentRepository.findById(contentID).orElseThrow().getContentType();
         var paymentIncrements = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).orElseThrow().getPaymentsLeft() + 1;
         var contentPricePerHundred = priceOfContent(contentType);
-        var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLater, 0).watchNowPayLater(channelName, creatorID, contentID, BigInteger.valueOf(contentPricePerHundred), BigInteger.valueOf(paymentIncrements));
-        var watchNowPayLaterTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.WatchNowPayLater, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLater, credentials, gasPrice, gasLimit).watchNowPayLater(channelName, creatorID, contentID, BigInteger.valueOf(contentPricePerHundred), BigInteger.valueOf(paymentIncrements));
+        var watchNowPayLaterTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(watchNowPayLaterTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -270,8 +325,11 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveUpdatePersonalWallet(SivantisContractLogs log) {
         var userId = log.getContractFunctionDetails().get(0).getUserID();
         var _newPersonalWallet = userRepository.findById(userId).orElseThrow().getPersonalWallet();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.UpdatePersonalWallet, 0).updatePersonalWallet(userId, _newPersonalWallet);
-        var updatePersonalWalletTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.UpdatePersonalWallet, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.UpdatePersonalWallet, credentials, gasPrice, gasLimit).updatePersonalWallet(userId, _newPersonalWallet);
+        var updatePersonalWalletTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(updatePersonalWalletTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -284,20 +342,33 @@ public class ResolveSmartContractFunctionCallService {
         var creatorID = user.getUserId();
         var creatorPersonalWallet = user.getPersonalWallet();
         var rank = user.getRank();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.AddContentCreator, 0).addContentCreator(creatorID, creatorPersonalWallet, BigInteger.valueOf(rank));
-        var addContentCreatorTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.AddContentCreator, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.AddContentCreator, credentials, gasPrice, gasLimit).addContentCreator(creatorID, creatorPersonalWallet, BigInteger.valueOf(rank));
+        var addContentCreatorTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(addContentCreatorTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         log.setContractTransactionReceipt(addContentCreatorTransactionReceipt);
+        approveContentCreatorRequest(user.getUserId());
+        var pendingContent = contentRepository.findByContentIdInAndPendingCreatorApprovalTrue(user.getCreatedContent());
+        for (Content content: pendingContent){
+            content.setActiveDate(Instant.now());
+            content.setContentEnum(ContentEnum.Active);
+        }
+        contentRepository.saveAll(pendingContent);
         sivantisContractLogsRepository.save(log);
     }
 
     private void resolveUpdateAverageWeeklyViewers(SivantisContractLogs log) {
         var channel = channelRepository.findByChannelName(log.getContractFunctionDetails().get(0).getChannelName()).orElseThrow();
         var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
-        var functionCall = loadInterfaceService(ContractFunctionEnum.UpdateAverageWeeklyViewers, 0).updateAverageWeeklyViewers(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
-        var updateAverageWeeklyViewersTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.UpdateAverageWeeklyViewers, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.UpdateAverageWeeklyViewers, credentials, gasPrice, gasLimit).updateAverageWeeklyViewers(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
+        var updateAverageWeeklyViewersTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(updateAverageWeeklyViewersTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -310,8 +381,11 @@ public class ResolveSmartContractFunctionCallService {
         var creatorID = functionDetails.getUserID();
         var contentID = functionDetails.getContentID();
         var channelName = functionDetails.getChannelName();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.CancelPayment,0).sendRefundPayment(creatorID,contentID,channelName);
-        var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.CancelPayment, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.CancelPayment,credentials, gasPrice, gasLimit).sendRefundPayment(creatorID,contentID,channelName);
+        var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(sendRefundPaymentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -334,8 +408,11 @@ public class ResolveSmartContractFunctionCallService {
         var channelName = functionDetails.getChannelName();
         var contentType = contentRepository.findById(contentID).orElseThrow().getContentType();
         var contentPricePerHundred = priceOfContent(contentType);
-        var functionCall = loadInterfaceService(ContractFunctionEnum.PayForContent, 0).payForContent(channelName,creatorID,contentID,BigInteger.valueOf(contentPricePerHundred));
-        var payForContentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.PayForContent, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.PayForContent, credentials, gasPrice, gasLimit).payForContent(channelName,creatorID,contentID,BigInteger.valueOf(contentPricePerHundred));
+        var payForContentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(payForContentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -356,12 +433,16 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveAddChannel(SivantisContractLogs log) {
         var channel = channelRepository.findByChannelName(log.getContractFunctionDetails().get(0).getChannelName()).orElseThrow();
         var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
-        var functionCall = loadInterfaceService(ContractFunctionEnum.AddChannel, 0).addChannel(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
-        var addChannelTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.AddChannel, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.AddChannel, credentials, gasPrice, gasLimit).addChannel(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
+        var addChannelTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(addChannelTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         log.setContractTransactionReceipt(addChannelTransactionReceipt);
+        messageService.approvedChannelMessage(log.getContractFunctionDetails().get(0).getChannelName());
         sivantisContractLogsRepository.save(log);
     }
 
@@ -369,24 +450,36 @@ public class ResolveSmartContractFunctionCallService {
         var content = contentRepository.findById(log.getContractFunctionDetails().get(0).getContentID()).orElseThrow();
         var userIDs = content.getListOfBuyerIds().keySet().stream().toList();
         List<String> previousWinners = userIDs.subList(0, Math.min(content.getNumbBidders(), userIDs.size()));
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToActive, previousWinners.size()).setAuctionToActive(content.getContentId(), previousWinners);
-        var setAuctionToActiveTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SetAuctionToActive, previousWinners.size());
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToActive, credentials, gasPrice, gasLimit).setAuctionToActive(content.getContentId(), previousWinners);
+        var setAuctionToActiveTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(setAuctionToActiveTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         log.setContractTransactionReceipt(setAuctionToActiveTransactionReceipt);
+        content.setContentEnum(ContentEnum.Active);
+        content.setActiveDate(Instant.now());
+        contentRepository.save(content);
         sivantisContractLogsRepository.save(log);
     }
 
     private void resolveCreateNewAuction(SivantisContractLogs log) {
         var content = contentRepository.findById(log.getContractFunctionDetails().get(0).getContentID()).orElseThrow();
         var creatorAddress = userRepository.findById(content.getCreatorID()).orElseThrow().getPersonalWallet();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.CreateNewAuction, 0).createNewAuction(content.getContentId(), BigInteger.valueOf(content.getNumbBidders()), BigInteger.valueOf(content.getStartingCost()), creatorAddress);
-        var createNewAuctionTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.CreateNewAuction, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.CreateNewAuction, credentials, gasPrice,gasLimit).createNewAuction(content.getContentId(), BigInteger.valueOf(content.getNumbBidders()), BigInteger.valueOf(content.getStartingCost()), creatorAddress);
+        var createNewAuctionTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(createNewAuctionTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         log.setContractTransactionReceipt(createNewAuctionTransactionReceipt);
+        content.setContentEnum(ContentEnum.Active);
+        content.setActiveDate(Instant.now());
+        contentRepository.save(content);
         sivantisContractLogsRepository.save(log);
     }
 
@@ -394,21 +487,32 @@ public class ResolveSmartContractFunctionCallService {
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var channelName = unresolvedLog.getContractFunctionDetails().get(0).getChannelName();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment, 0).sendWatchNowPayLaterRefundPayment(userID, contentID, channelName);
-        var WatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment, credentials, gasPrice, gasLimit).sendWatchNowPayLaterRefundPayment(userID, contentID, channelName);
+        var WatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(WatchNowPayLaterRefundPaymentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
         paymentService.refundChannelPurchasedContent(channelName, contentID, WatchNowPayLaterRefundPaymentTransactionReceipt.getTransactionHash());
         if(watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).isPresent()){
             var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).get();
-            var channel = channelRepository.findByChannelName(channelName).orElseThrow();
-            channel.getWatchNowPayLaterIDs().remove(watchNowPayLater.getWatchNowPlayLaterId());
-            channelRepository.save(channel);
+            removeWatchNowPlayLaterIdToChannel(channelName, watchNowPayLater.getWatchNowPlayLaterId());
             watchNowPayLaterRepository.delete(watchNowPayLater);
         }
         unresolvedLog.setContractTransactionReceipt(WatchNowPayLaterRefundPaymentTransactionReceipt);
         sivantisContractLogsRepository.save(unresolvedLog);
+    }
+
+    private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
+        Query query = new Query(Criteria.where("channelName").is(channelName));
+        Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Channels.class
+        );
     }
 
     private void resolveSendWatchNowPayLaterRefundPaymentMultiCall(SivantisContractLogs unresolvedLog) {
@@ -434,9 +538,7 @@ public class ResolveSmartContractFunctionCallService {
                 paymentService.refundChannelPurchasedContent(FunctionDetails.getChannelName(), FunctionDetails.getContentID(), sendWatchNowPayLaterRefundPaymentTransactionReceipt.getTransactionHash());
                 if(watchNowPayLaterRepository.findByChannelNameAndContentID(FunctionDetails.getChannelName(), FunctionDetails.getContentID()).isPresent()){
                     var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(FunctionDetails.getChannelName(), FunctionDetails.getContentID()).get();
-                    var channel = channelRepository.findByChannelName(FunctionDetails.getChannelName()).orElseThrow();
-                    channel.getWatchNowPayLaterIDs().remove(watchNowPayLater.getWatchNowPlayLaterId());
-                    channelRepository.save(channel);
+                    removeWatchNowPlayLaterIdToChannel(FunctionDetails.getChannelName(), watchNowPayLater.getWatchNowPlayLaterId());
                     watchNowPayLaterRepository.delete(watchNowPayLater);
                 }
             }
@@ -464,16 +566,48 @@ public class ResolveSmartContractFunctionCallService {
             throw new SivantisException("Unable to Resolve Log");
         }
         unresolvedLog.setContractTransactionReceipt(contractTransactionReceipt);
-        paymentCheck(clientSideMultiCallPackage, contractTransactionReceipt.getTransactionHash(), unresolvedLog);
+        functionChecks(clientSideMultiCallPackage, contractTransactionReceipt.getTransactionHash(), unresolvedLog);
         sivantisContractLogsRepository.save(unresolvedLog);
     }
 
-    private void paymentCheck(List<ClientSideMultiCallPackage> clientSideMultiCallPackages, String transactionHash, SivantisContractLogs clientMultiCallLog){
+    private void functionChecks(List<ClientSideMultiCallPackage> clientSideMultiCallPackages, String transactionHash, SivantisContractLogs clientMultiCallLog){
         double totalManaAmount = 0.0;
         double manaToCompany = 0.0;
+        var approvedChannelNames = new ArrayList<String>();
+        var allPayments = new ArrayList<Payment>();
+        var activeContent = new ArrayList<Content>();
+        var allPendingContent = new ArrayList<Content>();
+        var purchasedPaymentsList = new ArrayList<Payment>();
+        var purchasedContentList = new ArrayList<Content>();
+        var channelNamePurchases = new ArrayList<String>();
+        var canceledUserList = new ArrayList<Users>();
+        var canceledContentList = new ArrayList<Content>();
+        var channelNameCancellation = new ArrayList<String>();
+        var canceledManaAmounts = new ArrayList<String>();
         for (ClientSideMultiCallPackage multiCallPackage: clientSideMultiCallPackages){
             var contractFunctionDetails = multiCallPackage.getContractFunctionDetails();
-            switch (multiCallPackage.getContractFunctionDetails().getContractFunctionEnum()){
+            switch (contractFunctionDetails.getContractFunctionEnum()){
+                case AddChannel -> approvedChannelNames.add(contractFunctionDetails.getChannelName());
+                case ReactivateContent, SetAuctionToActive, CreateNewAuction -> {
+                    if(contentRepository.findById(contractFunctionDetails.getContentID()).isPresent()){
+                        var content = contentRepository.findById(contractFunctionDetails.getContentID()).get();
+                        content.setContentEnum(ContentEnum.Active);
+                        content.setActiveDate(Instant.now());
+                        activeContent.add(content);
+                    }
+                }
+                case AddContentCreator -> {
+                    if(userRepository.findById(contractFunctionDetails.getUserID()).isPresent()){
+                        approveContentCreatorRequest(contractFunctionDetails.getUserID());
+                        var user = userRepository.findById(contractFunctionDetails.getUserID()).get();
+                        var pendingContent = contentRepository.findByContentIdInAndPendingCreatorApprovalTrue(user.getCreatedContent());
+                        for (Content content: pendingContent){
+                            content.setActiveDate(Instant.now());
+                            content.setContentEnum(ContentEnum.Active);
+                        }
+                        allPendingContent.addAll(pendingContent);
+                    }
+                }
                 case PayForContent, WatchNowPayLater -> {
                     var purchasedContent = paymentService.findChannelPayment(contractFunctionDetails.getChannelName(), contractFunctionDetails.getContentID());
                     purchasedContent.setTransactionHash(transactionHash);
@@ -481,8 +615,10 @@ public class ResolveSmartContractFunctionCallService {
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
                     manaToCompany = manaToCompany + contractFunctionDetails.getManaAmount() / 10;
                     var content = contentRepository.findById(contractFunctionDetails.getContentID()).orElseThrow();
-                    messageService.purchasedPaymentChannelMessage(contractFunctionDetails.getChannelName(), purchasedContent, content);
-                    paymentRepository.save(purchasedContent);
+                    purchasedPaymentsList.add(purchasedContent);
+                    purchasedContentList.add(content);
+                    channelNamePurchases.add(contractFunctionDetails.getChannelName());
+                    allPayments.add(purchasedContent);
                 }
                 case CancelWatchNowPayLater, CancelPayment -> {
                     var Payment = paymentService.findChannelPayment(contractFunctionDetails.getChannelName(), contractFunctionDetails.getContentID());
@@ -491,14 +627,18 @@ public class ResolveSmartContractFunctionCallService {
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
                     var content = contentRepository.findById(contractFunctionDetails.getContentID()).orElseThrow();
                     var user = userRepository.findById(Payment.getUserId()).orElseThrow();
-                    messageService.refundChannelMessage(user, Payment.getTransactionHash(), contractFunctionDetails.getChannelName(), contractFunctionDetails.getManaAmount().toString(), content);
-                    paymentRepository.save(Payment);
+                    canceledUserList.add(user);
+                    channelNameCancellation.add(contractFunctionDetails.getChannelName());
+                    canceledContentList.add(content);
+                    canceledManaAmounts.add(contractFunctionDetails.getManaAmount().toString());
+                    allPayments.add(Payment);
                 }
                 case ReturnBid -> {
                     var Payment = paymentService.findPayment(contractFunctionDetails.getUserID(), contractFunctionDetails.getContentID());
                     Payment.setTransactionHash(transactionHash);
+                    Payment.setStatus(PaymentEnum.RefundedPurchase);
                     totalManaAmount = totalManaAmount + contractFunctionDetails.getManaAmount();
-                    paymentRepository.save(Payment);
+                    allPayments.add(Payment);
                 }
             }
         }
@@ -508,13 +648,47 @@ public class ResolveSmartContractFunctionCallService {
         if(manaToCompany > 0.0){
             clientMultiCallLog.setManaToCompany(manaToCompany);
         }
+        if(!approvedChannelNames.isEmpty()){
+            messageService.approvedChannelMessage(approvedChannelNames);
+        }
+        if(!allPayments.isEmpty()){
+            paymentRepository.saveAll(allPayments);
+        }
+        if(!activeContent.isEmpty()){
+            contentRepository.saveAll(activeContent);
+        }
+        if(!allPendingContent.isEmpty()){
+            contentRepository.saveAll(allPendingContent);
+        }
+        if(!channelNamePurchases.isEmpty()){
+            messageService.purchasedPaymentChannelMessage(channelNamePurchases, purchasedPaymentsList, purchasedContentList);
+        }
+        if(!canceledUserList.isEmpty()){
+            messageService.refundChannelMessage(canceledUserList, transactionHash, channelNameCancellation, canceledManaAmounts, canceledContentList);
+        }
     }
 
+    private void approveContentCreatorRequest(String userId) {
+        Query query = new Query(Criteria.where("_id").is(userId));
+
+        Update update = new Update()
+                .set("isContentCreator", true)
+                .set("contentCreatorPending", false);
+
+        mongoTemplate.findAndModify(
+                query,
+                update,
+                Users.class
+        );
+    }
 
     private void resolveIncreaseCreatorRank(SivantisContractLogs unresolvedLog)  {
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.IncreaseCreatorRank, 0).increaseCreatorRank(userID);
-        var increaseCreatorRankTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.IncreaseCreatorRank, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.IncreaseCreatorRank, credentials, gasPrice, gasLimit).increaseCreatorRank(userID);
+        var increaseCreatorRankTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(increaseCreatorRankTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -547,8 +721,11 @@ public class ResolveSmartContractFunctionCallService {
         var channelName = unresolvedLog.getContractFunctionDetails().get(0).getChannelName();
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).orElseThrow();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLaterPayment, 0).watchNowPayLaterPayment(channelName, contentID);
-        var watchNowPayLaterPaymentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.WatchNowPayLaterPayment, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLaterPayment, credentials, gasPrice, gasLimit).watchNowPayLaterPayment(channelName, contentID);
+        var watchNowPayLaterPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(watchNowPayLaterPaymentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -603,8 +780,11 @@ public class ResolveSmartContractFunctionCallService {
         var channelName = unresolvedLog.getContractFunctionDetails().get(0).getChannelName();
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SendRefundPayment, 0).sendRefundPayment(userID, contentID, channelName);
-        var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SendRefundPayment, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SendRefundPayment, credentials, gasPrice, gasLimit).sendRefundPayment(userID, contentID, channelName);
+        var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(sendRefundPaymentTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -643,8 +823,11 @@ public class ResolveSmartContractFunctionCallService {
 
     private void resolveSetAuctionToInactive(SivantisContractLogs unresolvedLog)  {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToInactive, 0).setAuctionToInactive(contentID);
-        var setAuctionToInactiveTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SetAuctionToInactive, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToInactive, credentials, gasPrice, gasLimit).setAuctionToInactive(contentID);
+        var setAuctionToInactiveTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(setAuctionToInactiveTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -675,8 +858,11 @@ public class ResolveSmartContractFunctionCallService {
 
     private void resolveSendWeeklyMana(SivantisContractLogs unresolvedLog)  {
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SendWeeklyMana, 0).sendWeeklyMana(userID);
-        var SendWeeklyManaTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SendWeeklyMana, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SendWeeklyMana, credentials, gasPrice, gasLimit).sendWeeklyMana(userID);
+        var SendWeeklyManaTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(SendWeeklyManaTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -708,8 +894,11 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveReturnBid(SivantisContractLogs unresolvedLog)  {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
-        var functionCall = loadInterfaceService(ContractFunctionEnum.ReturnBid,0).returnBid(contentID, userID);
-        var returnBidTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.ReturnBid, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.ReturnBid, credentials, gasPrice, gasLimit).returnBid(contentID, userID);
+        var returnBidTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         if(returnBidTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
         }
@@ -747,7 +936,6 @@ public class ResolveSmartContractFunctionCallService {
 
     private void resolveSendMana(SivantisContractLogs unresolvedLog)  {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
-        var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var content = contentRepository.findById(contentID).orElseThrow();
         var buyers = convertToDoubleMapAndSort(content.getListOfBuyerIds()).entrySet().stream().toList();
         double totalEarnings = 0;
@@ -761,8 +949,11 @@ public class ResolveSmartContractFunctionCallService {
                 totalEarnings += buyers.get(index).getValue();
             }
         }
-        var functionCall = loadInterfaceService(ContractFunctionEnum.SendMana, 0).sendMana(contentID);
-        var sendManaTransactionReceipt = executeFunctionCall(functionCall);
+        var credentials = getCredentials();
+        var gasPrice = getGasPrice(web3j);
+        var gasLimit = getGasLimit(ContractFunctionEnum.SendMana, 0);
+        var functionCall = loadInterfaceService(ContractFunctionEnum.SendMana, credentials, gasPrice, gasLimit).sendMana(contentID);
+        var sendManaTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
         unresolvedLog.setContractTransactionReceipt(sendManaTransactionReceipt);
         if(sendManaTransactionReceipt.getContractStatusEnum().equals(ContractStatusEnum.Error)){
             throw new SivantisException("Unable to Resolve Log");
@@ -770,7 +961,7 @@ public class ResolveSmartContractFunctionCallService {
         unresolvedLog.setTotalManaAmount(totalEarnings);
         unresolvedLog.setManaToCompany(totalEarnings / 15);
         sivantisContractLogsRepository.save(unresolvedLog);
-        paymentService.resolvedAuctionPayment(contentID, userID);
+        paymentService.resolvedAuctionPayment(contentID);
     }
 
     private void resolveSendManaMultiCall(SivantisContractLogs unresolvedLog){
@@ -778,7 +969,6 @@ public class ResolveSmartContractFunctionCallService {
         var sendManaFunctionDetailsList = unresolvedLog.getContractFunctionDetails();
         for(ContractFunctionDetails contractFunctionDetails: sendManaFunctionDetailsList){
             var contentID = contractFunctionDetails.getContentID();
-            var userID = contractFunctionDetails.getUserID();
             var function = new Function(
                     "sendMana",
                     List.of(new Utf8String(contentID)),
@@ -798,14 +988,14 @@ public class ResolveSmartContractFunctionCallService {
         sivantisContractLogsRepository.save(unresolvedLog);
         for(ContractFunctionDetails contractFunctionDetails: sendManaFunctionDetailsList){
             var contentID = contractFunctionDetails.getContentID();
-            var userID = contractFunctionDetails.getUserID();
-            paymentService.resolvedAuctionPayment(contentID, userID);
+
+            paymentService.resolvedAuctionPayment(contentID);
         }
     }
 
 
-    private InterfaceService loadInterfaceService(ContractFunctionEnum contractFunctionEnum, int listOfBuyersSize){
-        return InterfaceService.load(interfaceModuleAddress, web3j, getCredentials(), new StaticGasProvider(getGasPrice(web3j), getGasLimit(contractFunctionEnum, listOfBuyersSize)));
+    private InterfaceService loadInterfaceService(ContractFunctionEnum contractFunctionEnum, org.web3j.crypto.Credentials credentials, BigInteger gasPrice, BigInteger gasLimit){
+        return InterfaceService.load(interfaceModuleAddress, web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
     }
 
     private org.web3j.crypto.Credentials getCredentials(){
@@ -842,31 +1032,63 @@ public class ResolveSmartContractFunctionCallService {
 
 
     private ContractTransactionReceipt executeFunctionCall(
-            RemoteFunctionCall<TransactionReceipt> functionCall
+            RemoteFunctionCall<TransactionReceipt> functionCall,
+            org.web3j.crypto.Credentials credentials,
+            BigInteger gasPrice,
+            BigInteger gasLimit
     ){
-        TransactionReceipt transactionReceipt;
-        try {
-            transactionReceipt = functionCall.send();
-        } catch (Exception e) {
+        String encodedFunctionData = functionCall.encodeFunctionCall();
+        BigInteger nonce = nonceService.getNextNonce(credentials.getAddress());
+        if(nonce == null){
             return ContractTransactionReceipt.builder()
                     .contractStatusEnum(ContractStatusEnum.Error)
-                    .revertReason(e.getMessage())
-                    .build();
-        }
-        if (transactionReceipt == null || transactionReceipt.getStatus().equals("0x0")) {
-            return ContractTransactionReceipt.builder()
-                    .transactionHash(transactionReceipt != null ? transactionReceipt.getTransactionHash() : null)
-                    .contractStatusEnum(ContractStatusEnum.Error)
-                    .gasUsed(transactionReceipt != null ? transactionReceipt.getGasUsed() : null)
-                    .revertReason(transactionReceipt != null ? transactionReceipt.getRevertReason() : "Unknown failure")
+                    .revertReason("Recovery failed: nonce record still null after reset")
                     .build();
         }
 
-        return ContractTransactionReceipt.builder()
-                .transactionHash(transactionReceipt.getTransactionHash())
-                .contractStatusEnum(ContractStatusEnum.Completed)
-                .gasUsed(transactionReceipt.getGasUsed())
-                .build();
+        RawTransaction rawTransaction = RawTransaction.createTransaction(
+                nonce,
+                gasPrice,
+                gasLimit.multiply(BigInteger.valueOf(2)),
+                interfaceModuleAddress,
+                BigInteger.ZERO,
+                encodedFunctionData
+        );
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        String hexValue = Numeric.toHexString(signedMessage);
+        EthSendTransaction ethSendTx;
+        try {
+            ethSendTx = web3j.ethSendRawTransaction(hexValue).send();
+        } catch (IOException e) {
+            return ContractTransactionReceipt.builder()
+                    .contractStatusEnum(ContractStatusEnum.Error)
+                    .revertReason((e.getMessage() != null ? e.getMessage() : "IOException"))
+                    .build();
+
+        }
+        if (ethSendTx.hasError()) {
+            return ContractTransactionReceipt.builder()
+                    .transactionHash(ethSendTx.getTransactionHash())
+                    .contractStatusEnum(ContractStatusEnum.Error)
+                    .revertReason((ethSendTx.getError().getMessage() != null ? ethSendTx.getError().getMessage() : "Transaction reverted or failed"))
+                    .build();
+        }
+        String txHash = ethSendTx.getTransactionHash();
+        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3j, 1000, 60);
+        try {
+            TransactionReceipt confirmedReceipt = processor.waitForTransactionReceipt(txHash);
+            return ContractTransactionReceipt.builder()
+                    .transactionHash(confirmedReceipt.getTransactionHash())
+                    .contractStatusEnum(ContractStatusEnum.Completed)
+                    .gasUsed(confirmedReceipt.getGasUsed())
+                    .build();
+        } catch (IOException | TransactionException e) {
+            return ContractTransactionReceipt.builder()
+                    .transactionHash(ethSendTx.getTransactionHash())
+                    .contractStatusEnum(ContractStatusEnum.Error)
+                    .revertReason((e.getMessage() != null ? e.getMessage() : "IOException or TransactionException"))
+                    .build();
+        }
     }
 
     private BigInteger getGasPrice(Web3j web3j){
@@ -945,6 +1167,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.UpdatePersonalWallet).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -964,6 +1187,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.ReactivateContent).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -982,6 +1206,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1000,6 +1225,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.SendRefundPayment).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1019,6 +1245,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.AddContentCreator).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1035,6 +1262,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.UpdateAverageWeeklyViewers).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1058,6 +1286,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.WatchNowPayLater).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1079,6 +1308,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.PayForContent).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1095,6 +1325,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.AddChannel).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1115,6 +1346,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.SetAuctionToActive).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1129,6 +1361,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.ReturnBid).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1147,6 +1380,7 @@ public class ResolveSmartContractFunctionCallService {
                     );
                     var clientSideMultiCallPackage = ClientSideMultiCallPackage.builder()
                             .functionData(multiSendHelperService.buildCall(BigInteger.ZERO, function))
+                            .contractFunctionDetails(ContractFunctionDetails.builder().contractFunctionEnum(ContractFunctionEnum.CreateNewAuction).build())
                             .build();
                     clientSideMultiCallPackages.add(clientSideMultiCallPackage);
                 }
@@ -1154,4 +1388,6 @@ public class ResolveSmartContractFunctionCallService {
         }
         return clientSideMultiCallPackages;
     }
+
+
 }

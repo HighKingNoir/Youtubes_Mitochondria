@@ -7,8 +7,11 @@ import Project_Noir.Athena.SmartContracts.InterfaceService.InterfaceService;
 import Project_Noir.Athena.SmartContracts.MultiSendCallOnly.MultiSendCallOnly;
 import Project_Noir.Athena.SmartContracts.TestManaContract.TestManaContract;
 import Project_Noir.Athena.SmartContracts.WarChestService.WarChestService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
 import org.web3j.crypto.Credentials;
@@ -21,6 +24,8 @@ import java.math.BigInteger;
 import java.util.*;
 
 @Component
+@Slf4j
+@RequiredArgsConstructor
 @Profile("dev")
 public class DevEnvBootUpSeq implements CommandLineRunner {
 
@@ -45,19 +50,62 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
     @Value("${private.key.six}")
     private String privateKeySix;
 
+    @Value("${contract.bid.address}")
+    private String bidAddress;
+
+    @Value("${contract.channel.address}")
+    private String channelAddress;
+
+    @Value("${contract.warchest.address}")
+    private String warchestAddress;
+
+    @Value("${contract.multiSend.address}")
+    private String multiSendAddress;
+
+    @Value("${contract.interface.address}")
+    private String interfaceAddress;
+
+    @Value("${contract.gaslessFunctionCall.address}")
+    private String gaslessFunctionCallAddress;
+
+    @Value("${contract.testMana.address}")
+    private String testManaAddress;
+
     private final Web3j web3j = Web3j.build(new HttpService());
+    private final TutorialService tutorialService;
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws IOException {
         System.out.println("\nSpringBoot Application Boot Up Successful");
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Would you like to deploy the smart contracts (Y/n): ");
-        String input = scanner.nextLine().trim();
-        if (!input.equalsIgnoreCase("y")) {
-            System.out.println("Skipping contract deployment.");
-            return;
+        if(areAllContractsValid()){
+            System.out.println("Choose an option:");
+            System.out.println("1) Deploy smart contracts");
+            System.out.println("2) Start tutorial");
+            System.out.print("Enter choice: ");
+            Scanner scanner = new Scanner(System.in);
+            int choice = scanner.nextInt();
+            if(choice == 1){
+                deployContracts();
+            }
+            else if (choice == 2) {
+                System.out.println("\nStarting tutorial\n");
+                tutorialService.tutorial();
+            }
+            else{
+                System.out.println("Not an option");
+            }
         }
-        deployContracts();
+        else{
+            Scanner scanner = new Scanner(System.in);
+
+            System.out.print("Would you like to deploy the smart contracts (Y/n): ");
+            String input = scanner.nextLine().trim();
+            if (!input.equalsIgnoreCase("y")) {
+                System.out.println("Skipping contract deployment.");
+                return;
+            }
+            deployContracts();
+        }
     }
 
     private void deployContracts() {
@@ -221,6 +269,18 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
                 privateKeyFive != null && !privateKeyFive.isEmpty() &&
                 privateKeySix != null && !privateKeySix.isEmpty();
     }
+
+    private boolean areAllContractsValid() {
+        return bidAddress != null && !bidAddress.isEmpty() &&
+                channelAddress != null && !channelAddress.isEmpty() &&
+                warchestAddress != null && !warchestAddress.isEmpty() &&
+                multiSendAddress != null && !multiSendAddress.isEmpty() &&
+                interfaceAddress != null && !interfaceAddress.isEmpty() &&
+                testManaAddress != null && !testManaAddress.isEmpty() &&
+                gaslessFunctionCallAddress != null && !gaslessFunctionCallAddress.isEmpty();
+    }
+
+
 
     private String dashedLine()
     {

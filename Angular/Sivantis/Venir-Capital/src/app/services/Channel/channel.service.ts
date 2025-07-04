@@ -179,6 +179,14 @@ export class ChannelService {
     return this.httpClient.get(`${this.SivantisURL}/AWV/Update/Count`, {responseType: 'text'})
   }
 
+  removeStreamerInfo(channelName: string, indexToRemove: number){
+    return this.httpClient.put(this.SivantisURL + '/Remove', null,  {params: { channelName, indexToRemove}, responseType: 'text'});
+  }
+
+  addStreamerInfo(channelName: string, streamerInfo: StreamerInfo){
+    return this.httpClient.put(this.SivantisURL + '/Add', streamerInfo, {params: { channelName}, responseType: 'text'});
+  }
+
 }
 
 export interface ChannelStreamerInfoRequestPayload{

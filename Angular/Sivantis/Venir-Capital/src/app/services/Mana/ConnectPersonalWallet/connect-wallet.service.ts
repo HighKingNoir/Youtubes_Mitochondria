@@ -4,10 +4,10 @@ import { getAccount, getBalance } from '@wagmi/core'
 import { config } from '../../Contracts/config';
 import { formatEther } from 'viem'
 import { ganache } from '../../Contracts/ganache';
-
+import { connect, getConnectors } from '@wagmi/core';
 import { AppKit, createAppKit } from '@reown/appkit/react'
 import { polygon } from '@reown/appkit/networks'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { wagmiAdapter } from '../../Contracts/config';
 
 @Injectable({
   providedIn: 'root'
@@ -22,14 +22,10 @@ export class ConnectWalletService {
     const metadata = {
       name: 'Sivantis',
       description: 'AppKit Example',
-      url: environment.FrontEndURL, // origin must match your domain & subdomain.
+      url: environment.FrontEndURL.replace(/\/$/, ''), // origin must match your domain & subdomain.
       icons: [this.Logo]
     }
     const network = environment.production ? polygon : ganache
-    const wagmiAdapter = new WagmiAdapter({
-      networks: [network],
-      projectId
-    })
 
     this.web3Modal = createAppKit({
       adapters: [wagmiAdapter],
@@ -39,15 +35,17 @@ export class ConnectWalletService {
       features: {
         analytics: true,
         email: false,
-        socials: [
-        ],
+        socials: ['google', 'x', 'github', 'discord'],
       }
      })
+
   } 
 
   isConnected(): boolean {
     return this.web3Modal.getAccount()?.status == "connected"
   }
+
+  // connection.connector.getChainId is not a function
 
   getConnectedAccount(): string | undefined{
     return this.web3Modal.getAccount()?.address

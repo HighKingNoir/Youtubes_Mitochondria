@@ -30,7 +30,7 @@ public class ContractLogsController {
 
     @GetMapping("/View/Failed")
     public ResponseEntity<List<SivantisContractLogs>> getAllFailedLogs(@RequestParam(name = "creationDate", required = false) String creationDate){
-        Sort sort = Sort.by("creationDate").descending();
+        Sort sort = Sort.by("creationDate").ascending();
         List<SivantisContractLogs> failedLogs;
 
         if (creationDate != null) {
@@ -79,7 +79,7 @@ public class ContractLogsController {
 
     @PutMapping("/Resolve/OnChain")
     public ResponseEntity<String> resolveContactLogOnChain(@RequestParam String logID) throws TransactionException, IOException, ExecutionException, InterruptedException {
-        resolveSmartContractFunctionCallService.splitMultiCall(logID);
+        resolveSmartContractFunctionCallService.resolveOnChain(logID);
         return new ResponseEntity<>("Resolve Submitted", HttpStatus.OK);
     }
 

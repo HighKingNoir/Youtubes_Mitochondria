@@ -85,9 +85,8 @@
                         </div>
                         <div class="bid">
                             <div *ngIf="hasPaid; else PlaceBet" class="hasPaid">
-                                <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="raiseBid()">Riase Bid</button>
-                                <div style="margin-bottom: 15px;"></div>
-                                <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="cancelBid()">Cancel Bid</button>
+                                <button class="mainButton" style="margin-bottom: 15px;  margin-top: 15px;" *ngIf="isActive()" [disabled]="loading" (click)="raiseBid()">Riase Bid</button>
+                                <button class="mainButton" style="margin-bottom: 15px;" *ngIf="isActive()" [disabled]="loading" (click)="cancelBid()">Cancel Bid</button>
 
                                 <!-- <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="raiseBid()">Riase Bid</button>
                                 <div style="margin-bottom: 10px;"></div>
@@ -98,13 +97,13 @@
                                 <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="gaslessCancelBid()">Cancel Bid w/o POL</button> -->
                             </div>
                             <ng-template #PlaceBet>
-                                <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="bid()">Place Bid</button>
-                                <!-- <div style="margin-bottom: 15px;"></div>
-                                <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="gaslessPlaceBid()">Place Bid w/o POL</button> -->
+                                <button style="margin-bottom: 15px; margin-top: 15px;" class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="bid()">Place Bid</button>
+    
+                                <!-- <button class="mainButton" *ngIf="isActive()" [disabled]="loading" (click)="gaslessPlaceBid()">Place Bid w/o POL</button> -->
                             </ng-template>
                         </div>
                         <div class="get-More-Mana">
-                            <button class="mainButton" (click)="getMoreMana()">Get More Mana</button>
+                            <button class="mainButton" style="margin-bottom: 15px;" (click)="getMoreMana()">Get More Mana</button>
                         </div>
                         <div class="disconnect">
                             <button class="mainButton" (click)="disconnectWallet()">Change Wallet</button>

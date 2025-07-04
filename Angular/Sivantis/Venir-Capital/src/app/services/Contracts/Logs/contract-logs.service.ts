@@ -44,6 +44,9 @@ export class ContractLogsService {
     return this.httpClient.put(`${this.SivantisBackendURL}/Resolve/Split?logID=${logID}`, null, { responseType: 'text' });
   }
 
+  resolveContactLogOnChain(logID: string) {
+    return this.httpClient.put(`${this.SivantisBackendURL}/Resolve/OnChain?logID=${logID}`, null, { responseType: 'text' });
+  }
 
   
 }

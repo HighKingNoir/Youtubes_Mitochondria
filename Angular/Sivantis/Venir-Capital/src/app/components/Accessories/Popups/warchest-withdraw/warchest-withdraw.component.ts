@@ -122,7 +122,7 @@ export class WarchestWithdrawComponent implements OnInit, OnDestroy{
         this.alertService.addAlert("Must Be Reach Rank 2", 'danger')
         return
       }
-      if(this.connectedWallet !== this.userService.getPersonalWallet()){
+      if(this.connectedWallet.toLowerCase() !== this.userService.getPersonalWallet().toLowerCase()){
         this.alertService.addAlert("Connect to the Crypto Address " + this.userService.getPersonalWallet() + " To Withdraw", 'danger')
         return
       }

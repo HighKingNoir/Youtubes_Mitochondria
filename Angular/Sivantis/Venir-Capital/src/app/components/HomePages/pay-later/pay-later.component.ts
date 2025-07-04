@@ -74,6 +74,8 @@ export class PayLaterComponent implements OnInit{
         return (this.contentService.shortFilmPrice * channelAWV).toFixed(2);
       case 'Sports':
         return (this.contentService.sportsPrice * channelAWV).toFixed(2);
+      case 'Concerts':
+        return (this.contentService.sportsPrice * channelAWV).toFixed(2);
       case 'Movies':
         return (this.contentService.moviePrice * channelAWV).toFixed(2);
       default:
@@ -83,6 +85,10 @@ export class PayLaterComponent implements OnInit{
 
   watchTrailer(trailerId: string){
     window.open(`https://www.youtube.com/watch?v=${trailerId}`, '_blank');
+  }
+
+  trackByVideoId(index: number, video: CreatedContentDetails) {
+    return video.contentId;
   }
 
   removePayLater(contentId: string){

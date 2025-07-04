@@ -92,6 +92,8 @@ public class Users implements UserDetails {
 
     private boolean isContentCreator;
 
+    private boolean contentCreatorPending;
+
     private Instant nextWalletChangeTime;
 
     private String language;

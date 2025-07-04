@@ -18,6 +18,8 @@ public interface ContentRepository extends MongoRepository<Content, String>  {
 
     List<Content> findByContentNameContainingIgnoreCaseAndContentEnum(String contentName, ContentEnum contentEnum, PageRequest of);
 
+    List<Content> findByContentIdInAndPendingCreatorApprovalTrue(List<String> ids);
+
     // @dev returns content entity by youtubeMainVideoID
     Optional<Content> findByYoutubeMainVideoID(String youtubeMainVideoID);
 

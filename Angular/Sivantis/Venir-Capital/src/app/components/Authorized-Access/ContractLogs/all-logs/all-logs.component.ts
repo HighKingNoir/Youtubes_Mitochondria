@@ -1,4 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ContractFunctionDetailsComponent } from 'src/app/components/Accessories/Popups/ContractFunctionDetails/contract-function-details/contract-function-details.component';
 import { ContractLogs } from 'src/app/models/ContractLogs/contractlogs';
 import { ContractLogsService } from 'src/app/services/Contracts/Logs/contract-logs.service';
 import { UserService } from 'src/app/services/User/user-service';
@@ -16,6 +18,7 @@ export class AllLogsComponent implements OnInit{
 
   constructor(
     private contractLogsService: ContractLogsService,
+    private modalService: NgbModal, 
   ) {
    }
 
@@ -30,6 +33,10 @@ export class AllLogsComponent implements OnInit{
     return new Date(timeStamp);
   }
   
+  openContractFunctionDetails(log: ContractLogs){
+        const modalRef = this.modalService.open(ContractFunctionDetailsComponent, { size: 'md', scrollable: true, centered: true , animation: false, })
+        modalRef.componentInstance.failedLog = log
+    }
 
   loadLatestLogs() {
     if(!this.lastLog){

@@ -7,7 +7,7 @@
         </div>
     </div>
     <div *ngIf="youtubeVideoInfo" class="videoContainer">
-        <img src="{{this.youtubeVideoInfo.snippet.thumbnails.high.url}}" alt="">
+        <img  src="{{this.youtubeVideoInfo.snippet.thumbnails.high.url}}" alt="">
         <div class="video-info">
             <div class="contentName">{{this.youtubeVideoInfo.snippet.title}}</div>
             <div class="description">{{this.youtubeVideoInfo.snippet.description}}</div>
@@ -30,6 +30,7 @@
                     #d="ngbDatepicker"
                     placement="left"
                     [positionTarget]="buttonEl"
+                    [markDisabled]="markDisabled"
                     autocomplete="off"
                 />
                 <button #buttonEl 

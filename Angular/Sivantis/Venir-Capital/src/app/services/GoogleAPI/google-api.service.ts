@@ -14,6 +14,7 @@ import { AlertService } from '../Alerts/alert.service';
 import { StreamerInfo } from 'src/app/models/Channels/Channels';
 import { CreateChannelService } from '../CreateChannel/create-channel.service';
 import { EditChannelService } from '../EditChannel/edit-channel.service';
+import { ChannelService } from '../Channel/channel.service';
 
 
 
@@ -39,7 +40,8 @@ export class GoogleAPIService {
     private modalService: NgbModal, 
     private authService:AuthenticationService,
     private createChannelService: CreateChannelService,
-    private editChannelService:EditChannelService
+    private editChannelService:EditChannelService,
+    private channelService: ChannelService
   ) {
     oAuthService.configure(oAuthConfig)
     this.oAuthService.setupAutomaticSilentRefresh()
@@ -155,6 +157,9 @@ export class GoogleAPIService {
     if(this.router.url.startsWith("/Change")){
       this.oAuthService.redirectUri = environment.FrontEndURL + "Edit/Channel/Youtube"
     }
+    else if(this.router.url.startsWith("/Channel")){
+      this.oAuthService.redirectUri = environment.FrontEndURL + "Add/Channel/Youtube"
+    }
     else {
       this.oAuthService.redirectUri = environment.FrontEndURL + "Create/Channel/Youtube"
     }
@@ -183,6 +188,20 @@ export class GoogleAPIService {
               this.editChannelService.addStreamerInfo(streamerInfo)
               this.router.navigateByUrl(redirectURL)
             }
+            else if(redirectURL.startsWith("/Channel")){
+              const channelName = redirectURL.split("/")[2]
+              this.channelService.addStreamerInfo(channelName, streamerInfo).subscribe({
+                next: () => {
+                  this.alertService.addAlert("Streamer Info Added", "success")
+                  this.router.navigateByUrl(redirectURL)
+                },
+                error: () => {
+                  this.alertService.addAlert("Failed to Add Streamer Info", "danger")
+                  this.router.navigateByUrl(redirectURL)
+                },
+                complete: () => {}
+              });
+            }
             else{
               this.createChannelService.addStreamerInfo(streamerInfo)
               this.router.navigateByUrl('/Create/Channel')
@@ -201,7 +220,7 @@ export class GoogleAPIService {
   
 
   errorLoadingYoutubeChannel(errorMessage: string, redirectURL: string){
-    if(redirectURL.startsWith("/Change")){
+    if(redirectURL.startsWith("/Change") || redirectURL.startsWith("/Channel")){
       this.alertService.addAlert(errorMessage, "danger")
       this.router.navigateByUrl(redirectURL)
     }

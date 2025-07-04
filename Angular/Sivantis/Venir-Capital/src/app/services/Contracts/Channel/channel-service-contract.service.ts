@@ -4,11 +4,10 @@ import { readContract , writeContract , getGasPrice, waitForTransactionReceipt, 
 import { BaseError, formatEther, parseEther, parseGwei } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
-import { polygon } from '@wagmi/core/chains';
-import { ganache } from '../ganache';
 import { environment } from 'src/Environment/environment';
 
-const chainID = environment.production ? 137 : 1337
+type SupportedChainID = 137 | 1337;
+const chainID: SupportedChainID = environment.production ? 137 : 1337;
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +37,7 @@ export class ChannelServiceContract {
           functionName: 'fundChannel',
           args: [_channelName, parseEther(_mana)],
           gasPrice: increasedGasPrice,
+          chainId: chainID
         };
         simulateContract(config, request).then(()=> {
           writeContract(config, request).then(transactionHash => {

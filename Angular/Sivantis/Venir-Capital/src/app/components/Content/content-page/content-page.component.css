@@ -136,6 +136,7 @@
     color: white;
     align-items: center;
     padding-bottom: 10px;
+    will-change: transform;
 }
 
 .videoContainer{
@@ -208,6 +209,8 @@
     width: 100px;
     height: 100px;
     border-radius: 5px;
+    object-fit: cover; 
+    display: block;
 }
 
 .videoContainer .contentDescriptors{
@@ -269,6 +272,10 @@
 
 .status-red {
     background: linear-gradient(180deg, red, rgb(189, 0, 0), rgb(90, 0, 0));
+}
+
+.status-purple{
+    background: linear-gradient(180deg, rgb(123, 0, 255), rgb(101, 0, 208), rgb(56, 0, 116));
 }
   
 .status-yellow {
