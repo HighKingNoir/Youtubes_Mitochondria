@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { channelServiceContract } from './channelServiceContract';
-import { readContract , writeContract , getGasPrice, waitForTransactionReceipt, simulateContract } from '@wagmi/core'
+import { readContract , writeContract , getGasPrice, waitForTransactionReceipt, simulateContract, getAccount, reconnect } from '@wagmi/core'
 import { BaseError, formatEther, parseEther, parseGwei } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
@@ -19,6 +19,10 @@ export class ChannelServiceContract {
   ) { }
 
   async callfundChannel(_channelName: string, _mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 

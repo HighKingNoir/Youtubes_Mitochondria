@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ConnectWalletService } from '../../Mana/ConnectPersonalWallet/connect-wallet.service';
 import { warchestServiceContract } from './warchestServiceContract';
-import { readContract, writeContract, simulateContract, getGasPrice, waitForTransactionReceipt, getWalletClient } from '@wagmi/core'
+import { readContract, writeContract, simulateContract, getGasPrice, waitForTransactionReceipt, getWalletClient, getAccount, reconnect } from '@wagmi/core'
 import { BaseError, formatEther, parseGwei, parseEther } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
@@ -37,6 +37,10 @@ export class WarchestService {
   }
 
   async callUserWithdraw(_userID: string, dollarAmount: number): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     const walletClient = await getWalletClient(config);
     if (!walletClient) {
       throw new Error("Wallet not connected");

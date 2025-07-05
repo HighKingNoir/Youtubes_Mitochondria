@@ -187,9 +187,8 @@ public class PaymentService {
         Payment.setDollarAmount(Payment.getDollarAmount().add(bidPaymentRequest.getDollarAmount()));
         Payment.setPaymentDate(Instant.now());
         Payment.setManaToCreator(newManaAmount * .9);
-        addToListOfBuyersAndHype(content.getContentId(), userID, Payment.getManaAmount(), Payment.getDollarAmount(), auctionModifier);
+        addToListOfBuyersAndHype(content.getContentId(), userID, Payment.getManaAmount(), bidPaymentRequest.getDollarAmount(), auctionModifier);
         paymentRepository.save(Payment);
-        contentRepository.save(content);
         messageService.updatedPaymentMessage(
                 user,
                 Payment,
@@ -303,7 +302,6 @@ public class PaymentService {
                     Payment.setManaAmount("0");
                     Payment.setManaToCreator(0.0);
                     paymentRepository.save(Payment);
-                    contentRepository.save(content);
                     if(userRepository.findById(channel.getOwnerID()).isPresent()){
                         var user = userRepository.findById(channel.getOwnerID()).get();
                         messageService.pendingRefundChannelMessage(user, channelName, manaAmountRefunded, content);

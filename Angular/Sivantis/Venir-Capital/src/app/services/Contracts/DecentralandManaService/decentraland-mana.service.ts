@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AlertService } from '../../Alerts/alert.service';
-import { readContract, waitForTransaction , writeContract , simulateContract, getGasPrice, waitForTransactionReceipt } from '@wagmi/core'
+import { readContract, waitForTransaction , writeContract , simulateContract, getGasPrice, waitForTransactionReceipt, getAccount, reconnect } from '@wagmi/core'
 import { BaseError, formatEther, parseEther, parseGwei } from 'viem';
 import { decentralandManaContract } from './decentralandManaContract';
 import { environment } from 'src/Environment/environment';
@@ -22,6 +22,10 @@ export class DecentralandManaService {
   constructor(private alertService: AlertService) { }
 
   async approveBidService(_mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -77,6 +81,10 @@ export class DecentralandManaService {
   }
 
   async approveChannelService(_mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -159,6 +167,10 @@ export class DecentralandManaService {
 
 
   async increaseAllowanceBidService( _mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -214,6 +226,10 @@ export class DecentralandManaService {
   }
 
   async increaseAllowanceChannelService(_mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -269,6 +285,10 @@ export class DecentralandManaService {
   }
 
   async decreaseAllowanceBidService( _mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -324,6 +344,10 @@ export class DecentralandManaService {
   }
 
   async decreaseAllowanceChannelService(_mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 

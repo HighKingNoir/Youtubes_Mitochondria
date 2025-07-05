@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { bidServiceContract } from './bidServiceContract';
-import { writeContract, simulateContract, waitForTransactionReceipt, getGasPrice } from '@wagmi/core'
+import { writeContract, simulateContract, waitForTransactionReceipt, getGasPrice, getAccount, reconnect } from '@wagmi/core'
 import { BaseError, parseEther, parseGwei } from 'viem';
 import { AlertService } from '../../Alerts/alert.service';
 import { config } from '../config';
@@ -20,6 +20,10 @@ export class BidService {
   ) { }
 
   async callPlaceBid(_contentID: string, _userID: string, _mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -77,7 +81,10 @@ export class BidService {
 
  
   async callRaiseBid(_contentID: string, _userID: string, _mana: string): Promise<string | undefined> {
-
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 
@@ -132,6 +139,10 @@ export class BidService {
   }
 
   async callCancelBid(_contentID: string, _userID: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
     return new Promise<string | undefined>((resolve, reject) => {
       getGasPrice(config, {
         chainId: chainID, 

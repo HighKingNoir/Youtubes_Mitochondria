@@ -45,8 +45,6 @@ export class ConnectWalletService {
     return this.web3Modal.getAccount()?.status == "connected"
   }
 
-  // connection.connector.getChainId is not a function
-
   getConnectedAccount(): string | undefined{
     return this.web3Modal.getAccount()?.address
   }
