@@ -104,13 +104,13 @@
 		"compilationTarget": {
 			"TestContracts/MultiCallTest.sol": "MultiSendCallOnly"
 		},
-		"evmVersion": "paris",
+		"evmVersion": "cancun",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []

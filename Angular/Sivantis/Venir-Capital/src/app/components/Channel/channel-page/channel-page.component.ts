@@ -202,7 +202,9 @@ export class ChannelPageComponent implements OnInit, OnDestroy{
     if(!this.isInactive){
       this.channelServiceContract.callGetChannelBalance(this.channel.channelName).then(balance => {
         if(balance !== null && balance !== undefined){
-          this.channelDollarbalance = balance;
+          this.channelService.getChannelPendingManaAmount(this.channel.channelName).subscribe(pendingManaAmount =>{
+            this.channelDollarbalance = balance - pendingManaAmount;
+          })
         }
       })
     }

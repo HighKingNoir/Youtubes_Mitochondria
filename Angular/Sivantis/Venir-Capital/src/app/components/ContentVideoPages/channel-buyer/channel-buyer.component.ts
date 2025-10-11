@@ -37,7 +37,8 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
 
   private intervalSubscription?: Subscription;
 
-  channelDollarbalance = 0;
+  channelManabalance = 0;
+  channelPendingManaAmount = 0;
   highestActiveWeeklyViewers = 0;
   connectedWallet?:string;
   channel?: Channels 
@@ -122,11 +123,14 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
               const channel = userChannels[0]
               this.channelService.setChannel(channel)
               this.getHighestAWV(channel.streamerInfo)
-              
+            
               this.channelServiceContract.callGetChannelBalance(channel.channelName).then(balance => {
                 if(balance){
-                  this.channelService.setChannelManaBalance(balance)
-                  this.channelDollarbalance = balance;
+                  this.channelService.getChannelPendingManaAmount(channel.channelName).subscribe(manaAmount =>{
+                    this.channelPendingManaAmount = manaAmount
+                    this.channelManabalance = balance - this.channelPendingManaAmount;
+                    this.channelService.setChannelManaBalance(this.channelManabalance)
+                  })
                 }
               })
               this.getManaPricing(this.userService.getUserID())
@@ -137,7 +141,7 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
                 .subscribe(balance => {
                   if(balance){
                     this.channelService.setChannelManaBalance(balance)
-                    this.channelDollarbalance = balance;
+                    this.channelManabalance = balance - this.channelPendingManaAmount;
                   }
               });
             }
@@ -257,7 +261,7 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
       this.alertService.addAlert(`You can Purchase in ${this.countdown} seconds`, "danger")
       return; // Function can't be executed yet
     }
-    if((this.channelDollarbalance * this.MANA_PRICE) < (this.getCost(this.videoInfo.contentType) * this.highestActiveWeeklyViewers)){
+    if((this.channelManabalance * this.MANA_PRICE) < (this.getCost(this.videoInfo.contentType) * this.highestActiveWeeklyViewers)){
       this.alertService.addAlert(`Insufficent Funds`, "danger")
       return; // Function can't be executed yet
     }
@@ -343,7 +347,7 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
       contentID: this.route.snapshot.params['id'],
       paymentIncrements: 4
     };
-    if((this.channelDollarbalance * this.MANA_PRICE) < (this.getCost(this.videoInfo.contentType) * this.highestActiveWeeklyViewers / watchNowPayLaterRequestPayload.paymentIncrements)){
+    if((this.channelManabalance * this.MANA_PRICE) < (this.getCost(this.videoInfo.contentType) * this.highestActiveWeeklyViewers / watchNowPayLaterRequestPayload.paymentIncrements)){
       this.alertService.addAlert(`Insufficent Funds`, "danger")
       return; // Function can't be executed yet
     }
@@ -454,8 +458,11 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
 
           this.channelServiceContract.callGetChannelBalance(channel.channelName).then(balance => {
             if(balance){
-              this.channelService.setChannelManaBalance(balance)
-              this.channelDollarbalance = balance;
+              this.channelService.getChannelPendingManaAmount(channel.channelName).subscribe(manaAmount =>{
+                this.channelPendingManaAmount = manaAmount
+                this.channelManabalance = balance - this.channelPendingManaAmount;
+                this.channelService.setChannelManaBalance(this.channelManabalance)
+              })
             }
           })
           this.getManaPricing(this.userService.getUserID())
@@ -466,7 +473,7 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
             .subscribe(balance => {
               if(balance){
                 this.channelService.setChannelManaBalance(balance)
-                this.channelDollarbalance = balance;
+                this.channelManabalance = balance - this.channelPendingManaAmount;
               }
           });
         }
@@ -546,7 +553,7 @@ export class ChannelBuyerComponent implements OnInit, OnDestroy{
       this.channelServiceContract.callGetChannelBalance(channelName).then((balance) => {
         if(balance){
           this.channelService.setChannelManaBalance(balance)
-          this.channelDollarbalance = balance;
+          this.channelManabalance = balance - this.channelPendingManaAmount;
         }
       })
     }

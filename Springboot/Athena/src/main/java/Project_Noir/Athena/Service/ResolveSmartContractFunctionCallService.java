@@ -59,12 +59,8 @@ public class ResolveSmartContractFunctionCallService {
     private final NonceService nonceService;
     private final CredentialsService credentialsService;
     private final Ec2InstanceTagService ec2InstanceTagService;
-    private final BigInteger ultraHighGasLimit = BigInteger.valueOf(1500000L);
-    private final BigInteger highGasLimit = BigInteger.valueOf(750000L);
-    private final BigInteger midGasLimit = BigInteger.valueOf(500000L);
-    private final BigInteger lowGasLimit = BigInteger.valueOf(250000L);
     private final MongoTemplate mongoTemplate;
-
+    private final Web3JService web3JService;
 
     @Value("${contract.bid.address}")
     private String BidServiceAddress;
@@ -78,40 +74,15 @@ public class ResolveSmartContractFunctionCallService {
     @Value("${contract.interface.address}")
     private String interfaceModuleAddress;
 
-    @Value("${infura.api.secret}")
-    private String infuraAPISecret;
 
-    @Value("${infura.api.key}")
-    private String infuraAPIKey;
-    private Web3j web3j;
+
+
 
     @Value("${spring.profiles.active}")
     private String environment;
 
-    @PostConstruct
-    public void init() {
-        if (infuraAPIKey != null && !infuraAPIKey.isEmpty()) {
-            web3j = Web3j.build(createCustomHttpService("https://polygon-mainnet.infura.io/v3/" + infuraAPIKey));
-        } else {
-            web3j = Web3j.build(new HttpService());
-        }
-    }
 
-    private HttpService createCustomHttpService(String url) {
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
 
-        // Add an interceptor to add the Bearer token to each request
-        clientBuilder.addInterceptor(chain -> {
-            okhttp3.Request original = chain.request();
-            okhttp3.Request request = original.newBuilder()
-                    .header("Authorization", Credentials.basic(infuraAPIKey, infuraAPISecret))
-                    .method(original.method(), original.body())
-                    .build();
-            return chain.proceed(request);
-        });
-
-        return new HttpService(url, clientBuilder.build());
-    }
 
     public void resolveMultiCall(String logId){
         var log = sivantisContractLogsRepository.findById(logId).orElseThrow();
@@ -254,7 +225,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = functionDetails.getContentID();
         var channelName = functionDetails.getChannelName();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.CancelWatchNowPayLater, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.CancelWatchNowPayLater, credentials, gasPrice, gasLimit).sendWatchNowPayLaterRefundPayment(creatorID, contentID, channelName);
         var sendWatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -278,7 +249,7 @@ public class ResolveSmartContractFunctionCallService {
         var content = contentRepository.findById(log.getContractFunctionDetails().get(0).getContentID()).orElseThrow();
         var channelNames = content.getListOfBuyerIds().keySet().stream().toList();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.ReactivateContent, channelNames.size());
         var functionCall = loadInterfaceService(ContractFunctionEnum.ReactivateContent, credentials, gasPrice, gasLimit).reactivateContent(content.getContentId(), channelNames);
         var reactivateContentTransactionReceipt = executeFunctionCall(functionCall,credentials, gasPrice, gasLimit);
@@ -301,7 +272,7 @@ public class ResolveSmartContractFunctionCallService {
         var paymentIncrements = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).orElseThrow().getPaymentsLeft() + 1;
         var contentPricePerHundred = priceOfContent(contentType);
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.WatchNowPayLater, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLater, credentials, gasPrice, gasLimit).watchNowPayLater(channelName, creatorID, contentID, BigInteger.valueOf(contentPricePerHundred), BigInteger.valueOf(paymentIncrements));
         var watchNowPayLaterTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -326,7 +297,7 @@ public class ResolveSmartContractFunctionCallService {
         var userId = log.getContractFunctionDetails().get(0).getUserID();
         var _newPersonalWallet = userRepository.findById(userId).orElseThrow().getPersonalWallet();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.UpdatePersonalWallet, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.UpdatePersonalWallet, credentials, gasPrice, gasLimit).updatePersonalWallet(userId, _newPersonalWallet);
         var updatePersonalWalletTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -343,7 +314,7 @@ public class ResolveSmartContractFunctionCallService {
         var creatorPersonalWallet = user.getPersonalWallet();
         var rank = user.getRank();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.AddContentCreator, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.AddContentCreator, credentials, gasPrice, gasLimit).addContentCreator(creatorID, creatorPersonalWallet, BigInteger.valueOf(rank));
         var addContentCreatorTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -365,7 +336,7 @@ public class ResolveSmartContractFunctionCallService {
         var channel = channelRepository.findByChannelName(log.getContractFunctionDetails().get(0).getChannelName()).orElseThrow();
         var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.UpdateAverageWeeklyViewers, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.UpdateAverageWeeklyViewers, credentials, gasPrice, gasLimit).updateAverageWeeklyViewers(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
         var updateAverageWeeklyViewersTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -382,7 +353,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = functionDetails.getContentID();
         var channelName = functionDetails.getChannelName();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.CancelPayment, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.CancelPayment,credentials, gasPrice, gasLimit).sendRefundPayment(creatorID,contentID,channelName);
         var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -409,7 +380,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentType = contentRepository.findById(contentID).orElseThrow().getContentType();
         var contentPricePerHundred = priceOfContent(contentType);
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.PayForContent, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.PayForContent, credentials, gasPrice, gasLimit).payForContent(channelName,creatorID,contentID,BigInteger.valueOf(contentPricePerHundred));
         var payForContentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -434,7 +405,7 @@ public class ResolveSmartContractFunctionCallService {
         var channel = channelRepository.findByChannelName(log.getContractFunctionDetails().get(0).getChannelName()).orElseThrow();
         var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.AddChannel, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.AddChannel, credentials, gasPrice, gasLimit).addChannel(channel.getChannelName(), BigInteger.valueOf(Math.round(highestAverageWeeklyViewers)));
         var addChannelTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -451,7 +422,7 @@ public class ResolveSmartContractFunctionCallService {
         var userIDs = content.getListOfBuyerIds().keySet().stream().toList();
         List<String> previousWinners = userIDs.subList(0, Math.min(content.getNumbBidders(), userIDs.size()));
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SetAuctionToActive, previousWinners.size());
         var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToActive, credentials, gasPrice, gasLimit).setAuctionToActive(content.getContentId(), previousWinners);
         var setAuctionToActiveTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -469,7 +440,7 @@ public class ResolveSmartContractFunctionCallService {
         var content = contentRepository.findById(log.getContractFunctionDetails().get(0).getContentID()).orElseThrow();
         var creatorAddress = userRepository.findById(content.getCreatorID()).orElseThrow().getPersonalWallet();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.CreateNewAuction, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.CreateNewAuction, credentials, gasPrice,gasLimit).createNewAuction(content.getContentId(), BigInteger.valueOf(content.getNumbBidders()), BigInteger.valueOf(content.getStartingCost()), creatorAddress);
         var createNewAuctionTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -488,7 +459,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var channelName = unresolvedLog.getContractFunctionDetails().get(0).getChannelName();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.SendWatchNowPayLaterRefundPayment, credentials, gasPrice, gasLimit).sendWatchNowPayLaterRefundPayment(userID, contentID, channelName);
         var WatchNowPayLaterRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -508,7 +479,7 @@ public class ResolveSmartContractFunctionCallService {
     private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
         Query query = new Query(Criteria.where("channelName").is(channelName));
         Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Channels.class
@@ -552,7 +523,7 @@ public class ResolveSmartContractFunctionCallService {
         org.web3j.crypto.Credentials credentials = getCredentials();
         ArrayList<MultiCallResponse> multiCallResponses = new ArrayList<>();
         List<byte[]> transactions = new ArrayList<>();
-        BigInteger gasPrice = getGasPrice(web3j);
+        BigInteger gasPrice = getGasPrice(web3JService.web3j);
         for(ClientSideMultiCallPackage multiCallPackage: clientSideMultiCallPackage){
             transactions.add(multiCallPackage.getFunctionData());
         }
@@ -675,7 +646,7 @@ public class ResolveSmartContractFunctionCallService {
                 .set("isContentCreator", true)
                 .set("contentCreatorPending", false);
 
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class
@@ -685,7 +656,7 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveIncreaseCreatorRank(SivantisContractLogs unresolvedLog)  {
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.IncreaseCreatorRank, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.IncreaseCreatorRank, credentials, gasPrice, gasLimit).increaseCreatorRank(userID);
         var increaseCreatorRankTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -722,7 +693,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var watchNowPayLater = watchNowPayLaterRepository.findByChannelNameAndContentID(channelName, contentID).orElseThrow();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.WatchNowPayLaterPayment, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.WatchNowPayLaterPayment, credentials, gasPrice, gasLimit).watchNowPayLaterPayment(channelName, contentID);
         var watchNowPayLaterPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -781,7 +752,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SendRefundPayment, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.SendRefundPayment, credentials, gasPrice, gasLimit).sendRefundPayment(userID, contentID, channelName);
         var sendRefundPaymentTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -824,7 +795,7 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveSetAuctionToInactive(SivantisContractLogs unresolvedLog)  {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SetAuctionToInactive, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.SetAuctionToInactive, credentials, gasPrice, gasLimit).setAuctionToInactive(contentID);
         var setAuctionToInactiveTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -859,7 +830,7 @@ public class ResolveSmartContractFunctionCallService {
     private void resolveSendWeeklyMana(SivantisContractLogs unresolvedLog)  {
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SendWeeklyMana, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.SendWeeklyMana, credentials, gasPrice, gasLimit).sendWeeklyMana(userID);
         var SendWeeklyManaTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -895,7 +866,7 @@ public class ResolveSmartContractFunctionCallService {
         var contentID = unresolvedLog.getContractFunctionDetails().get(0).getContentID();
         var userID = unresolvedLog.getContractFunctionDetails().get(0).getUserID();
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.ReturnBid, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.ReturnBid, credentials, gasPrice, gasLimit).returnBid(contentID, userID);
         var returnBidTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -950,7 +921,7 @@ public class ResolveSmartContractFunctionCallService {
             }
         }
         var credentials = getCredentials();
-        var gasPrice = getGasPrice(web3j);
+        var gasPrice = getGasPrice(web3JService.web3j);
         var gasLimit = getGasLimit(ContractFunctionEnum.SendMana, 0);
         var functionCall = loadInterfaceService(ContractFunctionEnum.SendMana, credentials, gasPrice, gasLimit).sendMana(contentID);
         var sendManaTransactionReceipt = executeFunctionCall(functionCall, credentials, gasPrice, gasLimit);
@@ -995,7 +966,7 @@ public class ResolveSmartContractFunctionCallService {
 
 
     private InterfaceService loadInterfaceService(ContractFunctionEnum contractFunctionEnum, org.web3j.crypto.Credentials credentials, BigInteger gasPrice, BigInteger gasLimit){
-        return InterfaceService.load(interfaceModuleAddress, web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
+        return InterfaceService.load(interfaceModuleAddress, web3JService.web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
     }
 
     private org.web3j.crypto.Credentials getCredentials(){
@@ -1058,7 +1029,7 @@ public class ResolveSmartContractFunctionCallService {
         String hexValue = Numeric.toHexString(signedMessage);
         EthSendTransaction ethSendTx;
         try {
-            ethSendTx = web3j.ethSendRawTransaction(hexValue).send();
+            ethSendTx = web3JService.web3j.ethSendRawTransaction(hexValue).send();
         } catch (IOException e) {
             return ContractTransactionReceipt.builder()
                     .contractStatusEnum(ContractStatusEnum.Error)
@@ -1074,7 +1045,7 @@ public class ResolveSmartContractFunctionCallService {
                     .build();
         }
         String txHash = ethSendTx.getTransactionHash();
-        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3j, 1000, 60);
+        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3JService.web3j, 1500, 60);
         try {
             TransactionReceipt confirmedReceipt = processor.waitForTransactionReceipt(txHash);
             return ContractTransactionReceipt.builder()

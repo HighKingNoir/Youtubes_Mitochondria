@@ -31,8 +31,8 @@ public class NonceService {
 
     private static final int MAX_DRIFT = 5; // number of transactions
     private final MongoTemplate mongoTemplate;
+    private final Web3JService web3JService;
     private final Environment environment;
-    private Web3j web3j;
     @Value("${private.key.one}")
     private String privateKeyOne;
 
@@ -51,36 +51,7 @@ public class NonceService {
     @Value("${private.key.six}")
     private String privateKeySix;
 
-    @Value("${infura.api.secret}")
-    private String infuraAPISecret;
 
-    @Value("${infura.api.key}")
-    private String infuraAPIKey;
-
-    @PostConstruct
-    public void init() {
-        if (infuraAPIKey != null && !infuraAPIKey.isEmpty()) {
-            web3j = Web3j.build(createCustomHttpService("https://polygon-mainnet.infura.io/v3/" + infuraAPIKey));
-        } else {
-            web3j = Web3j.build(new HttpService());
-        }
-    }
-
-    private HttpService createCustomHttpService(String url) {
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
-        // Add an interceptor to add the Bearer token to each request
-        clientBuilder.addInterceptor(chain -> {
-            okhttp3.Request original = chain.request();
-            okhttp3.Request request = original.newBuilder()
-                    .header("Authorization", okhttp3.Credentials.basic(infuraAPIKey, infuraAPISecret))
-                    .method(original.method(), original.body())
-                    .build();
-            return chain.proceed(request);
-        });
-
-        return new HttpService(url, clientBuilder.build());
-    }
 
     /**
      * Atomically gets and increments the nonce for a given address.
@@ -127,7 +98,7 @@ public class NonceService {
         String activeProfile = environment.getProperty("spring.profiles.active");
         address = address.toLowerCase();
         try {
-            EthGetTransactionCount response = web3j.ethGetTransactionCount(
+            EthGetTransactionCount response = web3JService.web3j.ethGetTransactionCount(
                     address, DefaultBlockParameterName.PENDING).send();
 
             BigInteger pendingChainNonce = response.getTransactionCount();

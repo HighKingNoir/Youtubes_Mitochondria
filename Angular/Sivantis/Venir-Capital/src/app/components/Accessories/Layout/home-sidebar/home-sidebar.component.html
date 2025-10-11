@@ -2,8 +2,9 @@
     <div class="route-Section">
             <button class="nav-Button" routerLink="" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active" [ngClass]="{ 'active': isActiveHomeRoute() }"><i class="fa-solid fa-house"></i>Home</button>
             <button class="nav-Button" routerLink="/Channels" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-tv"></i>Channels</button>
-            <!-- <button class="nav-Button" routerLink="/LeaderBoard" routerLinkActive="active" [ngClass]="{ 'active': isActiveChannelRoute() }"><i class="fa-solid fa-ranking-star"></i>Leaderboard</button> -->
+            <!-- <button class="nav-Button" routerLink="/LeaderBoard" routerLinkActive="active"><i class="fa-solid fa-ranking-star"></i>Leaderboard</button> -->
             <button class="nav-Button" routerLink="/PayLater" routerLinkActive="active" [disabled]="!isLoggedIn"><i class="fa-solid fa-cart-shopping"></i>Pay Later</button>
+            <!-- <button class="nav-Button" routerLink="/RankUpPass" routerLinkActive="active"><i class="fa-solid fa-angles-up"></i>Rank Up Pass</button> -->
             <button class="nav-Button" (click)="getMoreMana()">Get More Mana</button>
     </div>
     <div class="your-Channel-Section">

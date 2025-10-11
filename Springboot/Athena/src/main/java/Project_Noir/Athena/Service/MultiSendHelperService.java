@@ -45,45 +45,13 @@ public class MultiSendHelperService {
     @Value("${contract.bid.address}")
     private String BidServiceAddress;
 
-    @Value("${infura.api.secret}")
-    private String infuraAPISecret;
 
-    @Value("${infura.api.key}")
-    private String infuraAPIKey;
-    private Web3j web3j;
+    private final Web3JService web3JService;
     private final CredentialsService credentialsService;
     private final NonceService nonceService;
     private final GasLimitService gasLimitService;
     private final BigInteger GAS_LIMIT = BigInteger.valueOf(10000000L);
     private final BigInteger baseGas = BigInteger.valueOf(250000L);
-    private final BigInteger highGasLimit = BigInteger.valueOf(750000L);
-    private final BigInteger midGasLimit = BigInteger.valueOf(500000L);
-    private final BigInteger lowGasLimit = BigInteger.valueOf(250000L);
-
-    @PostConstruct
-    public void init() {
-        if (infuraAPIKey != null && !infuraAPIKey.isEmpty()) {
-            web3j = Web3j.build(createCustomHttpService("https://polygon-mainnet.infura.io/v3/" + infuraAPIKey));
-        } else {
-            web3j = Web3j.build(new HttpService());
-        }
-    }
-
-    private HttpService createCustomHttpService(String url) {
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
-        // Add an interceptor to add the Bearer token to each request
-        clientBuilder.addInterceptor(chain -> {
-            okhttp3.Request original = chain.request();
-            okhttp3.Request request = original.newBuilder()
-                    .header("Authorization", okhttp3.Credentials.basic(infuraAPIKey, infuraAPISecret))
-                    .method(original.method(), original.body())
-                    .build();
-            return chain.proceed(request);
-        });
-
-        return new HttpService(url, clientBuilder.build());
-    }
 
     public byte[] buildCall(
             BigInteger value,
@@ -128,7 +96,7 @@ public class MultiSendHelperService {
             }
             for(List<byte[]> batch: splitTransactionBatches){
                 BigInteger gasLimit  = baseGas.add(GAS_PER_TRANSACTION.multiply(BigInteger.valueOf(batch.size())));
-                var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3j), gasLimit, batch);
+                var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3JService.web3j), gasLimit, batch);
                 credentials = getCredentials();
                 var multiCallResponse = MultiCallResponse.builder()
                         .contractTransactionReceipt(contractTransactionReceipt)
@@ -138,7 +106,7 @@ public class MultiSendHelperService {
             }
             return multiCallResponses;
         }
-        var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3j), estimatedGas, transactions);
+        var contractTransactionReceipt = executeMultiCall(credentials,getGasPrice(web3JService.web3j), estimatedGas, transactions);
         var multiCallResponse = MultiCallResponse.builder()
                 .contractTransactionReceipt(contractTransactionReceipt)
                 .transactionCount(transactions.size())
@@ -164,7 +132,7 @@ public class MultiSendHelperService {
             System.arraycopy(tx, 0, payload, offset, tx.length);
             offset += tx.length;
         }
-        var multiSendContract = MultiSendCallOnly.load(multiSendAddress, web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
+        var multiSendContract = MultiSendCallOnly.load(multiSendAddress, web3JService.web3j, credentials, new StaticGasProvider(gasPrice, gasLimit));
         String encodedFunctionData = multiSendContract.multiSend(payload, BigInteger.ZERO).encodeFunctionCall();
         BigInteger nonce = nonceService.getNextNonce(credentials.getAddress());
         if(nonce == null){
@@ -185,7 +153,7 @@ public class MultiSendHelperService {
         String hexValue = Numeric.toHexString(signedMessage);
         EthSendTransaction ethSendTx;
         try {
-            ethSendTx = web3j.ethSendRawTransaction(hexValue).send();
+            ethSendTx = web3JService.web3j.ethSendRawTransaction(hexValue).send();
         } catch (IOException e) {
             return ContractTransactionReceipt.builder()
                     .contractStatusEnum(ContractStatusEnum.Error)
@@ -216,7 +184,7 @@ public class MultiSendHelperService {
                         .build();
         }
         String txHash = ethSendTx.getTransactionHash();
-        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3j, 1000, 60);
+        PollingTransactionReceiptProcessor processor = new PollingTransactionReceiptProcessor(web3JService.web3j, 1500, 60);
         try {
             TransactionReceipt confirmedReceipt = processor.waitForTransactionReceipt(txHash);
             return ContractTransactionReceipt.builder()
@@ -234,27 +202,8 @@ public class MultiSendHelperService {
 
     }
 
-    private org.web3j.crypto.Credentials getCredentials(){
+    public org.web3j.crypto.Credentials getCredentials(){
         return credentialsService.getCredentials();
-    }
-
-    private ArrayList<String> getUsersThatCancelledBid(Content content, org.web3j.crypto.Credentials credentials) {
-        DefaultGasProvider contractGasProvider = new DefaultGasProvider();
-        var bidService = BidService.load(BidServiceAddress, web3j, credentials, contractGasProvider);
-        var userIdsThatCancelled = new ArrayList<String>();
-        for(String userID: content.getListOfBuyerIds().keySet()){
-            var result = bidService.findBidByContentIDAndUserID(content.getContentId(), userID);
-            BigInteger amount;
-            try {
-                amount = result.send().component3();
-                if(BigInteger.ZERO.equals(amount)){
-                    userIdsThatCancelled.add(userID);
-                }
-            } catch (Exception ignored) {
-
-            }
-        }
-        return userIdsThatCancelled;
     }
 
     private BigInteger getGasPrice(Web3j web3j){
@@ -272,8 +221,8 @@ public class MultiSendHelperService {
     @NotNull
     public ArrayList<String> getUsersThatCancelledBid(Content content) {
         DefaultGasProvider contractGasProvider = new DefaultGasProvider();
-        var credentials = getCredentials();
-        var bidService = BidService.load(BidServiceAddress, web3j, credentials, contractGasProvider);
+        var readonly = new org.web3j.tx.ReadonlyTransactionManager(web3JService.web3j, BidServiceAddress);
+        var bidService = BidService.load(BidServiceAddress, web3JService.web3j, readonly, contractGasProvider);
         var userIdsThatCancelled = new ArrayList<String>();
         for(String userID: content.getListOfBuyerIds().keySet()){
             var result = bidService.findBidByContentIDAndUserID(content.getContentId(), userID);

@@ -2,11 +2,16 @@ package Project_Noir.Athena.Service;
 
 import Project_Noir.Athena.Model.*;
 import Project_Noir.Athena.Repo.*;
-import com.google.errorprone.annotations.Var;
+import Project_Noir.Athena.SmartContracts.BidService.BidService;
+import Project_Noir.Athena.SmartContracts.WarChestService.WarChestService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Credentials;
+import okhttp3.OkHttpClient;
 import org.bson.types.ObjectId;
-import org.checkerframework.checker.units.qual.C;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,6 +20,9 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -34,20 +42,26 @@ public class ServerSideMultiSendContractService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final MessageService messageService;
-
+    private final Web3JService web3JService;
+    @Value("${contract.warchest.address}")
+    private String WarChestServiceAddress;
 
 
     public void sendWeeklyManaMultiCall(List<String> contentCreatorIds){
         if(!contentCreatorIds.isEmpty()){
             var contractFunctionDetailsList = new ArrayList<ContractFunctionDetails>();
             List<byte[]> calls = new java.util.ArrayList<>(List.of());
-            for(String creatorId: contentCreatorIds){
+            var creatorsIdsWithBalance = getCreatorIdsWithBalance(contentCreatorIds);
+            for(String creatorId: creatorsIdsWithBalance){
                 calls.add(buildCall("sendWeeklyMana", List.of(new Utf8String(creatorId))));
                 var contractFunctionDetails = ContractFunctionDetails.builder()
                         .contentID(creatorId)
                         .contractFunctionEnum(ContractFunctionEnum.SendWeeklyMana)
                         .build();
                 contractFunctionDetailsList.add(contractFunctionDetails);
+            }
+            if(calls.isEmpty()){
+                return;
             }
             var SendWeeklyManaMultiCallTransactionResponse = sendMultiCallTransaction(calls, ContractFunctionEnum.SendWeeklyMana);
             int index = 0;
@@ -62,6 +76,24 @@ public class ServerSideMultiSendContractService {
                 index += multiCallResponse.getTransactionCount();
             }
         }
+    }
+
+    private ArrayList<String> getCreatorIdsWithBalance(List<String> creatorIds) {
+        DefaultGasProvider contractGasProvider = new DefaultGasProvider();
+        var readonly = new org.web3j.tx.ReadonlyTransactionManager(web3JService.web3j, WarChestServiceAddress);
+        var warChestService = WarChestService.load(WarChestServiceAddress, web3JService.web3j, readonly, contractGasProvider);
+        var creatorsWithBalance = new ArrayList<String>();
+        for (String creatorId : creatorIds){
+            try {
+                BigInteger balance = warChestService.getCreatorsBalance(creatorId).send();
+                if(balance.compareTo(BigInteger.ZERO) > 0){
+                    creatorsWithBalance.add(creatorId);
+                }
+            }catch (Exception e){
+                creatorsWithBalance.add(creatorId);
+            }
+        }
+        return creatorsWithBalance;
     }
 
     public void watchNowPayLaterPaymentsMultiCall(List<WatchNowPayLater> watchNowPayLaterPayments){
@@ -365,7 +397,7 @@ public class ServerSideMultiSendContractService {
     private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
         Query query = new Query(Criteria.where("channelName").is(channelName));
         Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Channels.class
@@ -590,7 +622,7 @@ public class ServerSideMultiSendContractService {
     private void increaseDevelopingVideosAllowance(String userId, int Amount){
         Query query = new Query(Criteria.where("_id").is(userId));
         Update update = new Update().inc("allowedDevelopingVideos", Amount);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class

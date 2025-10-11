@@ -16,6 +16,14 @@ export class PaymentServiceService {
     return this.httpClient.post(this.SivantisURL, PaymentRequestPayload, {responseType: 'text'});
   }
 
+  purchaseMasterPass(transactionHash: string): Observable<any>{
+    return this.httpClient.post(`${this.SivantisURL}/Pass/Master/${transactionHash}`, null, {responseType: 'text'});
+  }
+
+  purchaseArchonPass(transactionHash: string): Observable<any>{
+    return this.httpClient.post(`${this.SivantisURL}/Pass/Archon/${transactionHash}`, null, {responseType: 'text'});
+  }
+
   updatePayment(PaymentRequestPayload: PaymentRequestPayload) : Observable<any>{
     return this.httpClient.put(this.SivantisURL + '/update', PaymentRequestPayload, {responseType: "text"});
   }

@@ -77,16 +77,24 @@ export class UserService {
     return this.httpClient.put(`${this.SivantisURL}/Change/Password`, passwordChangePayload, {responseType: 'json'})
   }
 
+  changeEmail(changeEmailRequestPayload: ChangeEmailRequestPayload): Observable<any>{
+    return this.httpClient.put(`${this.SivantisURL}/Change/Email`, changeEmailRequestPayload, {responseType: 'json'})
+  }
+
+  changeEmailInitiation(newEmail: string): Observable<any>{
+    return this.httpClient.put(`${this.SivantisURL}/Change/Email/Initiate/${newEmail}`, null, {responseType: 'text'})
+  }
+
   removeFromPayLater(contentId: string): Observable<any>{
     return this.httpClient.put(`${this.SivantisURL}/PayLater/Remove/${contentId}`, null, {responseType: 'text'})
   }
 
-  subscribeToChannel(contentId: string): Observable<any>{
-    return this.httpClient.put(`${this.SivantisURL}/Subscribe/${contentId}`, null, {responseType: 'text'})
+  subscribeToChannel(channelId: string): Observable<any>{
+    return this.httpClient.put(`${this.SivantisURL}/Subscribe/${channelId}`, null, {responseType: 'text'})
   }
 
-  unsubscribeToChannel(contentId: string): Observable<any>{
-    return this.httpClient.put(`${this.SivantisURL}/Unsubscribe/${contentId}`, null, {responseType: 'text'})
+  unsubscribeToChannel(channelId: string): Observable<any>{
+    return this.httpClient.put(`${this.SivantisURL}/Unsubscribe/${channelId}`, null, {responseType: 'text'})
   }
 
   deleteUser(code: string): Observable<any>{
@@ -104,6 +112,11 @@ export class UserService {
   setPersonalWallet(personalWallet: string) {
     this.User.personalWallet = personalWallet
   }
+
+  setEmail(newEmail: string) {
+    this.User.email = newEmail
+  }
+
 
   getInMemoryUser(): User{
     return this.User;
@@ -182,5 +195,11 @@ export interface UsernameChangePayload{
 export interface PasswordChangePayload{
   currentPassword: string
   newPassword: string
+  code: string
+}
+
+export interface ChangeEmailRequestPayload{
+  currentEmailVerificationCode: string
+  newEmailVerificationCode: string
   code: string
 }

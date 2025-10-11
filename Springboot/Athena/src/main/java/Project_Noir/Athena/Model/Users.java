@@ -61,13 +61,11 @@ public class Users implements UserDetails {
     //Map between content ID and purchase ID
     private Map<String, String> purchasedContent;
 
-    //The name the user decides to call their channel
     private ArrayList<String> channels;
 
     //The crypto wallet mana will be sent to
     private String personalWallet;
 
-    //IDs of users that are subscribed to you
     private ArrayList<String> channelSubscribedTo;
 
     //Content IDs of the videos you want to pay for later
@@ -95,6 +93,8 @@ public class Users implements UserDetails {
     private boolean contentCreatorPending;
 
     private Instant nextWalletChangeTime;
+
+    private NewEmailInfo newEmailInfo;
 
     private String language;
 

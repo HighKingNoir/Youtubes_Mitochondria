@@ -33,7 +33,12 @@ enum MessageEnum {
   SentVideo,
   FailedAuctionPayment,
   ChannelPendingPayment,
-  ChannelPendingRefund
+  ChannelPendingRefund,
+  ArchonPass,
+  MasterPass,
+  InvalidRankUpTransaction,
+  InvalidBidTransaction,
+  VerifyingTransaction
 }
 
 @Component({

@@ -1,5 +1,7 @@
 package Project_Noir.Athena.Repo;
 
+import Project_Noir.Athena.Model.Content;
+import Project_Noir.Athena.Model.ContentEnum;
 import Project_Noir.Athena.Model.Payment;
 import Project_Noir.Athena.Model.PaymentEnum;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,9 @@ public interface PaymentRepository extends MongoRepository<Payment, String> {
     );
 
     List<Payment> findByPaymentIdIn(Collection<String> contentIds, PageRequest of);
+
+
+    List<Payment> findByPaymentIdInAndStatus(Collection<String> paymentIds, PaymentEnum status);
 
     List<Payment> findByPaymentDateBeforeAndPaymentIdIn(Instant paymentDate, Collection<String> paymentIds, PageRequest of);
 }

@@ -49,7 +49,7 @@ export class BidService {
             waitForTransactionReceipt(config, {
               hash: transactionHash,
             }).then(result => {
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -110,7 +110,7 @@ export class BidService {
             waitForTransactionReceipt(config, {
               hash: transactionHash,
             }).then(result => {
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -169,7 +169,7 @@ export class BidService {
             waitForTransactionReceipt(config, {
               hash: transactionHash,
             }).then(result => {
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);

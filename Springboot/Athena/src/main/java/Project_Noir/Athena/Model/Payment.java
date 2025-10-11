@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashMap;
 
 @Data
 @Builder
@@ -46,5 +47,6 @@ public class Payment {
     //Transaction receipt
     private String transactionHash;
 
-
+    //HashMap for TransactionVerificationId and PaymentRevertInfo
+    private HashMap<String, PaymentRevertInfo> paymentRevertInfo;
 }

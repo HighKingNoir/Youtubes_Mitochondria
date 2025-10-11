@@ -47,7 +47,6 @@ export class PurchasedPageComponent implements OnInit{
       next: (data:PurchasedContentResponse) => {
         this.UserPurchasedVideos.content.push(...data.content)
         this.UserPurchasedVideos.payment.push(...data.payment)
-        console.log(data.payment)
         this.videoItems = this.UserPurchasedVideos.content.map((content, index) => ({
           content,
           payment: this.UserPurchasedVideos.payment[index],

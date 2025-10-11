@@ -5,7 +5,6 @@ import Project_Noir.Athena.DTO.FundChannelRequest;
 import Project_Noir.Athena.DTO.UserWithdrawRequest;
 import Project_Noir.Athena.Model.*;
 import Project_Noir.Athena.Repo.*;
-import com.auth0.jwt.JWT;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -109,14 +108,14 @@ public class MessageService {
         messageRepository.saveAll(Messages);
     }
 
-    public void updatedPaymentMessage(Users user, Payment payment, Content content, String manaSpent, String dollarSpent){
+    public void updatedPaymentMessage(String userId, Payment payment, Content content, String manaSpent, String dollarSpent){
         var Message = buildMessages(MessageEnum.UpdatedPayment, payment.getTransactionHash());
         Message.getExtraInfo().add(content.getThumbnail());
         Message.getExtraInfo().add(content.getContentName());
         Message.getExtraInfo().add(manaSpent);
         Message.getExtraInfo().add(dollarSpent);
         Message.getExtraInfo().add(payment.getManaAmount());
-        addMessageIdToUser(user.getUserId(), Message.getMessageId());
+        addMessageIdToUser(userId, Message.getMessageId());
         messageRepository.save(Message);
     }
 
@@ -375,7 +374,6 @@ public class MessageService {
     }
 
     public void youtubeEmailsMessage(List<Users> users, List<Content> contents) {
-        List<Content> contentToSave = new ArrayList<>();
         List<Messages> messagesToSave = new ArrayList<>();
         List<Payment> paymentsToSave = new ArrayList<>();
         // Preload users into map
@@ -417,20 +415,33 @@ public class MessageService {
             }
 
             if (message.getExtraInfo().size() == 4) {
-                content.setSentEmails(true);
-                content.setContentEnum(ContentEnum.Inactive);
+                setContentEnumAndSentEmails(content, ContentEnum.Inactive);
             } else {
-                content.setContentEnum(ContentEnum.InProgress);
+                setContentEnumAndSentEmails(content, ContentEnum.InProgress);
             }
             addMessageIdToUser(content.getCreatorID(), message.getMessageId());
-            contentToSave.add(content);
             messagesToSave.add(message);
         }
 
         // Save all updated entities
-        contentRepository.saveAll(contentToSave);
         messageRepository.saveAll(messagesToSave);
         paymentRepository.saveAll(paymentsToSave);
+    }
+
+    private void setContentEnumAndSentEmails(Content content, ContentEnum contentEnum){
+        Query query = new Query(Criteria.where("_id").is(content.getContentId()));
+
+        Update update;
+        if(contentEnum.equals(ContentEnum.Inactive)){
+            update = new Update()
+                    .set("contentEnum", ContentEnum.Inactive)
+                    .set("sentEmails", true);
+        }
+        else{
+            update = new Update().set("contentEnum", ContentEnum.InProgress);
+        }
+
+        mongoTemplate.updateFirst(query, update, Content.class);
     }
 
     public void approvedChannelMessage(String channelName){
@@ -486,7 +497,59 @@ public class MessageService {
         var Message = buildMessages(MessageEnum.ResolvedAuctionPayment);
         Message.getExtraInfo().add(content.getThumbnail());
         Message.getExtraInfo().add(content.getContentName());
-        addMessageIdToUser(contentID, Message.getMessageId());
+        addMessageIdToUser(content.getCreatorID(), Message.getMessageId());
+        messageRepository.save(Message);
+    }
+
+    public void invalidRankUpTransaction(
+            String userID,
+            TransactionVerificationFunctionEnum transactionVerificationFunctionEnum,
+            String reason
+    ) {
+        var Message = buildMessages(MessageEnum.InvalidRankUpTransaction);
+        Message.getExtraInfo().add(transactionVerificationFunctionEnum.name());
+        Message.getExtraInfo().add(reason);
+        addMessageIdToUser(userID, Message.getMessageId());
+        messageRepository.save(Message);
+    }
+
+    public void verifyingTransactionMessage(
+            String userID,
+            TransactionVerificationFunctionEnum transactionVerificationFunctionEnum,
+            String transactionHash,
+            Content content
+    ) {
+        var Message = buildMessages(MessageEnum.VerifyingTransaction, transactionHash);
+        Message.getExtraInfo().add(transactionVerificationFunctionEnum.name());
+        if(transactionVerificationFunctionEnum.equals(TransactionVerificationFunctionEnum.PlaceBid) || transactionVerificationFunctionEnum.equals(TransactionVerificationFunctionEnum.RaiseBid)){
+            Message.getExtraInfo().add(content.getThumbnail());
+            Message.getExtraInfo().add(content.getContentName());
+        }
+        addMessageIdToUser(userID, Message.getMessageId());
+        messageRepository.save(Message);
+    }
+
+    public void invalidBidTransaction(
+            String userID,
+            TransactionVerificationFunctionEnum transactionVerificationFunctionEnum,
+            String reason
+    ) {
+        var Message = buildMessages(MessageEnum.InvalidBidTransaction);
+        Message.getExtraInfo().add(transactionVerificationFunctionEnum.name());
+        Message.getExtraInfo().add(reason);
+        addMessageIdToUser(userID, Message.getMessageId());
+        messageRepository.save(Message);
+    }
+
+    public void archonPass(String userId) {
+        var Message = buildMessages(MessageEnum.ArchonPass);
+        addMessageIdToUser(userId, Message.getMessageId());
+        messageRepository.save(Message);
+    }
+
+    public void masterPassMessage(String userId) {
+        var Message = buildMessages(MessageEnum.MasterPass);
+        addMessageIdToUser(userId, Message.getMessageId());
         messageRepository.save(Message);
     }
 
@@ -694,7 +757,7 @@ public class MessageService {
     public void addMessageIdToUser(String userId, String messageId) {
         Query query = new Query(Criteria.where("_id").is(userId));
         Update update = new Update().push("messages", messageId);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class
@@ -705,7 +768,7 @@ public class MessageService {
         Query query = new Query(Criteria.where("_id").is(userId));
         Update update = new Update().inc("totalHype", addedHype);
 
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class
@@ -731,10 +794,11 @@ public class MessageService {
 
         Update update = new Update().set("isViolator", isViolator);
 
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class
         );
     }
+
 }

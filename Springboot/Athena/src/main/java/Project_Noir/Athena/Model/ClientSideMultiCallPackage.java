@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ClientSideMultiCallPackage {
     @Id
     private String packageId;
-    byte[] functionData;
-    ContractFunctionDetails contractFunctionDetails;
+    private byte[] functionData;
+    private ContractFunctionDetails contractFunctionDetails;
+    private BlockchainInteractionStatusEnum status;
 }

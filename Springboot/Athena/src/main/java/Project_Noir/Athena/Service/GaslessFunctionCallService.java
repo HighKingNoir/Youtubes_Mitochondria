@@ -35,45 +35,17 @@ public class GaslessFunctionCallService {
     private final MessageService messageService;
     private final ServerSideEventController serverSideEventController;
     private final CredentialsService credentialsService;
-
+    private final Web3JService web3JService;
     @Value("${contract.gaslessFunctionCall.address}")
     private String gaslessFunctionCallAddress;
 
-    @Value("${infura.api.secret}")
-    private String infuraAPISecret;
 
-    @Value("${infura.api.key}")
-    private String infuraAPIKey;
-    private Web3j web3j;
+
 
 
     @Value("${spring.profiles.active}")
     private String environment;
 
-    @PostConstruct
-    public void init() {
-        if (infuraAPIKey != null && !infuraAPIKey.isEmpty()) {
-            web3j = Web3j.build(createCustomHttpService("https://polygon-mainnet.infura.io/v3/" + infuraAPIKey));
-        } else {
-            web3j = Web3j.build(new HttpService());
-        }
-    }
-
-    private HttpService createCustomHttpService(String url) {
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
-        // Add an interceptor to add the Bearer token to each request
-        clientBuilder.addInterceptor(chain -> {
-            okhttp3.Request original = chain.request();
-            okhttp3.Request request = original.newBuilder()
-                    .header("Authorization", Credentials.basic(infuraAPIKey, infuraAPISecret))
-                    .method(original.method(), original.body())
-                    .build();
-            return chain.proceed(request);
-        });
-
-        return new HttpService(url, clientBuilder.build());
-    }
 
     public void gaslessFundChannel(GaslessFunctionCallRequest gaslessFunctionCallRequest, String Jwt) {
         validateDeadline(gaslessFunctionCallRequest.getDeadline());
@@ -197,6 +169,7 @@ public class GaslessFunctionCallService {
 
     private GaslessFunctionCallModule loadGaslessFunctionCallModule(){
         var credentials = getCredentials();
+        var web3j = web3JService.web3j;
         return GaslessFunctionCallModule.load(gaslessFunctionCallAddress, web3j, credentials, new StaticGasProvider(getGasPrice(web3j), BigInteger.valueOf(500000L)));
     }
 

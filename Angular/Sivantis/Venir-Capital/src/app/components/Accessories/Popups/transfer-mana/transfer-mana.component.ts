@@ -14,6 +14,7 @@ export class TransferManaComponent {
 
   @Input() approveContract = false;
   @Input() bidContract = false;
+  @Input() payToRankUpContract = false;
   @Input() allowance = 0;
   @Input() mana = 0;
 
@@ -34,6 +35,25 @@ export class TransferManaComponent {
       approvalAmount = '10000'
     }
     this.decentralandManaService.approveBidService(approvalAmount).then((transactionHash) => {
+      if(transactionHash){
+        this.activeModal.close("Approved")
+      }
+      else{
+        this.alertService.addAlert("Approval Failed", "danger")
+      }
+    }).catch(() => {
+    })
+  }
+
+  approvePayToRankUpService(){
+    let approvalAmount;
+    if(this.mana > 10000){
+      approvalAmount = (this.mana * 10).toString()
+    }
+    else{
+      approvalAmount = '10000'
+    }
+    this.decentralandManaService.approvePayToRankUpService(approvalAmount).then((transactionHash) => {
       if(transactionHash){
         this.activeModal.close("Approved")
       }
@@ -78,6 +98,31 @@ export class TransferManaComponent {
       allowanceIncrease = "10000"
     }
     this.decentralandManaService.increaseAllowanceBidService(allowanceIncrease).then((transactionHash) => {
+      if(transactionHash){
+        this.activeModal.close("Increased")
+      }
+      else{
+        this.alertService.addAlert("Increase Failed", "danger")
+
+      }
+    })
+  }
+
+  increasePayToRankUpAllowance(){
+    let allowanceIncrease;
+    if(this.allowance != 0 && this.mana != 0){
+      const newAllowance = this.mana * 5
+      if(newAllowance < 10000){
+        allowanceIncrease = '10000'
+      }
+      else{
+        allowanceIncrease = newAllowance.toString()
+      }
+    }
+    else{
+      allowanceIncrease = "10000"
+    }
+    this.decentralandManaService.increaseAllowancePayToRankUpService(allowanceIncrease).then((transactionHash) => {
       if(transactionHash){
         this.activeModal.close("Increased")
       }

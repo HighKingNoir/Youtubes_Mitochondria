@@ -20,7 +20,7 @@ export class ContractFunctionDetailsComponent {
     private contractLogService: ContractLogsService,
     private alertService: AlertService
   ){
-    console.log(this.failedLog)
+    
   }
 
    resolveLog(){

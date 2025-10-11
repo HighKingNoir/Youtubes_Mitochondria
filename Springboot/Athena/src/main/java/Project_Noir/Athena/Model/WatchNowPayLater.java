@@ -25,7 +25,7 @@ public class WatchNowPayLater {
 
     private String contentID;
 
-    private Double paymentAmountInUSD;
+    private Double manaIncrements;
 
     private int paymentsLeft;
 

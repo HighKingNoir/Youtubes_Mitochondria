@@ -2,6 +2,7 @@ package Project_Noir.Athena.Service;
 
 import Project_Noir.Athena.Exception.SivantisException;
 import Project_Noir.Athena.Model.NotificationEmail;
+import Project_Noir.Athena.Model.NotificationEmailEnum;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
@@ -25,12 +26,19 @@ public class MailService {
 
         // Set the dynamic link as a Thymeleaf context variable
         Context context = new Context();
-        context.setVariable("buttonLink", notificationEmail.getBody());
+        if(notificationEmail.getNotificationEmailEnum().equals(NotificationEmailEnum.ChangeEmail)){
+            context.setVariable("verificationCode", notificationEmail.getBody());
+        }
+        else {
+            context.setVariable("buttonLink", notificationEmail.getBody());
+        }
+
 
         String emailContent = null;
         switch (notificationEmail.getNotificationEmailEnum()){
             case Activation -> emailContent = templateEngine.process("ActivationTemplate", context);
             case ForgotPassword -> emailContent = templateEngine.process("ForgotPasswordTemplate", context);
+            case ChangeEmail -> emailContent = templateEngine.process("ChangeEmailTemplate",  context);
         }
 
         try {

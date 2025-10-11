@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -112,11 +113,17 @@ public class ContentService {
             }
         }
         Content.setIsComplete(true);
-        User.setVideosPosted(User.getVideosPosted() + 1);
-        User.getCreatedContent().add(Content.getContentId());
         contentRepository.save(Content);
-        userRepository.save(User);
+        increaseVideoPostedAndAddContentId(User, Content.getContentId());
         return Content;
+    }
+
+    private void increaseVideoPostedAndAddContentId(Users user, String contentID){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update()
+                .inc("videosPosted", 1)
+                .push("createdContent", contentID);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
     public void completeVideo(CompleteVideoRequest completeVideoRequest, String JWT){
@@ -132,23 +139,33 @@ public class ContentService {
             throw new SivantisException("Video is already complete");
         }
         var user = userRepository.findById(userID).orElseThrow();
+        Duration validatedDuration = null;
         if(content.getContentType().equals("Short Film")){
-            content.setDuration(isGreaterThanTenMinutes(completeVideoRequest.getDuration()));
+            validatedDuration = isGreaterThanTenMinutes(completeVideoRequest.getDuration());
         }
         else if (content.getContentType().equals("Movies")) {
-            content.setDuration(isGreaterThanOneHourAndFifteenMinutes(completeVideoRequest.getDuration()));
+            validatedDuration = isGreaterThanOneHourAndFifteenMinutes(completeVideoRequest.getDuration());
         }
-        user.setAllowedDevelopingVideos(user.getAllowedDevelopingVideos() + 1);
-        content.setYoutubeMainVideoID((completeVideoRequest.getYoutubeMainVideoID()));
-        content.setIsComplete(true);
+        incrementAllowedDevelopingVideos(user);
+        Query query = new Query(Criteria.where("_id").is(content.getContentId()));
+
+        Update update = new Update()
+                .set("youtubeMainVideoID", completeVideoRequest.getYoutubeMainVideoID())
+                .set("isComplete", true)
+                .set("duration", validatedDuration);
+
         try {
-            contentRepository.save(content); // save will fail if the ID already exists
+            mongoTemplate.updateFirst(query, update, Content.class);
         } catch (DuplicateKeyException e) {
             throw new SivantisException("A user published a video with this YouTube ID already");
         }
-        userRepository.save(user);
     }
 
+    private void incrementAllowedDevelopingVideos(Users user){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().inc("allowedDevelopingVideos", 1);
+        mongoTemplate.updateFirst(query, update, Users.class);
+    }
 
     // @dev Generates content entity that is under development
     public Content saveInDevelopmentContent(ContentRequest contentRequest, String JWT) throws IOException, URISyntaxException, TransactionException, ExecutionException, InterruptedException {
@@ -193,12 +210,18 @@ public class ContentService {
             }
         }
         Content.setIsComplete(false);
-        User.setVideosPosted(User.getVideosPosted() + 1);
-        User.getCreatedContent().add(Content.getContentId());
-        User.setAllowedDevelopingVideos(User.getAllowedDevelopingVideos() - 1);
-        userRepository.save(User);
         contentRepository.save(Content);
+        increaseVideoPostedAndAddContentIdAndDecrementAllowedDevelopingVideos(User, Content.getContentId());
         return Content;
+    }
+
+    private void increaseVideoPostedAndAddContentIdAndDecrementAllowedDevelopingVideos(Users user, String contentID){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update()
+                .inc("videosPosted", 1)
+                .push("createdContent", contentID)
+                .inc("allowedDevelopingVideos", -1);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
     public void editVideo(EditVideoRequest editVideoRequest, String JWT){
@@ -212,10 +235,16 @@ public class ContentService {
         if(editVideoRequest.getContentName().length() > 100){
             throw new SivantisException("The title exceeds the character limit of " + 100);
         }
-        content.setContentName(editVideoRequest.getContentName());
-        content.setDescription(editVideoRequest.getDescription());
-        content.setYoutubeTrailerVideoID(editVideoRequest.getYoutubeTrailerVideoID());
-        contentRepository.save(content);
+        updateContent(content.getContentId(), editVideoRequest);
+    }
+
+    private void updateContent(String contentId, EditVideoRequest editVideoRequest){
+        Query query = new Query(Criteria.where("_id").is(contentId));
+        Update update = new Update()
+                .set("contentName", editVideoRequest.getContentName())
+                .set("description", editVideoRequest.getDescription())
+                .set("youtubeTrailerVideoID", editVideoRequest.getYoutubeTrailerVideoID());
+        mongoTemplate.updateFirst(query, update, Content.class);
     }
 
     public void deleteCreatedContent(String userID, String contentID){
@@ -227,10 +256,14 @@ public class ContentService {
             throw new SivantisException("Content must be Inactive to delete");
         }
         content.setYoutubeMainVideoID(null);
-        var user = userRepository.findById(userID).orElseThrow();
-        user.getCreatedContent().remove(contentID);
-        userRepository.save(user);
+        removeUserCreatedContent(userID, contentID);
         contentRepository.save(content);
+    }
+
+    private void removeUserCreatedContent(String userId, String contentID){
+        Query query = new Query(Criteria.where("_id").is(userId));
+        Update update = new Update().pull("createdContent", contentID);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
 
@@ -347,18 +380,33 @@ public class ContentService {
     public void sentVideos(SentVideoRequest sentVideoRequest, String JWT){
         var content = contentRepository.findById(sentVideoRequest.getContentID()).orElseThrow();
         if(!content.getCreatorID().equals(jwtService.extractUserId(JWT))){
-            throw new SivantisException("You are not the owner of this message");
+            throw new SivantisException("You are not the owner of this content");
         }
-        if(!content.getSentEmails()){
+        if(hasNotSentEmails(content.getContentId())){
             var message = messageRepository.findById(sentVideoRequest.getMessageID()).orElseThrow();
             message.setHasRead(true);
-            content.setSentEmails(true);
             messageRepository.save(message);
-            contentRepository.save(content);
             messageService.sentVideo(content);
         }
     }
 
+    private boolean hasNotSentEmails(String contentId) {
+        Query query = new Query(Criteria
+                .where("_id").is(contentId)
+                .and("sentEmails").is(false));
+
+        Update update = new Update()
+                .set("sentEmails", true);
+
+        Content updatedContent = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Content.class
+        );
+
+        return updatedContent != null;
+    }
     public void reportVideo(ReportVideoRequest reportVideoRequest, String userID) {
         if(reportVideoRequest.getReport().isEmpty() || reportVideoRequest.getReport().length() > 300){
             throw new SivantisException("Invalid Report Description");
@@ -386,10 +434,16 @@ public class ContentService {
         if(index != -1){
             throw new SivantisException("Already Submitted A Report For This Video");
         }
-        content.getContentReports().add(report);
-        double totalReports = content.getContentReports().size();
-        content.setReportRate(totalReports / allBuyers * 100);
-        contentRepository.save(content);
+        double reportRate = content.getContentReports().size() / allBuyers * 100;
+        addReport(content.getContentId(), report, reportRate);
+    }
+
+    private void addReport(String contentId, ContentReports report,  Double reportRate){
+        Query query = new Query(Criteria.where("_id").is(contentId));
+        Update update = new Update()
+                .addToSet("contentReports", report)
+                .set("reportRate", reportRate);
+        mongoTemplate.updateFirst(query, update, Content.class);
     }
 
     private ContentReports buildReport(String report ,String userID) {
@@ -413,27 +467,38 @@ public class ContentService {
     public void deleteChannelPurchasedVideo(String userID, String contentID, String channelID) {
         var channel = channelRepository.findById(channelID).orElseThrow();
         if(!channel.getOwnerID().equals(userID)){
-            throw new SivantisException("You are not the owner of this message");
+            throw new SivantisException("You are not the owner of this channel");
         }
         var content = contentRepository.findById(contentID).orElseThrow();
         var payment = paymentRepository.findById(channel.getPurchasedContent().get(contentID)).orElseThrow();
         if(!content.getContentEnum().equals(ContentEnum.Inactive) && !payment.getStatus().equals(PaymentEnum.RefundedPurchase)){
             throw new SivantisException("Content must be Inactive OR must be refunded to delete");
         }
-        channel.getPurchasedContent().remove(contentID);
-        channelRepository.save(channel);
+        removeChannelPurchasedContent(channel.getChannelId(), contentID);
+    }
+
+    private void removeChannelPurchasedContent(String channelId, String contentID) {
+        Query query = new Query(Criteria.where("_id").is(channelId));
+        Update update = new Update().unset("purchasedContent." + contentID);
+        mongoTemplate.updateFirst(query, update, Channels.class);
     }
 
     public void deletePurchasedVideo(String userID, String contentID) {
-        var user = userRepository.findById(userID).orElseThrow();
         var content = contentRepository.findById(contentID).orElseThrow();
+        var user = userRepository.findById(userID).orElseThrow();
         var payment = paymentRepository.findById(user.getPurchasedContent().get(contentID)).orElseThrow();
         if(!content.getContentEnum().equals(ContentEnum.Inactive) && !payment.getStatus().equals(PaymentEnum.RefundedPurchase)){
             throw new SivantisException("Content must be Inactive OR must be refunded to delete");
         }
-        user.getPurchasedContent().remove(contentID);
-        userRepository.save(user);
+        removeUserPurchasedContent(userID, contentID);
     }
+
+    private void removeUserPurchasedContent(String userId, String contentID){
+        Query query = new Query(Criteria.where("_id").is(userId));
+        Update update = new Update().pull("purchasedContent", contentID);
+        mongoTemplate.updateFirst(query, update, Users.class);
+    }
+
 
     // @dev Generates a new Content entity
     private Content mapContentRequest(ContentRequest contentRequest, String userID, Boolean isViolator) throws IOException, URISyntaxException {

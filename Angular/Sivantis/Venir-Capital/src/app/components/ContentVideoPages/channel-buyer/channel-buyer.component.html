@@ -73,7 +73,7 @@
                     <div class="linked-Channel" *ngIf="hasChannel(); else CreateChannel">
                         <div class="channelbalance">
                             <div class="header">Channel balance</div>
-                            <div>{{channelDollarbalance | numberFormat}} mana (${{(channelDollarbalance * MANA_PRICE) | numberFormat}})</div>
+                            <div>{{channelManabalance | numberFormat}} mana (${{(channelManabalance * MANA_PRICE) | numberFormat}})</div>
                         </div>
                         <div class="buy">
                             <div *ngIf="hasPurchased(); else Buy">

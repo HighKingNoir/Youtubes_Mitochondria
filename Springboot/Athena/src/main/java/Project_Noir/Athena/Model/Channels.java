@@ -27,7 +27,7 @@ public class Channels {
     private String ownerID;
 
     //Map between content ID and purchase ID
-    private Map<String, String> purchasedContent;
+    private Map<String , String> purchasedContent;
 
     //The name the user decides to call their channel
     private String channelName;

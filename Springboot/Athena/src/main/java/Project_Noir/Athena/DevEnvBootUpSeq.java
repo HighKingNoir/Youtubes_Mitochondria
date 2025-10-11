@@ -5,13 +5,13 @@ import Project_Noir.Athena.SmartContracts.ChannelService.ChannelService;
 import Project_Noir.Athena.SmartContracts.GaslessFunctionCallModule.GaslessFunctionCallModule;
 import Project_Noir.Athena.SmartContracts.InterfaceService.InterfaceService;
 import Project_Noir.Athena.SmartContracts.MultiSendCallOnly.MultiSendCallOnly;
+import Project_Noir.Athena.SmartContracts.PayToRankUpService.PayToRankUpService;
 import Project_Noir.Athena.SmartContracts.TestManaContract.TestManaContract;
 import Project_Noir.Athena.SmartContracts.WarChestService.WarChestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
 import org.web3j.crypto.Credentials;
@@ -65,6 +65,9 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
     @Value("${contract.interface.address}")
     private String interfaceAddress;
 
+    @Value("${contract.payToRankUp.address}")
+    private String payToRankUpAddress;
+
     @Value("${contract.gaslessFunctionCall.address}")
     private String gaslessFunctionCallAddress;
 
@@ -76,7 +79,7 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException {
-        System.out.println("\nSpringBoot Application Boot Up Successful");
+        System.out.println("\nSpringBoot Application Boot Up Successful\n");
         if(areAllContractsValid()){
             System.out.println("Choose an option:");
             System.out.println("1) Deploy smart contracts");
@@ -226,6 +229,20 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
             return;
         }
         System.out.println("GaslessFunctionCall Contract deployed.");
+        System.out.println("Deploying PayToRankUp Contract...");
+        PayToRankUpService payToRankUpService;
+        try {
+            payToRankUpService = PayToRankUpService.deploy(
+                    web3j,
+                    companyCredentials,
+                    new StaticGasProvider(gasPrice, gasLimit),
+                    testManaContract.getContractAddress()
+            ).send();
+        } catch (Exception e) {
+            System.out.println("Error: Failed to deploy PayToRankUp Contract");
+            return;
+        }
+        System.out.println("PayToRankUp Contract deployed.");
         System.out.println("Completing Final Step...");
         try {
             bidServiceContract.addOverseer(interfaceService.getContractAddress()).send();
@@ -245,6 +262,7 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
         System.out.println("contract.multiSend.address=" + multiSendCallOnly.getContractAddress());
         System.out.println("contract.interface.address=" + interfaceService.getContractAddress());
         System.out.println("contract.gaslessFunctionCall.address=" + gaslessFunctionCallModule.getContractAddress());
+        System.out.println("contract.payToRankUp.address=" + payToRankUpService.getContractAddress());
         System.out.println("contract.testMana.address=" + testManaContract.getContractAddress() + "\n");
         System.out.println(dashedLine());
         System.out.println("Copy Into Angular 'environment.ts' file");
@@ -252,6 +270,7 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
         System.out.println("    Contract_Channel_Address: " + "'" + channelServiceContract.getContractAddress() + "',");
         System.out.println("    Contract_Warchest_Address: " + "'" + warChestServiceContract.getContractAddress() + "',");
         System.out.println("    Contract_Decentraland_Mana_Address: " + "'" + testManaContract.getContractAddress() + "',");
+        System.out.println("    Contract_Pay_To_Rank_Up_Address: " + "'" + payToRankUpService.getContractAddress() + "',");
         System.out.println("    Contract_Gasless_Function_Call_Address: " + "'" + gaslessFunctionCallModule.getContractAddress() + "',\n");
         System.out.println(dashedLine());
         System.out.println("Rerun Springboot Application with 'application-dev.properties' changes");
@@ -277,6 +296,7 @@ public class DevEnvBootUpSeq implements CommandLineRunner {
                 multiSendAddress != null && !multiSendAddress.isEmpty() &&
                 interfaceAddress != null && !interfaceAddress.isEmpty() &&
                 testManaAddress != null && !testManaAddress.isEmpty() &&
+                payToRankUpAddress != null && !payToRankUpAddress.isEmpty() &&
                 gaslessFunctionCallAddress != null && !gaslessFunctionCallAddress.isEmpty();
     }
 

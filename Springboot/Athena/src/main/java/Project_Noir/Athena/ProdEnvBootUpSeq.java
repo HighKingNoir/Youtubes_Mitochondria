@@ -18,45 +18,6 @@ public class ProdEnvBootUpSeq implements EnvironmentPostProcessor {
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        String activeProfile = environment.getProperty("spring.profiles.active");
 
-        // Only load secrets for the prod profile
-        if (!"prod".equalsIgnoreCase(activeProfile)) {
-            return;
-        }
-
-        try {
-            SecretsManagerClient client = SecretsManagerClient.builder()
-                    .region(Region.of("us-east-1")) // Set your AWS region
-                    .build();
-
-            String secretJson = client.getSecretValue(GetSecretValueRequest.builder()
-                            .secretId(SECRET_ID)
-                            .build())
-                    .secretString();
-
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, String> secretMap = mapper.readValue(secretJson, Map.class);
-
-            // Dynamically create Mongo URI from secrets
-            String mongoPassword = secretMap.get("mongo.password");
-            if (mongoPassword != null) {
-                String mongoUri = String.format(
-                        "mongodb+srv://AdminNoir:%s@sivantis.cqja1.mongodb.net/?retryWrites=true&w=majority&appName=Sivantis",
-                        mongoPassword
-                );
-                secretMap.put("spring.data.mongodb.uri", mongoUri);
-            }
-
-            Map<String, Object> resolvedSecrets = new HashMap<>(secretMap);
-
-            // Precedence: add first to override application.properties
-            environment.getPropertySources().addFirst(
-                    new MapPropertySource("aws-secrets", resolvedSecrets)
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load secrets from AWS Secrets Manager", e);
-        }
     }
 }

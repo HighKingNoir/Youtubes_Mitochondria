@@ -48,7 +48,7 @@ export class ChannelServiceContract {
             waitForTransactionReceipt(config, {
               hash: transactionHash,
             }).then(result => {
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);

@@ -6,6 +6,7 @@ import Project_Noir.Athena.Repo.ChannelRepository;
 import Project_Noir.Athena.Repo.UserRepository;
 import Project_Noir.Athena.Service.ChannelService;
 import Project_Noir.Athena.Service.JwtService;
+import Project_Noir.Athena.Service.PaymentService;
 import com.google.api.client.auth.oauth2.TokenRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/Channel")
@@ -40,6 +42,8 @@ public class ChannelController {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final ServerSideEventController serverSideEventController;
+    private final PaymentService paymentService;
 
     @PostMapping("/Kick/Token")
     public ResponseEntity<String> exchangeCodeForToken(@RequestBody KickTokenRequest kickTokenRequest) {
@@ -72,6 +76,14 @@ public class ChannelController {
     @GetMapping("/Single/{channelName}")
     public ResponseEntity<Channels> getChannel(@PathVariable String channelName){
         return new ResponseEntity<>(channelRepository.findByChannelName(channelName).orElseThrow(), HttpStatus.OK);
+    }
+
+    @GetMapping("/Pending/Mana/{channelName}")
+    public ResponseEntity<Double> getChannelPendingManaAmount(@PathVariable String channelName){
+        var channel = channelRepository.findByChannelName(channelName).orElseThrow();
+        var manaPrice = serverSideEventController.latestValue;
+        var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
+        return new ResponseEntity<>(channelService.pendingChannelPurchasesManaAmount(channel,manaPrice, highestAverageWeeklyViewers), HttpStatus.OK);
     }
 
     @GetMapping("/Active")

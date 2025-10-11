@@ -16,6 +16,7 @@ export class DecentralandManaService {
 
   private bidServiceAddress: string = environment.Contract_Bid_Address
   private channelServiceAddress: string = environment.Contract_Channel_Address
+  private payToRankUpServiceAddress: string = environment.Contract_Pay_To_Rank_Up_Address
   private decentralandManaAddress: string = environment.Contract_Decentraland_Mana_Address
   
 
@@ -52,7 +53,7 @@ export class DecentralandManaService {
             hash: transactionHash,
           }).then(result => {
             this.alertService.addAlert("Approval Complete", "success")
-            resolve(result.blockHash) 
+            resolve(result.transactionHash) 
           }).catch(error => {
             if (error instanceof BaseError) {
               this.handleError(error);
@@ -111,7 +112,7 @@ export class DecentralandManaService {
               hash: transactionHash,
             }).then(result => {
               this.alertService.addAlert("Approval Complete", "success")
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -139,6 +140,65 @@ export class DecentralandManaService {
     });
   }
 
+  async approvePayToRankUpService(_mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
+    return new Promise<string | undefined>((resolve, reject) => {
+      getGasPrice(config, {
+        chainId: chainID, 
+      }).then(gasPrice => {
+        const networkGasPrice = gasPrice;
+        let increasedGasPrice;
+        if(networkGasPrice){
+          increasedGasPrice = networkGasPrice + parseGwei('5')
+        }
+        else{
+          increasedGasPrice = parseGwei('30')
+        }
+        const request = {
+          abi: decentralandManaContract.abi,
+          address: this.decentralandManaAddress  as `0x${string}`,
+          functionName: 'approve',
+          args: [this.payToRankUpServiceAddress, parseEther(_mana)],
+          gasPrice: increasedGasPrice,
+          chainId: chainID
+        };
+      simulateContract(config, request).then(() => {
+        writeContract(config, request).then(transactionHash => {
+          waitForTransactionReceipt(config, {
+            hash: transactionHash,
+          }).then(result => {
+            this.alertService.addAlert("Approval Complete", "success")
+            resolve(result.transactionHash) 
+          }).catch(error => {
+            if (error instanceof BaseError) {
+              this.handleError(error);
+            }
+            reject(error);
+          });
+        }).catch(error => {
+          if (error instanceof BaseError) {
+            this.handleError(error);
+          }
+          reject(error);
+        });
+      }).catch(error => {
+        if (error instanceof BaseError) {
+          this.handleError(error);
+        }
+        reject(error);
+      });
+    }).catch(error => {
+      if (error instanceof BaseError) {
+        this.handleError(error);
+      }
+      reject(error);
+    });
+  });
+  }
+
   async getBidAllowance(_owner: string): Promise<number> {
     return new Promise<number>((resolve, ) => {
       readContract(config,{
@@ -146,6 +206,19 @@ export class DecentralandManaService {
         abi: decentralandManaContract.abi,
         functionName: 'allowance',
         args: [_owner, this.bidServiceAddress],
+      }).then(data => {
+        resolve(Number(formatEther(data as bigint)))
+      })
+    })
+  }
+
+  async getPayToRankUpAllowance(_owner: string): Promise<number> {
+    return new Promise<number>((resolve, ) => {
+      readContract(config,{
+        address: this.decentralandManaAddress  as `0x${string}`,
+        abi: decentralandManaContract.abi,
+        functionName: 'allowance',
+        args: [_owner, this.payToRankUpServiceAddress],
       }).then(data => {
         resolve(Number(formatEther(data as bigint)))
       })
@@ -197,7 +270,66 @@ export class DecentralandManaService {
               hash: transactionHash,
             }).then(result => {
               this.alertService.addAlert("Increase Successful", "success")
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
+            }).catch(error => {
+              if (error instanceof BaseError) {
+                this.handleError(error);
+              }
+              reject(error);
+            });
+          }).catch(error => {
+            if (error instanceof BaseError) {
+              this.handleError(error);
+            }
+            reject(error);
+          });
+        }).catch(error => {
+          if (error instanceof BaseError) {
+            this.handleError(error);
+          }
+          reject(error);
+        });
+      }).catch(error => {
+        if (error instanceof BaseError) {
+          this.handleError(error);
+        }
+        reject(error);
+      });
+    });
+  }
+
+  async increaseAllowancePayToRankUpService( _mana: string): Promise<string | undefined> {
+    const account = getAccount(config);
+    if(account.status != "connected"){
+      await reconnect(config)
+    }
+    return new Promise<string | undefined>((resolve, reject) => {
+      getGasPrice(config, {
+        chainId: chainID, 
+      }).then(gasPrice => {
+        const networkGasPrice = gasPrice;
+        let increasedGasPrice;
+        if(networkGasPrice){
+          increasedGasPrice = networkGasPrice + parseGwei('5')
+        }
+        else{
+          increasedGasPrice = parseGwei('30')
+        }
+        const request = {
+          abi: decentralandManaContract.abi,
+          address: this.decentralandManaAddress  as `0x${string}`,
+          functionName: 'increaseAllowance',
+          args: [this.payToRankUpServiceAddress, parseEther(_mana)],
+          gasPrice: increasedGasPrice,
+          chainId: chainID
+        };
+        simulateContract(config, request).then(()=> {
+          writeContract(config, request).then(transactionHash => {
+            waitForTransactionReceipt(config, {
+              hash: transactionHash,
+            }).then(result => {
+              this.alertService.addAlert("Increase Successful", "success")
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -256,7 +388,7 @@ export class DecentralandManaService {
               hash: transactionHash,
             }).then(result => {
               this.alertService.addAlert("Increase Successful", "success")
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -315,7 +447,7 @@ export class DecentralandManaService {
               hash: transactionHash,
             }).then(result => {
               this.alertService.addAlert("Decrease Successful", "success")
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);
@@ -374,7 +506,7 @@ export class DecentralandManaService {
               hash: transactionHash,
             }).then(result => {
               this.alertService.addAlert("Decrease Successful", "success")
-              resolve(result.blockHash) 
+              resolve(result.transactionHash) 
             }).catch(error => {
               if (error instanceof BaseError) {
                 this.handleError(error);

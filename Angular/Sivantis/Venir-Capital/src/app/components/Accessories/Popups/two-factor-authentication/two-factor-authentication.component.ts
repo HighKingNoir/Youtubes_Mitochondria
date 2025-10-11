@@ -5,7 +5,7 @@ import { LoginRequestPayload } from 'src/app/components/Login/login-account/logi
 import { AuthenticationResponse } from 'src/app/models/AuthenticationResponse/AuthenticationResponse';
 import { AlertService } from 'src/app/services/Alerts/alert.service';
 import { AuthenticationService, GoogleLoginPayload } from 'src/app/services/Auth/authentication.service';
-import { PasswordChangePayload, PersonalWalletPayload, UserService, UsernameChangePayload } from 'src/app/services/User/user-service';
+import { ChangeEmailRequestPayload, PasswordChangePayload, PersonalWalletPayload, UserService, UsernameChangePayload } from 'src/app/services/User/user-service';
 
 @Component({
     selector: 'app-two-factor-authentication',
@@ -31,6 +31,7 @@ export class TwoFactorAuthenticationComponent {
   @Input() passwordChangePayload?: PasswordChangePayload
   @Input() personalWalletPayload?: PersonalWalletPayload
   @Input() loginRequestPayload?: LoginRequestPayload
+  @Input() changeEmailRequestPayload?: ChangeEmailRequestPayload
 
 
   constructor(
@@ -80,6 +81,10 @@ export class TwoFactorAuthenticationComponent {
           this.usernameChangePayload.code = this.otp;
           this.changeUsername(this.usernameChangePayload)
         }
+        else if(this.changeEmailRequestPayload){
+          this.changeEmailRequestPayload.code = this.otp
+          this.changeEmail(this.changeEmailRequestPayload)
+        }
         else if(this.passwordChangePayload){
           this.passwordChangePayload.code = this.otp
           this.changePassword(this.passwordChangePayload)
@@ -94,6 +99,19 @@ export class TwoFactorAuthenticationComponent {
     }
  
   }
+  changeEmail(changeEmailRequestPayload: ChangeEmailRequestPayload) {
+    this.userService.changeEmail(changeEmailRequestPayload).subscribe({
+      next: () => {
+        this.activeModal.close('success')
+      },
+      error: () => {
+        this.inputDigitLeft = "Wrong Code";
+        this.btnStatus = "btn-red"
+      },
+      complete: () => {}
+    })
+  }
+  
 
   loginUser(loginRequestPayload:LoginRequestPayload){
     this.authService.login(loginRequestPayload).subscribe({

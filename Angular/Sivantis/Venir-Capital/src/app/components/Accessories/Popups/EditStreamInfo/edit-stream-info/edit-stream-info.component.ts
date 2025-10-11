@@ -38,7 +38,6 @@ export class EditStreamInfoComponent {
     if (index !== -1) {
       const JWT = localStorage.getItem('token') || ''
       this.authService.checkJWTExpiration(JWT).then(() => {
-        console.log(this.channelName)
         this.channelService.removeStreamerInfo(this.channelName, index).subscribe({
           next: (data:any) => {
             this.alertService.addAlert(data, 'success')

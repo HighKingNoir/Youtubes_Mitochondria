@@ -45,6 +45,7 @@ import { ConcertsComponent } from './components/HomePages/concerts/concerts.comp
 import { LeaderboardComponent } from './components/Leaderboard/leaderboard/leaderboard.component';
 import { UserDetailsComponent } from './components/Leaderboard/user-details/user-details.component';
 import { AddStreamerRedirectComponent } from './components/Accessories/Redirects/AddStreamerRedirect/add-streamer-redirect/add-streamer-redirect.component';
+import { RankUpPassComponent } from './components/RankUpPass/rank-up-pass/rank-up-pass.component';
 
 
 
@@ -85,6 +86,7 @@ const routes: Routes = [
   {path:'Create/Channel', component: CreateChannelComponent},
   {path:'Change/Channel/:name', component: ChangeStreamerInfoComponent},
   
+  {path:'RankUpPass', component: RankUpPassComponent},
 
   //Redirects
   {path:'Edit/Channel/:platform', component: EditStreamerRedirectComponent },

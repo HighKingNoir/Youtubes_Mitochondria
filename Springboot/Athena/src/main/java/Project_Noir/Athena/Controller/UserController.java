@@ -1,8 +1,6 @@
 package Project_Noir.Athena.Controller;
 
-import Project_Noir.Athena.DTO.PasswordChangeRequest;
-import Project_Noir.Athena.DTO.PersonalWalletRequest;
-import Project_Noir.Athena.DTO.UsernameChangeRequest;
+import Project_Noir.Athena.DTO.*;
 import Project_Noir.Athena.Model.AuthenticationResponse;
 import Project_Noir.Athena.Model.Users;
 import Project_Noir.Athena.Repo.ChannelRepository;
@@ -75,11 +73,7 @@ public class UserController {
 
     @PutMapping ("/PayLater/Add/{contentID}")
     public ResponseEntity<String> addToPayLater(@PathVariable() String contentID, @RequestHeader("Authorization") String jwt){
-        var user = userRepository.findById(jwtService.extractUserId(jwtService.getJWTString(jwt))).orElseThrow();
-        if(!user.getPayLater().contains(contentID)) {
-            user.getPayLater().add(contentID);
-            userRepository.save(user);
-        }
+        userService.addToPayLaterList(jwtService.extractUserId(jwtService.getJWTString(jwt)), contentID);
         return new ResponseEntity<String>("Added to Pay Later" , HttpStatus.OK);
     }
 
@@ -88,6 +82,16 @@ public class UserController {
         return new ResponseEntity<>(userService.changeUsername(usernameChangeRequest, jwtService.getJWTString(jwt)) , HttpStatus.OK);
     }
 
+    @PutMapping ("/Change/Email")
+    public ResponseEntity<AuthenticationResponse> changeEmail(@RequestBody @Valid ChangeEmailRequest changeEmailRequest, @RequestHeader("Authorization") String jwt) throws Exception {
+        return new ResponseEntity<>(userService.changeEmail(changeEmailRequest, jwtService.getJWTString(jwt)) , HttpStatus.OK);
+    }
+
+    @PutMapping ("/Change/Email/Initiate/{newEmail}")
+    public ResponseEntity<String> changeEmailInitiation(@PathVariable() String newEmail, @RequestHeader("Authorization") String jwt) throws Exception {
+        userService.changeEmailInitiation(newEmail, jwtService.getJWTString(jwt));
+        return new ResponseEntity<>("Email Change Initiated", HttpStatus.OK);
+    }
 
     @PutMapping ("/Change/Password")
     public ResponseEntity<AuthenticationResponse> changePassword(@RequestBody @Valid PasswordChangeRequest passwordChangeRequest, @RequestHeader("Authorization") String jwt) throws Exception {
@@ -96,37 +100,19 @@ public class UserController {
 
     @PutMapping ("/PayLater/Remove/{contentID}")
     public ResponseEntity<String> removeFromPayLater(@PathVariable() String contentID, @RequestHeader("Authorization") String jwt){
-        var user = userRepository.findById(jwtService.extractUserId(jwtService.getJWTString(jwt))).orElseThrow();
-        if(user.getPayLater().contains(contentID)) {
-            user.getPayLater().remove(contentID);
-            userRepository.save(user);
-        }
+        userService.removeFromPayLaterList(jwtService.extractUserId(jwtService.getJWTString(jwt)), contentID);
         return new ResponseEntity<String>("Removed From Pay Later", HttpStatus.OK);
     }
 
-    @PutMapping ("/Subscribe/{contentID}")
-    public ResponseEntity<String> subscribeToChannel(@PathVariable() String contentID, @RequestHeader("Authorization") String jwt){
-        var user = userRepository.findById(jwtService.extractUserId(jwtService.getJWTString(jwt))).orElseThrow();
-        var channel = channelRepository.findById(contentID).orElseThrow();
-        if(!user.getChannelSubscribedTo().contains(contentID)) {
-            user.getChannelSubscribedTo().add(contentID);
-            channel.getChannelSubscribers().add(user.getUserId());
-            userRepository.save(user);
-            channelRepository.save(channel);
-        }
+    @PutMapping ("/Subscribe/{channelId}")
+    public ResponseEntity<String> subscribeToChannel(@PathVariable() String channelId, @RequestHeader("Authorization") String jwt){
+        userService.subscribeToChannel(jwtService.extractUserId(jwtService.getJWTString(jwt)), channelId);
         return new ResponseEntity<String>("Subscribed" , HttpStatus.OK);
     }
 
-    @PutMapping ("/Unsubscribe/{contentID}")
-    public ResponseEntity<String> unsubscribeToChannel(@PathVariable() String contentID, @RequestHeader("Authorization") String jwt){
-        var user = userRepository.findById(jwtService.extractUserId(jwtService.getJWTString(jwt))).orElseThrow();
-        var channel = channelRepository.findById(contentID).orElseThrow();
-        if(user.getChannelSubscribedTo().contains(contentID)) {
-            user.getChannelSubscribedTo().remove(contentID);
-            channel.getChannelSubscribers().remove(user.getUserId());
-            userRepository.save(user);
-            channelRepository.save(channel);
-        }
+    @PutMapping ("/Unsubscribe/{channelId}")
+    public ResponseEntity<String> unsubscribeFromChannel(@PathVariable() String channelId, @RequestHeader("Authorization") String jwt){
+        userService.unsubscribeFromChannel(jwtService.extractUserId(jwtService.getJWTString(jwt)), channelId);
         return new ResponseEntity<String>("Unsubscribed", HttpStatus.OK);
     }
 

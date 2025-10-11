@@ -3,5 +3,7 @@ package Project_Noir.Athena.Model;
 public enum PaymentEnum {
     RefundedPurchase,
     PendingPurchase,
-    Purchased, PendingRefund,
+    Purchased,
+    PendingRefund,
+    VerifyingTransaction
 }

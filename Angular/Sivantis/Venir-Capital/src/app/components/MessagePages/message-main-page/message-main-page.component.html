@@ -276,6 +276,66 @@
                 </div>
             </ng-container>
 
+            <ng-container *ngSwitchCase="MessageEnum.ArchonPass">
+                <div class="header">Archon Pass Purchase</div>
+                <div class="info">
+                    <div class="instructions">
+                        You have successfully purchased <a>Archon Pass</a>.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.MasterPass">
+                <div class="header">MasterPass Pass Purchase</div>
+                <div class="info">
+                    <div class="instructions">
+                        You have successfully purchased <a>Master Pass</a>.
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="MessageEnum.InvalidRankUpTransaction">
+                <div class="header">Invalid {{addSpaceBeforeUppercase(messageContent.extraInfo[0])}} Transaction</div>
+                <div class="info">
+                    <div class="instructions">
+                        The transaction for {{addSpaceBeforeUppercase(messageContent.extraInfo[0])}} could not be verified.
+                    </div>
+                    <div class="instructions">
+                        Reason: {{messageContent.extraInfo[1]}}
+                    </div>
+                </div>
+            </ng-container>
+            
+            <ng-container *ngSwitchCase="MessageEnum.InvalidBidTransaction">
+                <div class="header">Invalid {{addSpaceBeforeUppercase(messageContent.extraInfo[0])}} Transaction</div>
+                <div class="info">
+                    <div class="instructions">
+                        The transaction for {{addSpaceBeforeUppercase(messageContent.extraInfo[0])}} could not be verified.
+                    </div>
+                    <div class="instructions">
+                        Reason: {{messageContent.extraInfo[1]}}
+                    </div>
+                    <div class="instructions">
+                        As a result, the bid was reverted back to it's previous state.
+                    </div>
+                </div>
+            </ng-container>
+            <ng-container *ngSwitchCase="MessageEnum.VerifyingTransaction">    
+                <div class="header">Verifying {{addSpaceBeforeUppercase(messageContent.extraInfo[0])}} Transaction</div>
+                <div class="info">
+                    <div class="video" *ngIf="messageContent.extraInfo[0] === 'PlaceBid' || messageContent.extraInfo[0] === 'RaiseBid'">
+                        <div class="videoContainer">
+                            <img [src]="messageContent.extraInfo[1]" alt="">
+                            <div class="contentName">{{messageContent.extraInfo[2]}}</div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        Give us a moment while we verify this <a class="transactionHash" href="https://polygonscan.com/tx/{{messageContent.transactionHash}}" target="_blank">Transaction Hash</a>
+                    </div>
+                </div>
+            </ng-container>
+            
+
             <ng-container *ngSwitchCase="MessageEnum.ChannelPayment">
                 <div class="header">Channel Payment</div>
                 <div class="info">

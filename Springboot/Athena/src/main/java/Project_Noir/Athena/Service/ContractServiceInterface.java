@@ -218,7 +218,7 @@ public class ContractServiceInterface {
                 .channelName(channel.getChannelName())
                 .contentID(contentID)
                 .watchNowPayLaterEnum(WatchNowPayLaterEnum.Unpaid)
-                .paymentAmountInUSD(totalManaAmount * priceOfMana / paymentIncrements)
+                .manaIncrements(totalManaAmount / paymentIncrements)
                 .paymentsLeft(paymentIncrements - 1)
                 .nextPaymentDate(Instant.now().plus(7, ChronoUnit.DAYS))
                 .build() ;
@@ -229,7 +229,7 @@ public class ContractServiceInterface {
     private void addWatchNowPlayLaterIdToChannel(String channelId, String watchNowPlayLaterId) {
         Query query = new Query(Criteria.where("_id").is(channelId));
         Update update = new Update().push("watchNowPayLaterIDs", watchNowPlayLaterId);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Channels.class
@@ -340,7 +340,7 @@ public class ContractServiceInterface {
     private void removeWatchNowPlayLaterIdToChannel(String channelName, String watchNowPlayLaterId) {
         Query query = new Query(Criteria.where("channelName").is(channelName));
         Update update = new Update().pull("watchNowPayLaterIDs", watchNowPlayLaterId);
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Channels.class

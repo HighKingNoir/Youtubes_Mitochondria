@@ -2,6 +2,8 @@ package Project_Noir.Athena.Service;
 
 import Project_Noir.Athena.Model.*;
 import Project_Noir.Athena.Repo.*;
+import Project_Noir.Athena.SmartContracts.BidService.BidService;
+import Project_Noir.Athena.SmartContracts.ChannelService.ChannelService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Convert;
 
 import java.io.IOException;
@@ -55,60 +58,36 @@ public class ClientSideMultiSendContractService {
     private final CredentialsService credentialsService;
     private final Ec2InstanceTagService ec2InstanceTagService;
     private final ClientSideMultiCallPackageRepository clientSideMultiCallPackageRepository;
-    private final BigInteger ultraHighGasLimit = BigInteger.valueOf(1500000L);
-    private final BigInteger highGasLimit = BigInteger.valueOf(750000L);
-    private final BigInteger midGasLimit = BigInteger.valueOf(500000L);
-    private final BigInteger lowGasLimit = BigInteger.valueOf(250000L);
+    private final Web3JService web3JService;
 
     @Value("${contract.channel.address}")
     private String ChannelServiceAddress;
 
-    @Value("${infura.api.secret}")
-    private String infuraAPISecret;
 
-    @Value("${infura.api.key}")
-    private String infuraAPIKey;
-    private Web3j web3j;
+
+
     private final BigInteger GAS_LIMIT = BigInteger.valueOf(10000000L);
     private final BigInteger baseGas = BigInteger.valueOf(250000L);
 
-    @PostConstruct
-    public void init() {
-        if (infuraAPIKey != null && !infuraAPIKey.isEmpty()) {
-            web3j = Web3j.build(createCustomHttpService("https://polygon-mainnet.infura.io/v3/" + infuraAPIKey));
-        } else {
-            web3j = Web3j.build(new HttpService());
-        }
-    }
 
-    private HttpService createCustomHttpService(String url) {
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
-        // Add an interceptor to add the Bearer token to each request
-        clientBuilder.addInterceptor(chain -> {
-            okhttp3.Request original = chain.request();
-            okhttp3.Request request = original.newBuilder()
-                    .header("Authorization", okhttp3.Credentials.basic(infuraAPIKey, infuraAPISecret))
-                    .method(original.method(), original.body())
-                    .build();
-            return chain.proceed(request);
-        });
-
-        return new HttpService(url, clientBuilder.build());
-    }
 
     public void addToQueue(ClientSideMultiCallPackage clientSideMultiCallPackage){
+        clientSideMultiCallPackage.setStatus(BlockchainInteractionStatusEnum.Awaiting);
         clientSideMultiCallPackageRepository.save(clientSideMultiCallPackage);
     }
 
-    @Scheduled(fixedDelayString = "${scheduler.delay}")
-    @SchedulerLock(name = "executeClientMultiCallLock", lockAtLeastFor = "PT10S", lockAtMostFor = "PT5M")
+    @Scheduled(fixedDelayString = "${multiCall.scheduler.delay}")
+    @SchedulerLock(name = "executeClientMultiCallLock", lockAtLeastFor = "PT10S", lockAtMostFor = "PT55S")
     public void executeMultiCall() {
-        var allClientSideMultiCallPackages = clientSideMultiCallPackageRepository.findAll();
+        var allClientSideMultiCallPackages = clientSideMultiCallPackageRepository.findAllByStatus(BlockchainInteractionStatusEnum.Awaiting);
         if(allClientSideMultiCallPackages.isEmpty()){
             return;
         }
         ec2InstanceTagService.markTransactionInProgress();
+        for (ClientSideMultiCallPackage clientSideMultiCallPackage: allClientSideMultiCallPackages){
+            clientSideMultiCallPackage.setStatus(BlockchainInteractionStatusEnum.InProgress);
+        }
+        clientSideMultiCallPackageRepository.saveAll(allClientSideMultiCallPackages);
         try {
             Credentials credentials = getCredentials();
             ArrayList<MultiCallResponse> multiCallResponses = new ArrayList<>();
@@ -120,7 +99,7 @@ public class ClientSideMultiSendContractService {
                 if(estimatedGasLimit.add(getGasLimit(clientSideMultiCallPackage.getContractFunctionDetails())).compareTo(GAS_LIMIT) > 0){
                     var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
                             credentials,
-                            getGasPrice(web3j),
+                            getGasPrice(web3JService.web3j),
                             estimatedGasLimit,
                             transactions
                     );
@@ -140,7 +119,7 @@ public class ClientSideMultiSendContractService {
                 if (index == allClientSideMultiCallPackages.size() - 1){
                     var contractTransactionReceipt = multiSendHelperService.executeMultiCall(
                             credentials,
-                            getGasPrice(web3j),
+                            getGasPrice(web3JService.web3j),
                             estimatedGasLimit,
                             transactions
                     );
@@ -277,39 +256,35 @@ public class ClientSideMultiSendContractService {
                 .set("isContentCreator", true)
                 .set("contentCreatorPending", false);
 
-        mongoTemplate.findAndModify(
+        mongoTemplate.updateFirst(
                 query,
                 update,
                 Users.class
         );
     }
 
-    public boolean hasSufficientChannelBalance(String channelName, Double manaPrice, Double averageWeeklyViewers, String contentType, Integer numberOfPayments) {
-        Function function = new Function(
-                "getChannelBalance",
-                List.of(new Utf8String(channelName)),
-                List.of(new TypeReference<Int>() {})
-        );
-        String encodedFunction = FunctionEncoder.encode(function);
-        org.web3j.crypto.Credentials credentials = getCredentials();
-        EthCall response;
+    public boolean hasSufficientChannelBalance(
+            String channelName,
+            Double manaPrice,
+            Double averageWeeklyViewers,
+            String contentType,
+            Integer numberOfPayments,
+            Double pendingChannelPurchasesManaAmount
+    ) {
+        DefaultGasProvider contractGasProvider = new DefaultGasProvider();
+        var readonly = new org.web3j.tx.ReadonlyTransactionManager(web3JService.web3j, ChannelServiceAddress);
+        var channelService = ChannelService.load(ChannelServiceAddress, web3JService.web3j, readonly, contractGasProvider);
+        var result = channelService.getChannelBalance(channelName);
+        BigInteger weiBalance;
         try {
-            response = web3j.ethCall(
-                            Transaction.createEthCallTransaction(
-                                    credentials.getAddress(),
-                                    ChannelServiceAddress,
-                                    encodedFunction),
-                            DefaultBlockParameterName.LATEST)
-                    .send();
-        } catch (IOException e) {
-            return false;
+            weiBalance = result.send();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        List<Type> result = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
-        var manaNeeded = (averageWeeklyViewers * priceOfContent(contentType)) / (100 * manaPrice);
-        BigInteger weiBalance = ((org.web3j.abi.datatypes.Int) result.get(0)).getValue();
 
+        var manaNeeded = (averageWeeklyViewers * priceOfContent(contentType)) / (100 * manaPrice);
         var channelManaBalance = Convert.fromWei(weiBalance.toString(), Convert.Unit.ETHER).doubleValue();
-        return channelManaBalance >= (manaNeeded / numberOfPayments);
+        return channelManaBalance >= (manaNeeded / numberOfPayments) + pendingChannelPurchasesManaAmount;
     }
 
     private int priceOfContent(String contentType){

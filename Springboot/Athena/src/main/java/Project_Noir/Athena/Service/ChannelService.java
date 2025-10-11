@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,8 +120,13 @@ public class ChannelService {
         if(channelRepository.findByPlatformAndStreamerId(streamerInfo.getPlatform(), streamerInfo.getStreamerId()).isPresent()){
             throw new SivantisException("Another channel already uses " + streamerInfo.getUsername() + " on " + streamerInfo.getPlatform());
         }
-        channel.getStreamerInfo().add(streamerInfo);
-        channelRepository.save(channel);
+        addChannelStreamerInfo(channel.getChannelId(), streamerInfo);
+    }
+
+    private void addChannelStreamerInfo(String channelId, StreamerInfo streamerInfo){
+        Query query = new Query(Criteria.where("_id").is(channelId));
+        Update update = new Update().push("streamerInfo", streamerInfo);
+        mongoTemplate.updateFirst(query, update, Channels.class);
     }
 
     public void removeStreamerInfo(String channelName, int indexToRemove, String JWT){
@@ -131,11 +137,20 @@ public class ChannelService {
         if(channel.getStreamerInfo().size() == 1){
             throw new SivantisException("Must have at least one remaining.");
         }
+        if(channel.getStreamerInfo().size() <= indexToRemove){
+            throw new SivantisException("Invalid Index.");
+        }
         if(!channel.getChannelStatus().equals(ChannelStatus.Approved)){
             throw new SivantisException("Channel must be approved before any changes can be made");
         }
-        channel.getStreamerInfo().remove(indexToRemove);
-        channelRepository.save(channel);
+        var streamerInfoToRemove = channel.getStreamerInfo().get(indexToRemove);
+        removeChannelStreamerInfo(channel.getChannelId(), streamerInfoToRemove);
+    }
+
+    private void removeChannelStreamerInfo(String channelId, StreamerInfo streamerInfo){
+        Query query = new Query(Criteria.where("_id").is(channelId));
+        Update update = new Update().pull("streamerInfo", streamerInfo);
+        mongoTemplate.updateFirst(query, update, Channels.class);
     }
 
     public Channels requestChannel(ChannelRequest channelRequest, String JWT) {
@@ -180,10 +195,15 @@ public class ChannelService {
         if(user.getChannels().size() >= maxNumberOfChannels){
             throw new SivantisException("Sivantis is only allowing " + maxNumberOfChannels + " channel per User");
         }
-        user.getChannels().add(newChannel.getChannelId());
-        userRepository.save(user);
+        addChannelId(userID, newChannel.getChannelId());
         channelRepository.save(newChannel);
         return newChannel;
+    }
+
+    private void addChannelId(String userId, String channelId){
+        Query query = new Query(Criteria.where("_id").is(userId));
+        Update update = new Update().push("channels", channelId);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
     private boolean validPlatform(String platform){
@@ -262,16 +282,31 @@ public class ChannelService {
         if(editChannelRequest.getStreamerLinks().size() != channel.getStreamerInfo().size()){
             throw new SivantisException("Invalid number of StreamerLinks");
         }
-        channel.setChannelLogo(editChannelRequest.getChannelLogo());
-        channel.setChannelBanner(editChannelRequest.getChannelBanner());
-        channel.setChannelDescription(editChannelRequest.getChannelDescription());
-        for(int index = 0; index < editChannelRequest.getStreamerLinks().size(); index++){
-            if(editChannelRequest.getStreamerLinks().get(index).getPlatform().equals("Youtube")){
-                channel.getStreamerInfo().get(index).setYoutubeChannelId(editChannelRequest.getStreamerLinks().get(index).getYoutubeChannelId());
+        return updatedChannel(editChannelRequest, channel.getChannelId());
+    }
+
+    private Channels updatedChannel(EditChannelRequest editChannelRequest, String channelId) {
+        // 1. Build the query to find the channel by its ID
+        Query query = new Query(Criteria.where("_id").is(channelId));
+
+        // 2. Create the update object for logo, banner, description
+        Update update = new Update()
+                .set("channelLogo", editChannelRequest.getChannelLogo())
+                .set("channelBanner", editChannelRequest.getChannelBanner())
+                .set("channelDescription", editChannelRequest.getChannelDescription());
+
+        // 3. Add updates to streamerInfo (loop through and apply each)
+        List<EditChannelRequest.StreamerLinks> streamerLinks = editChannelRequest.getStreamerLinks();
+        for (int index = 0; index < streamerLinks.size(); index++) {
+            EditChannelRequest.StreamerLinks link = streamerLinks.get(index);
+            if ("Youtube".equals(link.getPlatform())) {
+                // Dot notation: streamerInfo.N.youtubeChannelId
+                update.set("streamerInfo." + index + ".youtubeChannelId", link.getYoutubeChannelId());
             }
         }
-        channelRepository.save(channel);
-        return channel;
+
+        // 4. Execute findAndModify and return the updated channel
+        return mongoTemplate.findAndModify(query, update, FindAndModifyOptions.options().returnNew(true), Channels.class);
     }
 
 
@@ -305,7 +340,7 @@ public class ChannelService {
             throw new SivantisException("This video is no longer active");
         }
         var manaPrice = serverSideEventController.latestValue;
-        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1)){
+        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1, pendingChannelPurchasesManaAmount(channel, manaPrice, highestAverageWeeklyViewers))){
             throw new SivantisException("Insufficient Channel Balance");
         }
         var purchasedContent = paymentService.findChannelPayment(channel.getChannelName(), content.getContentId());
@@ -360,7 +395,7 @@ public class ChannelService {
             throw new SivantisException("This video is no longer active");
         }
         var manaPrice = serverSideEventController.latestValue;
-        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1)){
+        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1, pendingChannelPurchasesManaAmount(channel, manaPrice, highestAverageWeeklyViewers))){
             throw new SivantisException("Insufficient Channel Balance");
         }
         var purchasedContent = paymentService.findChannelPayment(channel.getChannelName(), content.getContentId());
@@ -396,13 +431,24 @@ public class ChannelService {
         if(channel.getStreamerInfo().size() != channelStreamerInfoRequest.getStreamerInfo().size()){
             throw new SivantisException("Streamer size imbalance");
         }
-        for (int index= 0; index < channel.getStreamerInfo().size(); index++){
-            channel.getStreamerInfo().get(index).setAverageWeeklyViewers(channelStreamerInfoRequest.getStreamerInfo().get(index).getAverageWeeklyViewers());
+        var updatedChannel = updatedAverageWeeklyViewers(channel.getChannelId(), channelStreamerInfoRequest);
+        var highestAverageWeeklyViewers = paymentService.getMaxNumber(updatedChannel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
+        contractServiceInterface.updateAverageWeeklyViewers(updatedChannel.getChannelName(), highestAverageWeeklyViewers);
+    }
+
+    private Channels updatedAverageWeeklyViewers(String channelId, ChannelStreamerInfoRequest channelStreamerInfoRequest) {
+        Query query = new Query(Criteria.where("_id").is(channelId));
+
+        Update update = new Update();
+
+        List<StreamerInfo> newStreamerInfoList = channelStreamerInfoRequest.getStreamerInfo();
+        for (int index = 0; index < newStreamerInfoList.size(); index++) {
+            update.set("streamerInfo." + index + ".averageWeeklyViewers", newStreamerInfoList.get(index).getAverageWeeklyViewers());
         }
-        channel.setAwvIsUpdated(true);
-        var highestAverageWeeklyViewers = paymentService.getMaxNumber(channel.getStreamerInfo().stream().map(StreamerInfo::getAverageWeeklyViewers).collect(Collectors.toList()));
-        contractServiceInterface.updateAverageWeeklyViewers(channel.getChannelName(), highestAverageWeeklyViewers);
-        channelRepository.save(channel);
+
+        update.set("awvIsUpdated", true);
+
+        return mongoTemplate.findAndModify(query, update, FindAndModifyOptions.options().returnNew(true), Channels.class);
     }
 
     @Scheduled(cron = "0 0 20 ? * SUN", zone = "America/New_York")
@@ -410,9 +456,11 @@ public class ChannelService {
     public void averageWeeklyViewersUpdate() {
         var allApprovedChannels = channelRepository.findAllByChannelStatus(ChannelStatus.Approved);
         for (Channels channel: allApprovedChannels){
-            channel.setAwvIsUpdated(false);
+            Query query = new Query(Criteria.where("_id").is(channel.getChannelId()));
+            Update update = new Update().set("awvIsUpdated", false);
+            mongoTemplate.updateFirst(query, update, Channels.class);
         }
-        channelRepository.saveAll(allApprovedChannels);
+
     }
 
     public void banChannel(String channelID, LocalDate unbanDate){
@@ -463,6 +511,48 @@ public class ChannelService {
             else{
                 contractServiceInterface.CancelPayment(content.getCreatorID(), content.getContentId(), channel.getChannelName(), manaAmount);
             }
+    }
+
+    public Double pendingChannelPurchasesManaAmount(
+            Channels channels,
+            Double manaPrice,
+            Double averageWeeklyViewers
+    ) {
+        // 1) Load pending payments for this channel’s purchased content
+        var payments = paymentRepository.findByPaymentIdInAndStatus(
+                channels.getPurchasedContent().values(),
+                PaymentEnum.PendingPurchase
+        );
+
+        if (payments.isEmpty()) return 0.0;
+
+        // 2) Load WNPL entries for those contentIds + this channel
+        var contentIds = payments.stream()
+                .map(Payment::getContentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        var watchNowPayLaterList = watchNowPayLaterRepository.findByContentIDInAndChannelName(
+                contentIds,
+                channels.getChannelName()
+        );
+
+        // 3) Build a fast lookup: contentId -> WatchNowPayLater
+        Map<String, WatchNowPayLater> watchNowPayLaterByContentId = watchNowPayLaterList.stream()
+                .collect(Collectors.toMap(WatchNowPayLater::getContentID, Function.identity(), (a, b) -> a));
+
+        // 4) Sum: if WNPL exists for the payment’s contentId, use special handling; else sum payment.manaAmount
+        return payments.stream()
+                .mapToDouble(payment -> {
+                    WatchNowPayLater watchNowPayLater = watchNowPayLaterByContentId.get(payment.getContentId());
+                    if (watchNowPayLater != null) {
+                        return watchNowPayLater.getManaIncrements() * watchNowPayLater.getPaymentsLeft();
+                    } else {
+                        return Double.parseDouble(payment.getManaAmount());
+                    }
+                }).sum();
+
     }
 
     public List<Channels> getAllActiveChannels(){

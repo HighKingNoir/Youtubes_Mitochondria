@@ -143,6 +143,10 @@ export class ChannelService {
     return this.httpClient.get(`${this.SivantisURL}/Single/${channelName}`, {responseType: 'json'});
   }
 
+  getChannelPendingManaAmount(channelName:string): Observable<any>{
+    return this.httpClient.get(`${this.SivantisURL}/Pending/Mana/${channelName}`, {responseType: 'json'});
+  }
+
   payForContent(ChannelPaymentRequest: ChannelPaymentRequestPayload): Observable<any>{
     return this.httpClient.post(`${this.SivantisURL}/Pay`,ChannelPaymentRequest, {responseType: 'text'});
   }

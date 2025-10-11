@@ -23,6 +23,7 @@ import org.web3j.abi.datatypes.Function;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.utils.Convert;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -78,6 +79,7 @@ public class TutorialService {
     private final ContractServiceInterface contractServiceInterface;
     private final ServerSideEventController serverSideEventController;
     private final PaymentRepository paymentRepository;
+    private final TransactionVerificationPackageRepository transactionVerificationPackageRepository;
     private final ClientSideMultiSendContractService clientSideMultiSendContractService;
     private final MessageRepository messageRepository;
     private final MultiSendHelperService multiSendHelperService;
@@ -199,14 +201,6 @@ public class TutorialService {
 
 
     private void createAuctions(List<String> videoIds) {
-        BigInteger gasPrice;
-        BigInteger gasLimit = BigInteger.valueOf(5000000L);
-        try {
-            gasPrice = web3j.ethGasPrice().send().getGasPrice();
-        } catch (IOException e) {
-            gasPrice = BigInteger.valueOf(40000000000L);
-        }
-        var bidServiceContract = BidService.load(BidAddress, web3j, getCredentials(), new StaticGasProvider(gasPrice, gasLimit));
         var admin = userRepository.findByUsername("admin").orElseThrow();
         var allContent = contentRepository.findAllById(videoIds);
         for (Content content: allContent){
@@ -292,7 +286,7 @@ public class TutorialService {
             }
         }
         var manaPrice = serverSideEventController.latestValue;
-        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 4)){
+        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 4, channelService.pendingChannelPurchasesManaAmount(channel, manaPrice, highestAverageWeeklyViewers))){
             throw new SivantisException("Insufficient Channel Balance");
         }
         this.contractServiceInterface.watchNowPayLater(
@@ -366,7 +360,7 @@ public class TutorialService {
             }
         }
         var manaPrice = serverSideEventController.latestValue;
-        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1)){
+        if(!clientSideMultiSendContractService.hasSufficientChannelBalance(channel.getChannelName(), manaPrice, highestAverageWeeklyViewers, content.getContentType(), 1, channelService.pendingChannelPurchasesManaAmount(channel, manaPrice, highestAverageWeeklyViewers))){
             throw new SivantisException("Insufficient Channel Balance");
         }
         this.contractServiceInterface.payForContent(
@@ -398,37 +392,55 @@ public class TutorialService {
     private void payment(Users user, Content content, String manaAmount, int dollarAmount, String transactionHash){
         var Payment = findPayment(user.getUserId(), content.getContentId());
         double totalManaAmount = Double.parseDouble(manaAmount);
+        var userID = user.getUserId();
         if(Payment != null){
             if(!Payment.getStatus().equals(PaymentEnum.RefundedPurchase)){
                 throw new SivantisException("Content was already purchased");
             }
             Payment.setManaAmount(manaAmount);
             Payment.setDollarAmount(BigDecimal.valueOf(dollarAmount));
-            Payment.setStatus(PaymentEnum.PendingPurchase);
+            Payment.setStatus(PaymentEnum.VerifyingTransaction);
             Payment.setTransactionHash(transactionHash);
             Payment.setPaymentDate(Instant.now());
             Payment.setManaToCreator(totalManaAmount * .9);
-            addToListOfBuyersAndHype(content.getContentId(), user.getUserId(), Payment.getManaAmount(), Payment.getDollarAmount(), auctionModifier);
+            addToListOfBuyersAndHype(content.getContentId(), userID, Payment.getManaAmount(), Payment.getDollarAmount(), auctionModifier);
             paymentRepository.save(Payment);
-            messageService.paymentMessage(user.getUserId(), Payment,content);
+            messageService.verifyingTransactionMessage(userID, TransactionVerificationFunctionEnum.PlaceBid, transactionHash, content);
+            addTransactionVerificationToQueue(
+                    content.getContentId(),
+                    userID,
+                    transactionHash,
+                    TransactionVerificationFunctionEnum.PlaceBid,
+                    Convert.toWei(new BigDecimal(manaAmount), Convert.Unit.ETHER)
+                            .toBigIntegerExact()
+            );
         }
         else {
             var newPayment = Project_Noir.Athena.Model.Payment.builder()
                     .paymentId(ObjectId.get().toHexString())
                     .contentId(content.getContentId())
-                    .userId(user.getUserId())
+                    .userId(userID)
                     .manaAmount(manaAmount)
-                    .dollarAmount(BigDecimal.valueOf( dollarAmount))
+                    .dollarAmount(BigDecimal.valueOf(dollarAmount))
                     .refundDate(null)
                     .paymentDate(Instant.now())
-                    .status(PaymentEnum.PendingPurchase)
+                    .status(PaymentEnum.VerifyingTransaction)
                     .manaToCreator(totalManaAmount * .9)
+                    .paymentRevertInfo(new HashMap<>())
                     .transactionHash(transactionHash)
                     .build();
-            addPurchasedContent(user.getUserId(), newPayment.getContentId(), newPayment.getPaymentId());
-            addToListOfBuyersAndHype(content.getContentId(), user.getUserId(), newPayment.getManaAmount(), newPayment.getDollarAmount(), auctionModifier);
+            addPurchasedContent(userID, newPayment.getContentId(), newPayment.getPaymentId());
+            addToListOfBuyersAndHype(content.getContentId(), userID, newPayment.getManaAmount(), newPayment.getDollarAmount(), auctionModifier);
             paymentRepository.save(newPayment);
-            messageService.paymentMessage(user.getUserId(), newPayment, content);
+            messageService.verifyingTransactionMessage(userID, TransactionVerificationFunctionEnum.PlaceBid, transactionHash, content);
+            addTransactionVerificationToQueue(
+                    content.getContentId(),
+                    userID,
+                    transactionHash,
+                    TransactionVerificationFunctionEnum.PlaceBid,
+                    Convert.toWei(new BigDecimal(manaAmount), Convert.Unit.ETHER)
+                            .toBigIntegerExact()
+            );
         }
     }
 
@@ -439,7 +451,7 @@ public class TutorialService {
                 .set("listOfBuyerIds." + userIdOrChannelName, manaAmount) // Add/overwrite buyer
                 .inc("hype", dollarAmount.multiply(BigDecimal.valueOf(modifier))); // Increment hype
 
-        mongoTemplate.findAndModify(query, update, Content.class);
+        mongoTemplate.updateFirst(query, update, Content.class);
     }
 
     public void addPurchasedContent(String userId, String contentId, String paymentId) {
@@ -770,5 +782,25 @@ public class TutorialService {
                 .build();
         userRepository.save(user);
         return user.getUserId();
+    }
+
+    public String addTransactionVerificationToQueue(
+            String contentId,
+            String userId,
+            String transactionHash,
+            TransactionVerificationFunctionEnum transactionVerificationFunctionEnum,
+            BigInteger expectedManaAmount
+    ){
+        TransactionVerificationPackage transactionVerificationPackage = TransactionVerificationPackage.builder()
+                .transactionVerificationId(ObjectId.get().toHexString())
+                .transactionVerificationFunctionEnum(transactionVerificationFunctionEnum)
+                .contentID(contentId)
+                .transactionHash(transactionHash)
+                .userId(userId)
+                .status(BlockchainInteractionStatusEnum.Awaiting)
+                .expectedManaAmount(expectedManaAmount)
+                .build();
+        transactionVerificationPackageRepository.save(transactionVerificationPackage);
+        return transactionVerificationPackage.getTransactionVerificationId();
     }
 }

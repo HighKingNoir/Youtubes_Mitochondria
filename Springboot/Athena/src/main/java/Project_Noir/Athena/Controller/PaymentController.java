@@ -67,6 +67,18 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.OK).body(paymentService.findChannelPayment(channelName, contentID));
     }
 
+    @PostMapping("/Pass/Master/{transactionHash}")
+    // @dev Generates a new payment entity
+    public ResponseEntity<String> purchaseMasterPass(@PathVariable String transactionHash, @RequestHeader("Authorization") String jwt){
+        paymentService.purchaseMasterPass(transactionHash, jwt);
+        return new ResponseEntity<String>("Payment Successful", HttpStatus.OK);
+    }
 
+    @PostMapping("/Pass/Archon/{transactionHash}")
+    // @dev Generates a new payment entity
+    public ResponseEntity<String> purchaseArchonPass(@PathVariable String transactionHash, @RequestHeader("Authorization") String jwt){
+        paymentService.purchaseArchonPass(transactionHash, jwt);
+        return new ResponseEntity<String>("Payment Successful", HttpStatus.OK);
+    }
 
 }

@@ -186,6 +186,7 @@ export class SingleBuyerComponent implements OnInit, OnDestroy{
           const modelRef = this.modalService.open(TransferManaComponent, {size: 'lg', scrollable: true, centered: true , animation: false})
           modelRef.componentInstance.approveContract = true;
           modelRef.componentInstance.bidContract = true;
+           modelRef.componentInstance.mana = Number(mana)
         }
         else if(allowedMana! < Number(mana)){
           const modelRef = this.modalService.open(TransferManaComponent, {size: 'lg', scrollable: true, centered: true , animation: false})

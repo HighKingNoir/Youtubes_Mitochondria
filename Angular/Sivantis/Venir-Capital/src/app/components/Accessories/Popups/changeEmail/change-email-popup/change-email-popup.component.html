@@ -1,0 +1,60 @@
+<div class="modal-header">
+    <div class="title">Change Email</div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+    <form action="" method="post" [formGroup]="newEmailForm" (ngSubmit)="submitNewEmail()">
+        <div *ngIf="isPhase1; else Phase2">
+            <div style="font-size: 25px; margin-bottom: 15px; display: flex; justify-content: center;">Enter New Email</div>
+            <div class="input-box">
+                <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="text" name="newEmail" id="newEmail" [formControlName]="'newEmail'" required>
+                <label for="newEmail" >New Email</label>
+            </div>
+            <div *ngIf="newEmailForm.get('newEmail')?.hasError('email') || newEmailForm.get('newEmail')?.hasError('required') && newEmailForm.get('newEmail')?.touched" class="error-message">
+                Invalid email entered.
+            </div>
+            <div *ngIf="newEmailForm.get('newEmail')?.hasError('emailTaken')" class="error-message">
+                Email already Taken.
+            </div>
+            <div style="display: flex; justify-content: end;">
+                <button type="button" class="btn btn-light"  ngbAutofocus (click)="next()">Next</button>
+            </div>
+        </div>
+        <ng-template #Phase2>
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div style="font-size: 25px; margin-bottom: 15px;">Confirm Your Emails</div>
+                <div>
+                    <div>We will send one verification code to your current email:</div>
+                    <div style="color: gold;">{{currentEmail}}</div>
+                    <div class="input-box"> 
+                        <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="text" name="currentEmailVerificationCode" id="currentEmailVerificationCode" [formControlName]="'currentEmailVerificationCode'"  required>
+                        <label for="currentEmailVerificationCode" >Current Email Verification Code</label>
+                    </div>
+                    <div *ngIf="newEmailForm.get('currentEmailVerificationCode')?.hasError('pattern') || newEmailForm.get('currentEmailVerificationCode')?.hasError('required') && newEmailForm.get('currentEmailVerificationCode')?.touched" class="error-message">
+                        Code must be exactly 6 letters/numbers.
+                    </div>
+                </div>
+                <div>
+                    <div>And another verification code to your new email:</div>
+                    <div style="color: gold;">{{newEmailForm.get('newEmail')?.value}}</div>
+                    <div class="input-box"> 
+                        <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="text" name="newEmailVerificationCode" id="newEmailVerificationCode" [formControlName]="'newEmailVerificationCode'"  required>
+                        <label for="newEmailVerificationCode" >New Email Verification Code</label>
+                    </div>
+                    <div *ngIf="newEmailForm.get('newEmailVerificationCode')?.hasError('pattern') || newEmailForm.get('newEmailVerificationCode')?.hasError('required') && newEmailForm.get('newEmailVerificationCode')?.touched" class="error-message">
+                        Code must be exactly 6 letters/numbers.
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <button type="button" class="btn btn-light" (click)="back()">Back</button>
+                <button type="button" class="btn btn-light" (click)="submitNewEmail()">Submit</button>
+            </div>
+        </ng-template>
+    </form>
+    
+    
+</div>

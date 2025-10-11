@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div *ngIf="bidContract; else channelContract">
+    <div *ngIf="bidContract; else payToRankUp">
         <div *ngIf="approveContract; else increaseAllowance">
             <div class="Header">Approve Bid Contract</div>
             <div class="instructions">
@@ -35,6 +35,36 @@
             <button (click)="increaseBidAllowance()">Increase Allowance</button>
         </ng-template>
     </div> 
+
+    <ng-template #payToRankUp>
+        <div *ngIf="payToRankUpContract; else channelContract">
+            <div *ngIf="approveContract; else increaseAllowance">
+                <div class="Header">Approve Pay To Rank Up Contract</div>
+                <div class="instructions">
+                    To rank up faster on Sivantis, you need to approve the spending of
+                    Polygon Decentraland Mana on Sivantis' Pay To Rank Up Service Smart Contract. Please follow the steps below:
+                </div>
+                <ul>
+                    <li>Below is the link to allow the tranfer of a set amount of your polygon mana to our smart contract.</li>
+                    <li>Once you approve this transaction, you will be able send mana to our pay to rank up service smart contract.</li>
+                </ul>
+                <button (click)="approvePayToRankUpService()">Approve Contract</button>
+            </div>
+            <ng-template #increaseAllowance>
+                <div class="Header">Increase Pay To Rank Up Funding Allowance</div>
+                <div class="instructions">
+                    You need to increase your allowance of
+                    Polygon Decentraland Mana. Please follow the steps below:
+                </div>
+                <ul>
+                    <li>Below is the link to allow the tranfer of more polygon mana to our smart contract from your crypto address.</li>
+                    <li>Your current allowance is <a class="goldText">{{allowance | numberFormat}}</a> mana and you tried to send <a class="goldText">{{mana | numberFormat}}</a> mana.</li>
+                    <li>To complete this transaction, you must first raise your allowance.</li>
+                </ul>
+                <button (click)="increasePayToRankUpAllowance()">Increase Allowance</button>
+            </ng-template>
+        </div>
+    </ng-template>
 
     <ng-template #channelContract>
         <div *ngIf="approveContract; else increaseAllowance">

@@ -20,5 +20,5 @@ public enum MessageEnum {
     UserWithdraw,
     FailedToSendEmails,
     SentVideo,
-    FailedAuctionPayment, ResolvedAuctionPayment, ChannelPendingPayment, ChannelPendingRefund,
+    FailedAuctionPayment, ResolvedAuctionPayment, ChannelPendingPayment, ChannelPendingRefund, ArchonPass, MasterPass, InvalidRankUpTransaction, InvalidBidTransaction, VerifyingTransaction,
 }

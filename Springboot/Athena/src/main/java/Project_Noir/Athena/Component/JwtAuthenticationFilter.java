@@ -1,5 +1,6 @@
 package Project_Noir.Athena.Component;
 
+import Project_Noir.Athena.Service.RateLimiterService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +23,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Project_Noir.Athena.Service.JwtService JwtService;
     private final UserDetailsService userDetailsService;
-
+    private final RateLimiterService rateLimiterService;
 
     @Override
     protected void doFilterInternal(
@@ -34,6 +35,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String Jwt, Username;
 
         if(AuthHeader == null || !AuthHeader.startsWith("Bearer ")){
+            String ip = getClientIp(request);
+            boolean ipAllowed = rateLimiterService.allowRequest("ip:" + ip, 100, 100, 60_000);
+
+            if (!ipAllowed) {
+                response.setStatus(429);
+                response.getWriter().write("Rate limit exceeded");
+                return;
+            }
             if (request.getRequestURI().startsWith("/sse/manaPrice")) {
                 // Extract the JWT token from the query parameter
                 checkServerSideEmitterJWT(request, response, filterChain);
@@ -46,6 +55,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Jwt = AuthHeader.substring(7);
             Username = JwtService.extractUsername(Jwt);
             if(Username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                boolean userAllowed = rateLimiterService.allowRequest("user:" + JwtService.extractUserId(Jwt), 200, 200, 60_000);
+                if (!userAllowed) {
+                    response.setStatus(429);
+                    response.getWriter().write("Rate limit exceeded");
+                    return;
+                }
+
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(Username);
                     if(JwtService.isTokenValid(Jwt, userDetails) && JwtService.isVerified(Jwt)){
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -83,4 +99,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request,response);
     }
 
+
+    private String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
+    }
 }

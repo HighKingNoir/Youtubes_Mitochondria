@@ -230,6 +230,19 @@ contract BidService {
         return manaAmountInUsd;
     }
 
+    function getManaPrice() internal view returns (uint256) {
+        (, int256 answer, , , ) = priceFeed.latestRoundData();
+         return uint256(answer);
+    }
+
+	function getManaBalanceInUSD(
+        int256 manaAmount
+    ) internal view returns (int256) {
+        int256 manaPrice = int256(getManaPrice()) * 1e10; 
+        int256 manaAmountInUsd = (manaPrice * manaAmount) / 1e18;
+        return manaAmountInUsd;
+    }
+
     function addOverseer(address _newContractAddress) external{
         if(msg.sender != CompanyWallet){
             revert FunctionError("This function can only be called by Company Wallet");

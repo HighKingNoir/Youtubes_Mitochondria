@@ -98,6 +98,8 @@ import { TransakPopupComponent } from './components/Accessories/Popups/transak-p
 import { EditStreamInfoComponent } from './components/Accessories/Popups/EditStreamInfo/edit-stream-info/edit-stream-info.component';
 import { ContractFunctionDetailsComponent } from './components/Accessories/Popups/ContractFunctionDetails/contract-function-details/contract-function-details.component';
 import { AddStreamerRedirectComponent } from './components/Accessories/Redirects/AddStreamerRedirect/add-streamer-redirect/add-streamer-redirect.component';
+import { ChangeEmailPopupComponent } from './components/Accessories/Popups/changeEmail/change-email-popup/change-email-popup.component';
+import { RankUpPassComponent } from './components/RankUpPass/rank-up-pass/rank-up-pass.component';
 
 const jwtModule = JwtModule.forRoot({
     config: {
@@ -111,6 +113,8 @@ const jwtModule = JwtModule.forRoot({
 
 @NgModule({ declarations: [
         AppComponent,
+        RankUpPassComponent,
+        ChangeEmailPopupComponent,
         ContractFunctionDetailsComponent,
         AddStreamerRedirectComponent,
         EditStreamInfoComponent,

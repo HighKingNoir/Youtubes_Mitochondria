@@ -1,12 +1,11 @@
 package Project_Noir.Athena.Service;
 
+import Project_Noir.Athena.DTO.ChangeEmailRequest;
 import Project_Noir.Athena.DTO.PasswordChangeRequest;
 import Project_Noir.Athena.DTO.PersonalWalletRequest;
 import Project_Noir.Athena.DTO.UsernameChangeRequest;
 import Project_Noir.Athena.Exception.SivantisException;
-import Project_Noir.Athena.Model.AuthenticationResponse;
-import Project_Noir.Athena.Model.ContentEnum;
-import Project_Noir.Athena.Model.Users;
+import Project_Noir.Athena.Model.*;
 import Project_Noir.Athena.Repo.ContentRepository;
 import Project_Noir.Athena.Repo.UserRepository;
 import lombok.AllArgsConstructor;
@@ -21,6 +20,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,6 +41,7 @@ public class UserService {
     private final MongoTemplate mongoTemplate;
     private final ContentRepository contentRepository;
     private final ServerSideMultiSendContractService serverSideMultiSendContractService;
+    private final MailService mailService;
 
     //Adds a personal wallet to a user account
     public AuthenticationResponse setPersonalWallet(PersonalWalletRequest personalWalletRequest, String JWT) throws Exception {
@@ -117,6 +118,94 @@ public class UserService {
         return null;
     }
 
+    public AuthenticationResponse changeEmail(
+            ChangeEmailRequest changeEmailRequest,
+            String JWT
+    ) throws Exception {
+
+        var user = userRepository.findById(jwtService.extractUserId(JWT)).orElseThrow();
+        if(Instant.now().isAfter(user.getNewEmailInfo().getExpiration())){
+            throw new SivantisException("Verification Codes have Expired");
+        }
+        if (!changeEmailRequest.getCurrentEmailVerificationCode().equalsIgnoreCase(user.getNewEmailInfo().getCurrentEmailVerificationCode())){
+            throw new SivantisException("Current Email Verification Code is Incorrect");
+        }
+        if (!changeEmailRequest.getNewEmailVerificationCode().equalsIgnoreCase(user.getNewEmailInfo().getNewEmailVerificationCode())){
+            throw new SivantisException("New Email Verification Code is Incorrect");
+        }
+
+        //2FA is enabled
+        if(user.getMfaEnabled() && !changeEmailRequest.getCode().isEmpty()){
+            if (!TFAService.isOtpValid(encryptionService.decrypt(user.getMfaSecret()), changeEmailRequest.getCode())){
+                throw new SivantisException("Incorrect Code");
+            }
+            changeEmail(user, user.getNewEmailInfo().getNewEmail());
+            return AuthenticationResponse.builder()
+                    .mfaEnabled(true)
+                    .build();
+        }
+        if(user.getMfaEnabled()){
+            return AuthenticationResponse.builder()
+                    .mfaEnabled(true)
+                    .build();
+        }
+        changeEmail(user, user.getNewEmailInfo().getNewEmail());
+        return AuthenticationResponse.builder()
+                .mfaEnabled(false)
+                .build();
+    }
+
+    public void changeEmailInitiation(String newEmail, String JWT){
+        userRepository.findByEmail(newEmail)
+                .ifPresent(user -> {
+                    throw new SivantisException("Email already exists: " + newEmail);
+                });
+        var user = userRepository.findById(jwtService.extractUserId(JWT)).orElseThrow();
+        var currentEmailVerificationCode = generateCode(6);
+        var newEmailVerificationCode = generateCode(6);
+        NewEmailInfo newEmailInfo = NewEmailInfo.builder()
+                .newEmailVerificationCode(newEmailVerificationCode)
+                .currentEmailVerificationCode(currentEmailVerificationCode)
+                .newEmail(newEmail)
+                .expiration(Instant.now().plus(30, ChronoUnit.MINUTES))
+                .build();
+        addNewEmailInfo(user, newEmailInfo);
+
+        mailService.sendEmail(new NotificationEmail("Change Email",
+                user.getEmail(),
+                currentEmailVerificationCode,
+                NotificationEmailEnum.ChangeEmail));
+
+        mailService.sendEmail(new NotificationEmail("Change Email",
+                newEmail,
+                newEmailVerificationCode,
+                NotificationEmailEnum.ChangeEmail));
+    }
+
+    public static String generateCode(int length) {
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            sb.append(CHARACTERS.charAt(index));
+        }
+        return sb.toString();
+    }
+
+    private void changeEmail(Users user, String newEmail){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("email", newEmail).unset("newEmailInfo");
+        mongoTemplate.updateFirst(query, update, Users.class);
+    }
+
+    private void addNewEmailInfo(Users user, NewEmailInfo newEmailInfo){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("newEmailInfo", newEmailInfo);
+        mongoTemplate.updateFirst(query, update, Users.class);
+    }
+
 
     public AuthenticationResponse toggle2FA(String code, String JWT) throws Exception {
         var user = userRepository.findById(jwtService.extractUserId(JWT)).orElseThrow();
@@ -127,8 +216,7 @@ public class UserService {
                     throw new SivantisException("Incorrect Code");
                 }
                 //disable 2FA
-                user.setMfaEnabled(false);
-                userRepository.save(user);
+                toggleTFA(user, false);
                 return AuthenticationResponse.builder()
                         .mfaEnabled(false)
                         .build();
@@ -143,18 +231,61 @@ public class UserService {
                 throw new SivantisException("Incorrect Code");
             }
             //Enable 2FA
-            user.setMfaEnabled(true);
-            userRepository.save(user);
+            toggleTFA(user, true);
             return AuthenticationResponse.builder()
                     .mfaEnabled(true)
                     .build();
         }
-        user.setMfaSecret(encryptionService.encrypt(TFAService.generateNewSecret()));
-        userRepository.save(user);
+        user = setMfaSecret(user, encryptionService.encrypt(TFAService.generateNewSecret()));
         return AuthenticationResponse.builder()
                 .mfaEnabled(false)
                 .secretImageUri(TFAService.generateQRCodeImageUrl(encryptionService.decrypt(user.getMfaSecret())))
                 .build();
+
+    }
+
+    private Users setMfaSecret(Users user, String mfaSecret){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("mfaSecret", mfaSecret);
+        return mongoTemplate.findAndModify(query, update, FindAndModifyOptions.options().returnNew(true), Users.class);
+    }
+
+    private void toggleTFA(Users user, boolean mfaEnabled){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("mfaEnabled", mfaEnabled);
+        mongoTemplate.updateFirst(query, update, Users.class);
+    }
+
+    public void addToPayLaterList(String userId, String contentID){
+        Query userQuery = new Query(Criteria.where("_id").is(userId));
+        Update userUpdate = new Update().addToSet("payLater", contentID);
+        mongoTemplate.updateFirst(userQuery, userUpdate, Users.class);
+    }
+
+    public void removeFromPayLaterList(String userId, String contentID){
+        Query userQuery = new Query(Criteria.where("_id").is(userId));
+        Update userUpdate = new Update().pull("payLater", contentID);
+        mongoTemplate.updateFirst(userQuery, userUpdate, Users.class);
+    }
+
+    public void subscribeToChannel(String userId, String channelId){
+        Query userQuery = new Query(Criteria.where("_id").is(userId));
+        Update userUpdate = new Update().addToSet("channelSubscribedTo", channelId);
+        mongoTemplate.updateFirst(userQuery, userUpdate, Users.class);
+
+        Query channelQuery = new Query(Criteria.where("_id").is(channelId));
+        Update channelUpdate = new Update().addToSet("channelSubscribers", userId);
+        mongoTemplate.updateFirst(channelQuery, channelUpdate, Channels.class);
+    }
+
+    public void unsubscribeFromChannel(String userId, String channelId){
+        Query userQuery = new Query(Criteria.where("_id").is(userId));
+        Update userUpdate = new Update().pull("channelSubscribedTo", channelId);
+        mongoTemplate.updateFirst(userQuery, userUpdate, Users.class);
+
+        Query channelQuery = new Query(Criteria.where("_id").is(channelId));
+        Update channelUpdate = new Update().pull("channelSubscribers", userId);
+        mongoTemplate.updateFirst(channelQuery, channelUpdate, Channels.class);
 
     }
 
@@ -170,8 +301,7 @@ public class UserService {
             if (!TFAService.isOtpValid(encryptionService.decrypt(user.getMfaSecret()), usernameChangeRequest.getCode())){
                 throw new SivantisException("Incorrect Code");
             }
-            user.setUsername(usernameChangeRequest.getUsername());
-            userRepository.save(user);
+            user = changeUsername(user, usernameChangeRequest.getUsername());
             return AuthenticationResponse.builder()
                     .mfaEnabled(true)
                     .jwtToken(jwtService.generateToken(user))
@@ -182,12 +312,18 @@ public class UserService {
                     .mfaEnabled(true)
                     .build();
         }
-        user.setUsername(usernameChangeRequest.getUsername());
-        userRepository.save(user);
+        user = changeUsername(user, usernameChangeRequest.getUsername());
         return AuthenticationResponse.builder()
                 .mfaEnabled(false)
                 .jwtToken(jwtService.generateToken(user))
                 .build();
+    }
+
+    private Users changeUsername(Users user, String username){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("username", username);
+        return mongoTemplate.findAndModify(query, update, FindAndModifyOptions.options().returnNew(true), Users.class);
+
     }
 
     public AuthenticationResponse changePassword(PasswordChangeRequest passwordChangeRequest, String JWT) throws Exception {
@@ -199,8 +335,7 @@ public class UserService {
             if (!TFAService.isOtpValid(encryptionService.decrypt(user.getMfaSecret()), passwordChangeRequest.getCode())){
                 throw new SivantisException("Incorrect Code");
             }
-            user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
-            userRepository.save(user);
+            changePassword(user, passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
             return AuthenticationResponse.builder()
                     .mfaEnabled(true)
                     .build();
@@ -210,11 +345,16 @@ public class UserService {
                     .mfaEnabled(true)
                     .build();
         }
-        user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
-        userRepository.save(user);
+        changePassword(user, passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
         return AuthenticationResponse.builder()
                 .mfaEnabled(false)
                 .build();
+    }
+
+    private void changePassword(Users user, String newPassword){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update().set("password", newPassword);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
     public AuthenticationResponse deleteUser(String code, String JWT) throws Exception {
@@ -229,9 +369,7 @@ public class UserService {
             if (!TFAService.isOtpValid(encryptionService.decrypt(user.getMfaSecret()), code)){
                 throw new SivantisException("Incorrect Code");
             }
-            user.setDeleteRequest(true);
-            user.setDeleteAccountDate(Instant.now().plus(30, ChronoUnit.DAYS));
-            userRepository.save(user);
+            deleteAccountRequest(user);
             return AuthenticationResponse.builder()
                     .mfaEnabled(true)
                     .build();
@@ -241,12 +379,18 @@ public class UserService {
                     .mfaEnabled(true)
                     .build();
         }
-        user.setDeleteRequest(true);
-        user.setDeleteAccountDate(Instant.now().plus(30, ChronoUnit.DAYS));
-        userRepository.save(user);
+        deleteAccountRequest(user);
         return AuthenticationResponse.builder()
                 .mfaEnabled(false)
                 .build();
+    }
+
+    private void deleteAccountRequest(Users user){
+        Query query = new Query(Criteria.where("_id").is(user.getUserId()));
+        Update update = new Update()
+                .setOnInsert("deleteAccountDate", Instant.now().plus(30, ChronoUnit.DAYS))
+                .set("deleteRequest", true);
+        mongoTemplate.updateFirst(query, update, Users.class);
     }
 
     @Scheduled(cron = "0 0 22 ? * THU", zone = "America/New_York")

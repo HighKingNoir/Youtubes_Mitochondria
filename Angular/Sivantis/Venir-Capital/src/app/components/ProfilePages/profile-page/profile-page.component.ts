@@ -9,6 +9,7 @@ import { AuthenticationService } from 'src/app/services/Auth/authentication.serv
 import { UserService, UsernameChangePayload } from 'src/app/services/User/user-service';
 import { ConfirmationComponent } from '../../Accessories/Popups/confirmation/confirmation.component';
 import { TwoFactorAuthenticationComponent } from '../../Accessories/Popups/two-factor-authentication/two-factor-authentication.component';
+import { ChangeEmailPopupComponent } from '../../Accessories/Popups/changeEmail/change-email-popup/change-email-popup.component';
 
 @Component({
     selector: 'app-profile-page',
@@ -44,9 +45,19 @@ export class ProfilePageComponent {
       this.userEmail = this.userService.getUserEmail()
       this.usernameForm.get("username")?.setValue(this.username)
     }
+
   }
 
 
+  changeEmail(){
+    const modalRef = this.modalService.open(ChangeEmailPopupComponent, {size: 'md', scrollable: true,centered: true , animation: false})
+    modalRef.result.then(result => {
+      if(result === "Email Changed"){
+        this.userEmail = this.userService.getUserEmail()
+      }
+    })
+  }
+      
   changeUsername(){
     const JWT = window.localStorage.getItem('token') || ''
     this.authService.checkJWTExpiration(JWT).then((JWTResult) => {
